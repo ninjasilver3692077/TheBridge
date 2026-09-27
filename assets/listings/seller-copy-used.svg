@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 420" role="img" aria-labelledby="title desc">
+<title id="title">Used copy seller photo placeholder</title>
+<desc id="desc">Visible wear • fully readable.</desc>
+<rect width="640" height="420" rx="28" fill="#F8FAFC"/>
+<rect x="76" y="258" width="488" height="28" rx="8" fill="#CBD5E1"/>
+<g transform="translate(166 66) rotate(-5 150 100)">
+<rect width="310" height="190" rx="14" fill="#0F766E"/>
+<rect x="24" y="28" width="262" height="134" rx="10" fill="#fff" opacity=".12"/>
+<path d="M44 126 C100 92 136 98 155 130 C174 98 210 92 266 126" fill="none" stroke="#fff" stroke-width="7" stroke-linecap="round"/>
+<circle cx="110" cy="68" r="12" fill="#fff"/><circle cx="200" cy="68" r="12" fill="#fff"/>
+</g>
+<text x="76" y="338" fill="#0F172A" font-family="Arial, sans-serif" font-size="26" font-weight="700">Used copy</text>
+<text x="76" y="374" fill="#64748B" font-family="Arial, sans-serif" font-size="18">Visible wear • fully readable</text>
+</svg>

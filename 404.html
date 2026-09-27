@@ -1,0 +1,70 @@
+﻿<!doctype html>
+<html lang="en" class="scroll-smooth">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="description"
+      content="TheBridge connects university students through second-hand books, exchanges, loans, rentals, and sales."
+    />
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <script>
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            fontFamily: {
+              sans: ["Manrope", "ui-sans-serif", "system-ui", "sans-serif"],
+            },
+            colors: {
+              bridge: {
+                blue: "#2563EB",
+                indigo: "#4F46E5",
+                violet: "#7C3AED",
+                navy: "#0F172A",
+              },
+            },
+            boxShadow: {
+              soft: "0 16px 50px rgba(15, 23, 42, 0.10)",
+            },
+          },
+        },
+      };
+    </script>
+
+    <script>
+      (() => {
+        try {
+          const savedTheme = localStorage.getItem("thebridge:theme");
+          const prefersDark = window.matchMedia(
+            "(prefers-color-scheme: dark)"
+          ).matches;
+
+          if (savedTheme === "dark" || (!savedTheme && prefersDark)) {
+            document.documentElement.classList.add("dark");
+          }
+        } catch {}
+      })();
+    </script>
+
+    <title>TheBridge - Home</title>
+    <script type="module" crossorigin src="/TheBridge/assets/index-Db1L0hwQ.js"></script>
+    <link rel="stylesheet" crossorigin href="/TheBridge/assets/index-x1XGuNl0.css">
+  </head>
+
+  <body
+    class="min-h-screen overflow-x-hidden bg-slate-50 font-sans text-slate-900 antialiased transition-colors dark:bg-slate-950 dark:text-slate-100"
+  >
+    <div id="root"></div>
+
+  </body>
+</html>

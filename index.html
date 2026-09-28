@@ -1,4 +1,4 @@
-﻿<!doctype html>
+<!doctype html>
 <html lang="en" class="scroll-smooth">
   <head>
     <meta charset="UTF-8" />
@@ -18,6 +18,8 @@
     <script src="https://cdn.tailwindcss.com"></script>
 
     <script>
+      const token = (name) => `rgb(var(--c-${name}) / <alpha-value>)`;
+
       tailwind.config = {
         darkMode: "class",
         theme: {
@@ -26,15 +28,33 @@
               sans: ["Manrope", "ui-sans-serif", "system-ui", "sans-serif"],
             },
             colors: {
-              bridge: {
-                blue: "#2563EB",
-                indigo: "#4F46E5",
-                violet: "#7C3AED",
-                navy: "#0F172A",
+              canvas: token("canvas"),
+              chrome: token("chrome"),
+              surface: {
+                DEFAULT: token("surface"),
+                muted: token("surface-muted"),
+                raised: token("surface-raised"),
+              },
+              ink: {
+                DEFAULT: token("ink"),
+                muted: token("ink-muted"),
+                subtle: token("ink-subtle"),
+              },
+              line: {
+                DEFAULT: token("line"),
+                strong: token("line-strong"),
+              },
+              wine: {
+                DEFAULT: token("wine"),
+                hover: token("wine-hover"),
+                soft: token("wine-soft"),
+                ink: token("wine-ink"),
+                deep: token("wine-deep"),
               },
             },
             boxShadow: {
-              soft: "0 16px 50px rgba(15, 23, 42, 0.10)",
+              card: "0 1px 2px rgb(36 28 30 / 0.04), 0 6px 20px -12px rgb(36 28 30 / 0.12)",
+              lift: "0 2px 4px rgb(36 28 30 / 0.04), 0 18px 36px -18px rgb(36 28 30 / 0.22)",
             },
           },
         },
@@ -57,12 +77,12 @@
     </script>
 
     <title>TheBridge - Home</title>
-    <script type="module" crossorigin src="/TheBridge/assets/index-Be0-GS3c.js"></script>
-    <link rel="stylesheet" crossorigin href="/TheBridge/assets/index-x1XGuNl0.css">
+    <script type="module" crossorigin src="/TheBridge/assets/index-BCPtgqhE.js"></script>
+    <link rel="stylesheet" crossorigin href="/TheBridge/assets/index-C44ANm86.css">
   </head>
 
   <body
-    class="min-h-screen overflow-x-hidden bg-slate-50 font-sans text-slate-900 antialiased transition-colors dark:bg-slate-950 dark:text-slate-100"
+    class="min-h-screen overflow-x-hidden bg-canvas font-sans text-ink antialiased"
   >
     <div id="root"></div>
 

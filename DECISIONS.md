@@ -22,7 +22,7 @@
 ## Language
 
 - Visible interface text and project documentation are written in English.
-- Code comments are written in Spanish when they clarify non-obvious intent or flow.
+- Code files contain no comments.
 
 ## Collaboration
 

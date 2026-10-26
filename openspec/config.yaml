@@ -26,4 +26,4 @@ operations:
       - Implement only the tasks in tasks.md; if reality differs, update the spec before the code
   archive:
     guidance:
-      - Archive only after the reviewer approved the pull request and acceptance criteria pass
+      - Archive after the acceptance criteria pass and before the reviewer's final approval, so the archived spec ships in the same pull request as the code

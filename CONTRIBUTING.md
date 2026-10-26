@@ -4,6 +4,8 @@ TheBridge is built by a four-person academic team using **BMAD** (planning: what
 
 ## Team roles
 
+> **Proposed.** These responsibilities are pending confirmation by all four team members; update this table once agreed.
+
 | Person | Human role | Operates the AI agents for |
 |---|---|---|
 | Juan Esteban González | Coordinator: assigns tasks, owns `sprint-status.yaml`, approves sync points, merges PRs, talks to the stakeholder | Product Owner (brief, PRD), planning (epics, sprint) |
@@ -31,17 +33,18 @@ TheBridge is built by a four-person academic team using **BMAD** (planning: what
 | 7. Evaluate | Acceptance criteria + demo, then `/opsx:archive` | Spec merged into `openspec/specs/` |
 | 8. Retrospective | `bmad-retrospective` at the end of each epic | Lessons fed back into the PRD |
 
-One story = one OpenSpec change = one branch = one pull request.
+One story = one OpenSpec change = one branch = one pull request. The spec and the code travel in the same pull request, approved in two gates.
 
 ### Story cycle
 
 1. The coordinator assigns the story as a GitHub issue using the task card below.
-2. The owner creates the branch and runs `/opsx:propose`, then opens a **spec-only** pull request.
-3. The assigned reviewer approves the spec or requests changes.
-4. The owner runs `/opsx:apply` and opens the code pull request with lint, build, and demo passing.
-5. The reviewer runs `bmad-code-review` in a new session, reads the diff, and approves.
-6. The owner checks the acceptance criteria and runs `/opsx:archive`.
-7. The coordinator merges and marks the story `done` in `sprint-status.yaml`.
+2. The owner creates the branch, runs `/opsx:propose`, and opens a **draft** pull request that contains only the spec.
+3. **Gate 1, spec:** the assigned reviewer reviews the spec and leaves an approving comment ("Spec approved") or requests changes. Nothing is merged at this point.
+4. The owner runs `/opsx:apply`, pushes the code to the same pull request, checks the acceptance criteria, runs `/opsx:archive` and pushes that too, then marks the pull request ready for review.
+5. **Gate 2, code:** the reviewer runs `bmad-code-review` in a new session, reads the diff, and submits a GitHub approval.
+6. The coordinator merges once Gate 2 is approved and marks the story `done` in `sprint-status.yaml`.
+
+No code commit may be pushed to the pull request before Gate 1 is approved. If the spec must change after Gate 1, the owner updates it in the same pull request and the reviewer re-approves it before more code is pushed.
 
 ### Task card (issue template)
 
@@ -96,7 +99,7 @@ Every pull request targets `main` and includes:
 ## Verification checklist
 
 - `npm run lint` and `npm run build` pass.
-- `openspec validate` passes before `/opsx:archive`.
+- `openspec validate` passes before `/opsx:archive`, and the archive commit is in the pull request before Gate 2.
 - The screen works at 375px, 768px, 1280px, and 1440px without horizontal scroll.
 - Dark mode keeps contrast, borders, icons, and overlays legible.
 - Relevant states exist (initial, loading, data, empty, error, validation, success).

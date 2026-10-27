@@ -427,3 +427,38 @@ Pending team review before submission.
 ### Learning
 
 Refactors for a line limit are safest when each extraction matches an existing responsibility and the rendered output is compared before and after. Comparing the rendered HTML found no differences, which made it possible to split large components without changing the interface.
+
+## Issue #9 — Full-stack architecture and API contract (2026-10-27)
+
+### Task and workflow
+
+The user delegated the complete issue #9 documentation task after reviewing its step-by-step plan. The assigned workflow was `bmad-agent-architect` followed by `bmad-architecture`, on branch `docs/architecture`. The audience is Juan and Jorge as required reviewers and the contributors who will implement the client/API integration.
+
+### Inputs and assistance adopted
+
+- Updated from `main` at `dc7bd2c` and read the integrated AGENTS/CONTRIBUTING policies.
+- Read the issue, existing client services, the draft PRD at PR #13 commit `6f12ef9210f8ffa533fb0e21dd8ccc1deac6f275`, its brief/addendum, and the original HW11–HW15 rubrics. Juan-owned draft artifacts were read without copying or editing them on this branch.
+- Resolved the local BMAD architect/workflow configuration and recorded constraints, proposals and assumptions through the shared memlog script.
+- Proposed one canonical root `api-design.md`, real root graded route/model/type modules, a layered Express boundary, transactional request transitions, controlled Admin bootstrap and a single-origin Vercel target.
+- Checked current package metadata and primary runtime, hosting, database and authentication documentation; no dependency was added to the application.
+- Ran independent input-reconciliation and architecture-gate checks required by the skill. These are internal artifact checks, not the human code review or approval required by the team.
+
+### Corrections during verification
+
+Input reconciliation identified missing participant-visible exchange metadata, incomplete LibraryBook/activity references, filter options lost through pagination, an untestable HW11 create sequence without fixture copies, expiry monitoring limited to protected views, and missing weekly deployment/AI-LOG gates. These were corrected in the documentation. The React seed version was corrected from the package.json lower bound to lockfile-resolved 19.3.0.
+
+### Human review and remaining decisions
+
+Pending review by Juan and Jorge. All new architecture choices remain proposed. Product assumptions are indexed as A-1–A-5; Q-1 explicitly gates moderation of Reserved listings until the PRD owner defines how Accepted requests and Lent books are settled. Hosting resources, the shared limiter and grading-source confirmation have named follow-up gates. No human approval, backend behavior, production URL or course grade is invented.
+
+### Verification and scope
+
+- `npm run lint`: passed with zero errors and warnings.
+- `npm run build`: passed; the existing frontend bundle and SPA fallback were generated.
+- BMAD spine mechanical lint: passed with zero findings.
+- Contract/document checks cover operation-ID uniqueness, method/path uniqueness, FR/NFR traceability, JSON examples and relative links; detailed results and the independent-review disposition are recorded in the architecture handoff.
+- No application code, package files, assets, deployment settings, peer-owned PRD or team policies were changed. Publication and PR creation remain a human action under AGENTS.md.
+
+### Learning
+
+An API contract must describe enough data for both sides to implement independently, including the participant's view of an exchange and the global options behind a paginated list. Explicit product gates are more useful than silently inventing state transitions for books that may already be physically lent.

@@ -13,6 +13,16 @@ Agreed collaboration rules. They live outside the managed block so context refre
 - Write visible UI text and documents in English; communicate with the team in Spanish.
 - Read and write domain data (listings, requests, my-books, favorites, auth) only through `src/services/*`; components and hooks never call `localStorage` or `fetch` directly. The theme preference in `src/components/AppShell.jsx` is the allowed exception.
 
+## Starting a session
+
+People state the goal in plain language (an issue number, "apply 0-1", "review Daniel's pull request", "what's next?"); the agent picks and runs the commands.
+
+- Start with `git status` and `git fetch`. For new work, update `main` and create the branch named in the issue; to continue or review, switch to the existing branch. Never work on `main`.
+- Read the issue with `gh issue view <number>` (or ask the person to paste it) and follow its task card.
+- Route to the right workflow: `/opsx:propose` to plan, `/opsx:apply` to implement an approved spec, `bmad-code-review` to review someone else's change, or the BMAD agent the issue names.
+- If the goal is unclear, run `bmad-help` and propose the next step.
+- Commit locally from the person's account, but never push or open pull requests; give the person the exact commands to run.
+
 <!-- bmad:context -->
 <!-- Verified 2026-10-24 against 71d9524. Managed by bmad-project-context; edits inside this block are replaced on refresh. Keep anything you want preserved outside the markers. -->
 

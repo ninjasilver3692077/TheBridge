@@ -1,6 +1,6 @@
 ---
 title: "PRD: TheBridge"
-status: draft
+status: final
 created: 2026-10-26
 updated: 2026-10-26
 ---
@@ -17,7 +17,7 @@ Vocabulary is fixed by the Glossary (§3). Features (§4) group the functional r
 - **Partial** — part of the behavior exists; the FR says what is new.
 - **New** — the behavior does not exist yet.
 
-Cross-cutting non-functional requirements are in §5. Inline `[ASSUMPTION]` tags are indexed in §11.
+Cross-cutting non-functional requirements are in §5. Every assumption made while drafting was confirmed by Juan on 2026-10-26 and is now stated as a requirement.
 
 ## 1. Vision
 
@@ -42,10 +42,10 @@ Milestone 2 delivered the full experience in the browser, but every visitor saw 
 
 ### 2.3 Key User Journeys
 
-- **UJ-1. Laura publishes a textbook she no longer needs.** Laura, a fourth-semester student, finished Calculus and has the textbook on her shelf. She registers, opens My Books, searches the catalog for the title, picks it, sets the condition to "Good condition," and saves it. From My Books she chooses **Publish**, selects Rental, enters 15,000 COP for 14 days, and publishes. The listing appears in the Marketplace for everyone. **Edge case:** if she enters a price of 0, the form and the server both refuse it with "Enter a price greater than 0."
-- **UJ-2. Andrés requests a book and offers a swap.** Andrés needs a novel for a reading club. In the Marketplace he searches the title, filters by Exchange, and opens Laura's listing for that novel. He logs in when prompted, chooses one of his available Library Books to offer, and sends the request. His Sent tab shows it as Pending. **Edge case:** if he already has an active request on that listing, the request button is disabled and says so.
-- **UJ-3. Laura accepts a request and closes the loop.** Laura opens Requests and sees two pending requests for the same listing in her Received tab. She accepts Andrés's; the other request becomes Rejected and the listing becomes Reserved. They meet on campus the next day, and Laura marks the request Completed. Andrés sees each change in his Sent tab.
-- **UJ-4. Camila removes a fake listing.** Camila is the community's admin. She logs in and lands on the admin area, which members never see. She reviews recent listings, finds one titled "free money," and removes it with the reason "Not a book." The listing disappears from the Marketplace, and its pending requests are rejected.
+- **UJ-1. Laura publishes a textbook she no longer needs.** Laura, a fourth-semester student, finished Calculus and has the textbook on her shelf. She registers, opens My Books, searches the Catalog for the title, picks it, sets the Condition to "Good condition," and saves it. From My Books she chooses **Publish**, selects Rental, enters 15,000 COP for 14 days, and publishes. The Listing appears in the Marketplace for everyone. **Edge case:** if she enters a price of 0, the form and the server both refuse it with "Enter a price greater than 0."
+- **UJ-2. Andrés requests a book and offers a swap.** Andrés needs a novel for a reading club. In the Marketplace he searches the title, filters by Exchange, and opens Laura's Listing for that novel. He logs in when prompted, chooses one of his Available Library Books to offer, and sends the Request. His Sent tab shows it as Pending. **Edge case:** if he already has an active Request on that Listing, the Request button is disabled and says so.
+- **UJ-3. Laura accepts a Request and closes the loop.** Laura opens Requests and sees two Pending Requests for the same Listing in her Received tab. She accepts Andrés's; the other Request becomes Rejected and the Listing becomes Reserved. They meet on campus the next day, and Laura marks the Request Completed. Andrés sees each change in his Sent tab.
+- **UJ-4. Camila removes a fake Listing.** Camila is the community's admin. She logs in and lands on the Admin Area, which members never see. She reviews recent Listings, finds one titled "free money," and removes it with the reason "Not a book." The Listing disappears from the Marketplace, and its Pending Requests are rejected.
 
 ## 3. Glossary
 
@@ -67,6 +67,9 @@ Milestone 2 delivered the full experience in the browser, but every visitor saw 
 - **Offered Book** — the Requester's Available Library Book proposed in an Exchange Request.
 - **Request Status** — Pending, Accepted, Rejected, Cancelled, or Completed.
 - **Favorite** — a Catalog book a Member saved for later.
+- **Visitor** — anyone using TheBridge, with or without a Session. What a Visitor can do, Members and Admins can also do.
+- **Session** — the signed-in state after login, tied to one Account and one Role; it ends on logout or expiry.
+- **Admin Area** — the section only Admins can open: overview, lists, and Listing removal.
 
 ## 4. Features
 
@@ -78,14 +81,14 @@ Milestone 2 delivered the full experience in the browser, but every visitor saw 
 
 #### FR-1: Register
 
-A visitor can create an Account with a name, an email, and a password. Realizes UJ-1.
+A Visitor can create an Account with a name, an email, and a password. Realizes UJ-1.
 
 **Milestone 2:** New (Milestone 2 has a single "Continue as member" button).
 
 **Consequences (testable):**
 - The new Account has the Member role.
 - An email that already belongs to an Account is rejected with a message that says so.
-- A missing name, an invalid email, or a password shorter than 8 characters is rejected with a message per field. [ASSUMPTION: 8-character minimum.]
+- A missing name, an invalid email, or a password shorter than 8 characters is rejected with a message per field.
 - The password is never stored or returned in readable form.
 
 #### FR-2: Log in and log out
@@ -96,7 +99,7 @@ A person with an Account can log in with email and password and log out. Realize
 
 **Consequences (testable):**
 - Wrong credentials show one generic error that does not reveal whether the email exists.
-- After login a Member lands on My Books and an Admin lands on the admin area.
+- After login a Member lands on My Books and an Admin lands on the Admin Area.
 - After logout, protected pages redirect to login.
 
 #### FR-3: Protect member and admin areas
@@ -107,12 +110,12 @@ The system restricts pages and operations by Role.
 
 **Consequences (testable):**
 - Without a valid session, My Books, Add Book, Create Listing, and Requests redirect to login, and every write operation is refused as unauthenticated.
-- A Member cannot open the admin area or call admin operations; they are refused as forbidden.
+- A Member cannot open the Admin Area or call admin operations; they are refused as forbidden.
 - An Admin does not see My Books, Add Book, Create Listing, or Requests in the navigation, and cannot publish or send Requests.
 
 #### FR-4: Expire sessions
 
-A session expires after a fixed time, and the person is sent to the login page with a message instead of seeing errors. [ASSUMPTION: sessions last 24 hours.]
+A session expires after a fixed time, and the person is sent to the login page with a message instead of seeing errors. A Session lasts 24 hours.
 
 **Milestone 2:** New.
 
@@ -122,13 +125,13 @@ A session expires after a fixed time, and the person is sent to the login page w
 
 ### 4.2 Catalog Search and Favorites
 
-**Description:** Members and visitors search the Open Library Catalog by title, author, or keyword. On open, the Marketplace shows a random discovery topic. Results show cover, title, author, and year. If Open Library fails, the last saved results for the same search are shown with the time they were saved. Favorites keep Catalog books for later.
+**Description:** Members and Visitors search the Open Library Catalog by title, author, or keyword. On open, the Marketplace shows a random discovery topic. Results show cover, title, author, and year. If Open Library fails, the last saved results for the same search are shown with the time they were saved. Favorites keep Catalog books for later.
 
 **Functional Requirements:**
 
 #### FR-5: Search the Catalog
 
-A visitor can search the Catalog and see up to 20 results, with loading, success, saved-data, empty, and error states.
+A Visitor can search the Catalog and see up to 20 results, with loading, success, saved-data, empty, and error states.
 
 **Milestone 2:** Implemented.
 
@@ -144,7 +147,8 @@ A Member can add and remove Catalog books as Favorites and see them in a Favorit
 **Milestone 2:** Partial (Favorites exist per browser; tying them to the Account is new).
 
 **Consequences (testable):**
-- Favorites saved on one device appear on another after login with the same Account. [ASSUMPTION: Favorites move to the server; visitors without an Account cannot save Favorites.]
+- Favorites are stored with the Account, so Favorites saved on one device appear on another after login.
+- A Visitor without a Session who tries to save a Favorite is sent to login.
 
 ### 4.3 My Books (Personal Library)
 
@@ -161,7 +165,7 @@ A Member can see all their Library Books with cover, title, author, Condition, L
 **Consequences (testable):**
 - A Member sees only their own Library Books.
 - An empty library shows an empty state with a link to Add Book.
-- Transferred books are not shown among active books. [ASSUMPTION]
+- Transferred books are not shown among active books.
 
 #### FR-8: Add a Library Book
 
@@ -181,6 +185,7 @@ A Member can change the Condition and notes of a Library Book, and delete it.
 
 **Consequences (testable):**
 - Only Available Library Books can be edited or deleted; Published, Reserved, and Lent books show why they cannot.
+- A Library Book that is the Offered Book of a Pending Request cannot be edited, deleted, published, or offered in another Request; it is free again when that Request becomes Rejected or Cancelled.
 
 ### 4.4 Listings
 
@@ -208,7 +213,7 @@ An Owner can change the Modality or Terms of their Listing while it is Available
 
 **Consequences (testable):**
 - A Reserved, Closed, or Removed Listing cannot be edited.
-- Pending Requests stay Pending after an edit. [ASSUMPTION]
+- Pending Requests stay Pending after an edit.
 
 #### FR-12: Withdraw a Listing
 
@@ -228,24 +233,24 @@ An Owner can delete their Listing while it is Available.
 
 #### FR-13: Browse and filter Listings
 
-A visitor can browse Listings, search by title, author, genre, or ISBN, and filter by Modality, genre, and Condition. Realizes UJ-2.
+A Visitor can browse Listings, search by title, author, genre, or ISBN, and filter by Modality, genre, and Condition. Realizes UJ-2.
 
 **Milestone 2:** Implemented.
 
 **Consequences (testable):**
 - Search ignores case and accents.
 - Only Available Listings are shown; Reserved, Closed, and Removed ones are not.
-- Results arrive in pages of a fixed size, and the person can move between pages.
+- Results arrive in pages of 10 Listings by default, and the person can move between pages.
 
 #### FR-14: See Marketplace statistics
 
-A visitor can see the total of Available Listings, the count per Modality, and the average price for Rental and Sale.
+A Visitor can see the total of Available Listings, the count per Modality, and the average price for Rental and Sale.
 
 **Milestone 2:** Implemented.
 
 #### FR-15: See Listing details
 
-A visitor can open a Listing and see the book metadata, the Owner's name, the Condition, the Modality, and the Terms in plain words ("Open to offers," "Free loan · 14 days," a price in COP).
+A Visitor can open a Listing and see the book metadata, the Owner's name, the Condition, the Modality, and the Terms in plain words ("Open to offers," "Free loan · 14 days," a price in COP).
 
 **Milestone 2:** Implemented (the Owner's real name is new; Milestone 2 shows sample names).
 
@@ -254,7 +259,7 @@ A visitor can open a Listing and see the book metadata, the Owner's name, the Co
 
 #### FR-16: See the Home summary
 
-A visitor can see the community summary and the newest Listings on Home.
+A Visitor can see on Home four figures (Community listings, Sharing modes, Exchange options, Books for sale) computed from Available Listings, and the four newest Listings.
 
 **Milestone 2:** Implemented.
 
@@ -274,7 +279,7 @@ A Member can send a Request on a Listing they do not own. For Exchange, they cho
 - The request button reads Request Exchange, Request Loan, Request Rental, or Request Purchase.
 - A Member cannot request their own Listing or a Listing that is not Available.
 - A Member with a Pending or Accepted Request on a Listing cannot send another on it.
-- A visitor without an Account is sent to login and returns to the Listing.
+- A Visitor without a Session is sent to login and returns to the Listing.
 
 #### FR-18: Review Requests
 
@@ -284,7 +289,7 @@ A Member can see Received and Sent Requests in separate tabs with the counterpar
 
 **Consequences (testable):**
 - Received shows only Requests on the Member's Listings; Sent shows only Requests the Member sent.
-- A change made by the counterpart appears the next time the Member opens or refreshes Requests. [ASSUMPTION: no real-time updates.]
+- A change made by the counterpart appears the next time the Member opens or refreshes Requests; there are no real-time updates.
 
 #### FR-19: Accept or reject a Request
 
@@ -299,12 +304,13 @@ An Owner can accept or reject a Pending Request on their Listing. Realizes UJ-3.
 
 #### FR-20: Cancel a Request
 
-A Requester can cancel their own Pending Request. [ASSUMPTION]
+A Requester can cancel their own Pending Request.
 
 **Milestone 2:** New.
 
 **Consequences (testable):**
 - The Request becomes Cancelled and no longer blocks a new Request on that Listing.
+- Its Offered Book, if any, is free again.
 
 #### FR-21: Complete a Request
 
@@ -314,11 +320,11 @@ An Owner can mark an Accepted Request as Completed after the in-person handoff. 
 
 **Consequences (testable):**
 - For Loan and Rental, the Library Book returns to Available and the Listing becomes Closed; the Owner can publish the book again.
-- For Sale and Exchange, the Listing becomes Closed and the Library Book becomes Transferred; in an Exchange, the Offered Book also becomes Transferred. [ASSUMPTION: books do not move to the other Member's library automatically.]
+- For Sale and Exchange, the Listing becomes Closed and the Library Book becomes Transferred; in an Exchange, the Offered Book also becomes Transferred. Books do not move to the other Member's library automatically.
 
 ### 4.7 Moderation (Admin)
 
-**Description:** The admin area is a separate section only Admins see. It shows totals and lists of Listings, Requests, and Members, and lets the Admin remove a Listing with a reason. Admins cannot edit or delete Accounts. Realizes UJ-4.
+**Description:** The Admin Area is a separate section only Admins see. It shows totals and lists of Listings, Requests, and Members, and lets the Admin remove a Listing with a reason. Admins cannot edit or delete Accounts. Realizes UJ-4.
 
 **Functional Requirements:**
 
@@ -345,9 +351,9 @@ An Admin can remove any Listing that is not Closed, with a required reason. Real
 **Milestone 2:** New.
 
 **Consequences (testable):**
-- The Listing becomes Removed, disappears from the Marketplace, and returns not found to visitors.
-- Pending Requests on it become Rejected, and the Library Book returns to Available.
-- The Owner sees the Listing as Removed with the reason in My Books. [ASSUMPTION]
+- The Listing becomes Removed, disappears from the Marketplace, and shows the not found page to every Visitor.
+- Pending and Accepted Requests on it become Rejected; the Library Book and any Offered Book return to Available.
+- The Owner sees the Listing as Removed with the reason in My Books.
 
 ### 4.8 App Shell and Information Pages
 
@@ -357,19 +363,19 @@ An Admin can remove any Listing that is not Closed, with a required reason. Real
 
 #### FR-25: Navigate by Role
 
-Everyone sees a navigation bar whose items depend on the session: visitors see Home, Marketplace, About, and Log in; Members add My Books and Requests; Admins see the admin area instead.
+Everyone sees a navigation bar whose items depend on the Session: without a Session it shows Home, Marketplace, About, and Log in; Members add My Books and Requests; Admins see the Admin Area instead.
 
 **Milestone 2:** Partial (navigation exists; Role-based items are new).
 
 #### FR-26: Switch theme
 
-A visitor can switch between light and dark themes, and the choice is remembered on that device.
+A Visitor can switch between light and dark themes, and the choice is remembered on that device.
 
 **Milestone 2:** Implemented.
 
 #### FR-27: Read About
 
-A visitor can read the project flow, the user stories, and the team.
+A Visitor can read the project flow, the user stories, and the team.
 
 **Milestone 2:** Implemented.
 
@@ -389,7 +395,7 @@ An unknown address shows a 404 page with a link Home, including on direct visits
 - **NFR-3:** Every error response has the body `{ "error": string, "code": number }`, where `code` equals the HTTP status.
 - **NFR-4:** Invalid input returns 400 with a message that names the problem; it never causes a 500.
 - **NFR-5:** Missing or invalid sessions return 401; valid sessions without the required Role return 403; unknown resources return 404.
-- **NFR-6:** Collection endpoints accept a page number and page size and return the total count.
+- **NFR-6:** Collection endpoints accept a page number and page size (default 10) and return the total count.
 - **NFR-7:** The API is documented in `api-design.md` before its code is written.
 
 **Security** (each item is justified in `security-audit.md`)
@@ -403,7 +409,7 @@ An unknown address shows a 404 page with a link Home, including on direct visits
 
 **Code quality**
 - **NFR-15:** Shared entities (at least Listing, Request, Library Book, Account) are typed once and used by both client and server, with strict type checking and no `any`.
-- **NFR-16:** Components and hooks read and write domain data only through `src/services/*`; the theme preference is the only direct browser-storage use.
+- **NFR-16:** Components and hooks read and write domain data, including the Session token, only through `src/services/*`; outside the services, the theme preference is the only direct browser-storage use.
 - **NFR-17:** Code files contain no comments.
 
 **Experience**
@@ -421,6 +427,7 @@ The course rubric (HW11–HW15) fixes the stack and several deliverables, so the
 - TheBridge does not handle delivery, logistics, or locations.
 - TheBridge does not support more than one community or Roles beyond Member and Admin.
 - Admins do not edit, suspend, or delete Accounts.
+- Members cannot edit their profile or change or reset their password in Milestone 3.
 - Ratings, reviews, and handoff history are not part of Milestone 3.
 
 ## 8. Scope by Week
@@ -454,17 +461,5 @@ FRs marked Implemented keep working every week; their data source changes in wee
 1. Where do the graded files (`routes/`, `models/`, `api-design.md`, `deployment.txt`, `.env.example`, `src/types.ts`) live relative to `client/` and `server/`? Owner: Edwin, issue #9.
 2. Does `api-design.md` mirror the architecture document, or is it the source of the API contract? Owner: Edwin, issue #9.
 3. How is the Admin Account created on Vercel (seed script, environment variable)? Owner: Edwin, issue #9.
-4. What sample data seeds the production database for the demo, and do `src/data/listings.js`, `myBooks.js`, and `requests.js` become that seed? Owner: team.
+4. What sample data seeds the production database for the demo, and do `src/data/listings.js`, `myBooks.js`, and `requests.js` become that seed? Do UI content arrays such as `aboutContent.js` and `navigation.js` count as mock data under HW13? Owner: team.
 5. Moving hosting from GitHub Pages to Vercel changes `AGENTS.md`, `DECISIONS.md`, `README.md`, and the `/TheBridge/` base path. Who proposes that pull request? Owner: coordinator.
-
-## 11. Assumptions Index
-
-- §4.1 FR-1 — Passwords need at least 8 characters.
-- §4.1 FR-4 — Sessions last 24 hours.
-- §4.2 FR-6 — Favorites move to the server and need an Account.
-- §4.3 FR-7 — Transferred books are hidden from active books.
-- §4.4 FR-11 — Pending Requests stay Pending when the Owner edits the Listing.
-- §4.6 FR-18 — Request changes appear on refresh, not in real time.
-- §4.6 FR-20 — Requesters can cancel their Pending Requests.
-- §4.6 FR-21 — Completing a Sale or Exchange does not move books into the other Member's library.
-- §4.7 FR-24 — The Owner sees a Removed Listing and its reason in My Books.

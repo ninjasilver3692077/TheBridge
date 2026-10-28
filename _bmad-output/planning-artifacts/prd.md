@@ -166,6 +166,7 @@ A Member can see all their Library Books with cover, title, author, Condition, L
 - A Member sees only their own Library Books.
 - An empty library shows an empty state with a link to Add Book.
 - Transferred books are not shown among active books.
+- My Books can be filtered by Library Book Status and shows a count per status; the filters and counts keep working as in Milestone 2.
 
 #### FR-8: Add a Library Book
 
@@ -213,7 +214,10 @@ An Owner can change the Modality or Terms of their Listing while it is Available
 
 **Consequences (testable):**
 - A Reserved, Closed, or Removed Listing cannot be edited.
-- Pending Requests stay Pending after an edit.
+- Pending Requests stay Pending after an edit, and each keeps the Modality and Terms it was sent under.
+- If the Modality or Terms change, every Pending Request on the Listing is marked as needing reconfirmation. The Owner cannot accept it until the Requester reconfirms it under the new Modality and Terms (for an Exchange, by choosing an Offered Book); the Requester can also cancel it.
+- If the new Modality is not Exchange, the Offered Book of each Pending Request is free again when the edit is saved.
+- If the new Modality is Exchange, a Pending Request without an Offered Book needs the Requester to choose one before it can be accepted.
 
 #### FR-12: Withdraw a Listing
 
@@ -248,6 +252,9 @@ A Visitor can see the total of Available Listings, the count per Modality, and t
 
 **Milestone 2:** Implemented.
 
+**Consequences (testable):**
+- The statistics are computed over all Listings that match the current search and filters, before pagination.
+
 #### FR-15: See Listing details
 
 A Visitor can open a Listing and see the book metadata, the Owner's name, the Condition, the Modality, and the Terms in plain words ("Open to offers," "Free loan · 14 days," a price in COP).
@@ -256,6 +263,7 @@ A Visitor can open a Listing and see the book metadata, the Owner's name, the Co
 
 **Consequences (testable):**
 - An unknown or Removed Listing shows a "not found" page with a way back to the Marketplace.
+- From a Marketplace card, a quick view shows the Listing and lets a Member send a Request without leaving the Marketplace, following the same rules as FR-17.
 
 #### FR-16: See the Home summary
 
@@ -301,6 +309,7 @@ An Owner can accept or reject a Pending Request on their Listing. Realizes UJ-3.
 - Accepting sets the Listing to Reserved and every other Pending Request on it to Rejected.
 - Accepting a Loan or Rental sets the Library Book to Lent; accepting a Sale or Exchange sets it to Reserved. In an Exchange, the Offered Book is also set to Reserved.
 - The accepted status message tells both people to coordinate the handoff in person.
+- A Pending Request that needs reconfirmation (FR-11) cannot be accepted, but can be rejected.
 
 #### FR-20: Cancel a Request
 
@@ -314,12 +323,13 @@ A Requester can cancel their own Pending Request.
 
 #### FR-21: Complete a Request
 
-An Owner can mark an Accepted Request as Completed after the in-person handoff. Realizes UJ-3.
+An Owner can mark an Accepted Request as Completed. For Sale and Exchange this is after the final in-person handoff; for Loan and Rental it is after the Library Book is physically returned to the Owner. Realizes UJ-3.
 
 **Milestone 2:** New.
 
 **Consequences (testable):**
-- For Loan and Rental, the Library Book returns to Available and the Listing becomes Closed; the Owner can publish the book again.
+- For Loan and Rental, the Library Book stays Lent from acceptance until the Owner marks the Request Completed after the physical return; only then does it return to Available and the Listing become Closed, and the Owner can publish the book again.
+- The Completed action for a Loan or Rental is labeled as confirming the return.
 - For Sale and Exchange, the Listing becomes Closed and the Library Book becomes Transferred; in an Exchange, the Offered Book also becomes Transferred. Books do not move to the other Member's library automatically.
 
 ### 4.7 Moderation (Admin)
@@ -346,13 +356,16 @@ An Admin can list every Listing (any Listing Status), every Request, and every M
 
 #### FR-24: Remove a Listing
 
-An Admin can remove any Listing that is not Closed, with a required reason. Realizes UJ-4.
+An Admin can remove any Listing that is not Closed or Removed, with a required reason. Realizes UJ-4.
 
 **Milestone 2:** New.
 
 **Consequences (testable):**
 - The Listing becomes Removed, disappears from the Marketplace, and shows the not found page to every Visitor.
-- Pending and Accepted Requests on it become Rejected; the Library Book and any Offered Book return to Available.
+- Pending Requests on it become Rejected, and their Offered Books return to Available.
+- An Accepted Sale or Exchange Request becomes Rejected, and the Library Book and any Offered Book return to Available.
+- An Accepted Loan or Rental Request stays Accepted and the Library Book stays Lent, because the copy is still with the borrower. The Owner can still mark that Request Completed after the physical return (FR-21), and only then does the Library Book return to Available.
+- Removing a Listing that is already Removed is rejected and changes nothing; it never frees a Library Book that is linked to another Listing.
 - The Owner sees the Listing as Removed with the reason in My Books.
 
 ### 4.8 App Shell and Information Pages

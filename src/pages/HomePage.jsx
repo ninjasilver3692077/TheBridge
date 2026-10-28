@@ -12,7 +12,6 @@ import {
 function HomePage() {
   return (
     <AppShell
-      activePage="home"
       title="Home"
       subtitle="Find your next book connection"
     >

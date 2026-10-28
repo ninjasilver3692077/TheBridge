@@ -30,7 +30,6 @@ function AddBookPage() {
 
   return (
     <AppShell
-      activePage="add-book"
       title="Add a Book"
       subtitle="Add a physical book to your personal library"
     >

@@ -45,7 +45,6 @@ function AboutSection({ section }) {
 function AboutPage() {
   return (
     <AppShell
-      activePage="about"
       title="About TheBridge"
       subtitle="Why TheBridge exists and how people use it"
     >

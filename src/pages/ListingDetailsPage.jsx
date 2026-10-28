@@ -29,7 +29,6 @@ function ListingDetailsPage({ listing }) {
   if (!listing) {
     return (
       <AppShell
-        activePage="listing"
         title="Listing details"
         subtitle="This listing could not be found"
       >
@@ -40,7 +39,6 @@ function ListingDetailsPage({ listing }) {
 
   return (
     <AppShell
-      activePage="listing"
       title="Listing details"
       subtitle={`${listing.title} by ${listing.author}`}
     >

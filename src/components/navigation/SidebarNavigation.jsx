@@ -7,10 +7,6 @@ function SidebarNavigation({ collapsed }) {
   const location = useLocation();
 
   const isCurrentRoute = (item) => {
-    if (item.id === "listing") {
-      return location.pathname.startsWith("/listing/");
-    }
-
     if (item.path === "/") {
       return location.pathname === "/";
     }

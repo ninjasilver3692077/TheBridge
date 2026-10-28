@@ -1,7 +1,7 @@
 ---
 title: "TheBridge REST API contract"
 status: proposed
-version: 2
+version: 3
 created: 2026-10-27
 updated: 2026-10-28
 issue: 9
@@ -11,6 +11,8 @@ input_prd_commit: e8545a29e7a4502a282f06f21c044de1e0b5cd79
 # TheBridge REST API contract
 
 This is the canonical HTTP design required before HW11 implementation. It is a proposal for Juan/Jorge review, reconciled with PR #13 at the input commit above. That PR is ready for review but remains unmerged and has no recorded human approval. Architecture, staged rollout, decisions A-1–A-5 and product gates Q-1–Q-3 are defined in [architecture.md](_bmad-output/planning-artifacts/architecture.md). No endpoint is claimed to exist yet.
+
+Version 3 addresses PR #14 review feedback on transaction bounds, copy-version ownership, rejection reasons and auth boundaries. PR #13 now has newer unmerged decisions at `a1fc15f`; their reconfirmation/Reserved-moderation contract is deliberately pending [issue #15](https://github.com/ninjasilver3692077/TheBridge/issues/15) after merge. ADMIN-05/FR-24 are explicitly partial in this version; do not implement the older A-1/A-3/Q-1 branches as the final newer-PRD behavior.
 
 ## 1. Global rules
 
@@ -27,20 +29,24 @@ Every API error, including parser, auth, validation, origin-policy, rate-limit, 
 | Status | Meaning |
 | --- | --- |
 | 400 | Missing/invalid field, malformed ID/JSON, invalid enum/query/version header; message identifies the problem. |
-| 401 | Missing, invalid or expired bearer token; no token/password/database details. |
+| 401 | Missing, invalid or expired bearer token on a protected operation, or invalid login credentials; no token/password/database details. Public operations ignore bearer headers. |
 | 403 | Valid token with forbidden role; wrong owner on a public listing mutation; disallowed browser Origin. |
 | 404 | Unknown resource, Removed public listing, or another Member's private copy/request. |
 | 405 | Unsupported method on a known API resource; send `Allow`. |
-| 409 | Duplicate identity/active request, unavailable state/copy, stale version/quote or a conflicting transaction outcome. |
+| 409 | Duplicate identity/active request, unavailable state/copy, stale version/quote or confirmed write contention after bounded retries. |
 | 413 / 415 | Body too large / unsupported request content type. |
 | 429 | Auth rate limit exceeded; send `Retry-After`. |
-| 500 / 503 | Sanitized unexpected fault / unavailable backing service. |
+| 500 / 503 | Sanitized unexpected fault / unavailable backing service or unconfirmed transaction commit. An unconfirmed commit is not a rollback guarantee. |
 
 **Pagination:** every database collection endpoint accepts `page` (integer 1–10000, default 1) and `limit` (integer 1–100, default 10, following FR-13/NFR-6). Reject arrays, objects, operators and numeric fractions with 400. Pages beyond the end return an empty array with the actual total. Default sort is descending `createdAt`, then descending `id`, for deterministic ties. `q` is a trimmed string of at most 100 characters; server search ignores case/accents and escapes regex syntax. No arbitrary sort expressions are accepted.
 
-**Concurrency:** mutable resources expose `version`, initially 1. PATCH/DELETE on an existing copy/listing/request and POST Request creation require a strong `If-Match` header such as `"3"`; it refers to the target copy/listing/request version, or to the listing version for POST Request. Missing/malformed headers return 400; a valid but stale version returns 409. The server increments public versions on representation changes; body-supplied versions/status/owner fields are rejected. GET collections return versions so controls can send this header. All Pending creation and lifecycle commands also write one internal Listing revision in the same transaction; it is not returned and does not invalidate quotes when only a Pending request is inserted.
+**Concurrency:** mutable resources expose `version`, initially 1. PATCH/DELETE on an existing copy/listing/request and POST Request creation require a strong `If-Match` header such as `"3"`; it refers to the target copy/listing/request version, or to the listing version for POST Request. Missing/malformed headers return 400; a valid but stale version returns 409. The server increments public versions on versioned domain changes; body-supplied versions/status/owner fields are rejected. GET collections return versions so controls can send this header. All Pending creation and lifecycle commands also write one internal Listing revision in the same transaction; it is not returned and does not invalidate quotes when only a Pending request is inserted.
 
-**Roles:** Public needs no bearer token; Member/Admin require `Authorization: Bearer <JWT>`. All declared Member operations reject Admin with 403. `ownerId`, `requesterId`, removal actor and role are server-derived. Private reads are account scoped; public owner summaries contain name/id only. Admin member rows may contain email, never password/hash. Tokens and private data use `Cache-Control: no-store`.
+LibraryBook has two separate counters: internal `revision` for conditional contention writes, and public `version` for stored metadata/condition/notes/lifecycle-status changes. Derived activity/currentListing/lastModeration and bookkeeping timestamps are not part of this domain-version token. A Pending offer that leaves the copy Available increments only internal revision; it must not stale COPY-04/05 If-Match. Those writes separately revalidate eligibility and return 409 while the offer is active; after its release an unchanged domain version remains current. Actual lifecycle/status or editable-field changes increment public version. No internal revision is serialized or accepted as a client precondition.
+
+The central transaction runner permits at most three body attempts (initial plus two transient-error retries with 25–100 ms jitter) and at most three commit calls per transaction, as specified in architecture §4. Unknown commit results retry the same commit only; exhausted uncertainty returns sanitized 503 with an unconfirmed-outcome message, not 409 or an asserted rollback. Clients refetch and reconcile before any further action and do not automatically replay mutations. Confirmed state/write contention returns 409; unavailable storage returns 503.
+
+**Roles:** Public operations ignore Authorization headers, including expired/malformed tokens, and expose the same public projection/status as anonymous requests under the usual validation/origin/rate-limit rules. This includes registration/login and health; their payload/readiness errors still apply. Member/Admin operations require `Authorization: Bearer <JWT>` and return 401 for invalid/expired tokens. All declared Member operations reject Admin with 403. `ownerId`, `requesterId`, removal actor and role are server-derived. Private reads are account scoped; public owner summaries contain name/id only. Admin member rows may contain email, never password/hash. Tokens and private data use `Cache-Control: no-store`. The client independently expires its active session on any page under FR-4.
 
 ## 2. Shared DTOs and payload vocabulary
 
@@ -53,7 +59,7 @@ Root `src/types.ts` will define these contracts once and both runtimes will impo
 | BookMetadata | `catalogId`, `title`, `author`, `genre`, `coverUrl`, `year`, `publisher`, `isbn`, `language`. `genre` defaults to `Uncategorized`; cover/year/publisher/isbn/language may be null; all response keys are present. |
 | LibraryBook | `id`, `book: BookMetadata`, `condition`, `notes`, `status`, `currentListing`, `activity`, `lastModeration`, `version`, timestamps. currentListing is null or `{id, modality, status, version}` for its Available/Reserved listing. Activity is null or `{requestId, status, kind, counterpart: PublicMember}`; kind is ReceivedRequest or OfferedExchange, and status is Pending or Accepted. lastModeration is null or `{listingId, reason, removedAt}`. |
 | Listing | `id`, `libraryBookId`, `owner: PublicMember`, `book`, `condition`, `description`, `modality`, `terms`, `status`, `closureReason`, `version`, timestamps. book/condition/description are publication-time snapshots; closureReason is null, Withdrawn or Completed. |
-| Request | `id`, `listingId`, `owner: PublicMember`, `requester: PublicMember`, `listing: RequestListingSummary`, `offeredBookId`, `offeredBook`, `status`, `quotedListingVersion`, `quotedModality`, `quotedTerms`, `version`, timestamps. offeredBookId/offeredBook are null exactly when quotedModality is not Exchange, regardless of later listing edits; offeredBook is an immutable `{id, book: BookMetadata, condition}` snapshot visible only to the participants/Admin. |
+| Request | `id`, `listingId`, `owner: PublicMember`, `requester: PublicMember`, `listing: RequestListingSummary`, `offeredBookId`, `offeredBook`, `status`, `rejectionReason`, `quotedListingVersion`, `quotedModality`, `quotedTerms`, `version`, timestamps. offeredBookId/offeredBook are null exactly when quotedModality is not Exchange, regardless of later listing edits; offeredBook is an immutable `{id, book: BookMetadata, condition}` snapshot visible only to the participants/Admin. rejectionReason is defined below and never supplied by the client. |
 | RequestListingSummary | `id`, `title`, `author`, `coverUrl`, `modality`, `status`. Metadata/modality are immutable request-time snapshots, with modality equal to quotedModality; status is the current retained Listing status. |
 | Favorite | `id`, `book: BookMetadata`, `createdAt`. Favorite ID is independent of catalogId. |
 | AuthSession | `token`, `expiresAt`, `account: Account`. |
@@ -73,6 +79,8 @@ Condition is exactly `Like new`, `Good condition` or `Used copy`. Notes and mode
 
 These limits are proposed validation boundaries; Juan/Jorge confirm them with the PRD. Reject inconsistent non-null terms with 400. A Listing's book/condition/description snapshot is captured from its LibraryBook at publication and survives later copy edits or deletion; description captures notes at that time. Terms updates never accept arbitrary book/owner/condition replacements. Request creation captures the visible listing metadata, modality/terms, public version and offered-copy summary; later listing/copy edits never rewrite that quote.
 
+`Request.rejectionReason` is null unless status is Rejected. Rejected always has exactly one enum value: `OwnerRejected` (REQUEST-05), `CompetingRequestAccepted` (another request wins REQUEST-04), `ListingWithdrawn` (LISTING-07), or `ListingRemoved` (the currently supported ADMIN-05 branch). Server commands set reason and status in the same transaction and increment Request version. This field is included in participant/Admin projections and does not contain the Admin's free-text moderation reason. It distinguishes status-message causes without exposing private moderation text. Non-Rejected states, including Cancelled, use null. Future issue #15 transitions must preserve this distinction.
+
 ## 3. Operations
 
 All paths below include `/api`. Each stable operation ID cites its requirement. Named inputs link to their payload rules below the corresponding table; shared BookMetadata/terms are defined in §2. All operations may return the applicable global errors; domain-specific cases are listed below.
@@ -90,7 +98,9 @@ All paths below include `/api`. Each stable operation ID cites its requirement. 
 
 RegisterInput is `{name, email, password}`; role is always Member. Duplicate normalized email returns 409. LoginInput is `{email, password}`; wrong credentials return 401 with one generic message. AUTH-03 returns the authenticated account, not a user ID supplied by the client. OPS-01 returns a generic 503 error when required storage is unavailable and never publishes connection strings or runtime secrets.
 
-Logout is a client service operation clearing the token/private cache; there is no pretend server logout endpoint. Tokens otherwise remain valid until expiration. No refresh or public Admin creation/promotion endpoint is included. Expiry and safe post-login return behavior are specified in architecture §5.
+For valid LoginInput with an absent email, perform one asynchronous comparison against a valid dummy bcrypt hash of the configured cost, then reject regardless of the comparison result. The dummy hash is prepared once per cost; no hash generation or early successful-login path is allowed on a missing Account. At auth startup validate the signing secret and a strictly parsed numeric TTL of 86400 seconds under architecture §5; pass the numeric TTL to `expiresIn`, never an unparsed environment string.
+
+Logout is a client service operation clearing the token/private cache; there is no pretend server logout endpoint. Tokens otherwise remain valid until expiration. No refresh or public Admin creation/promotion endpoint is included. Only a protected-operation 401 matching the active generation/account invalidates the session. AUTH-02 invalid-credentials 401 remains a form error, not an expiry event. Expiry and safe post-login return behavior are specified in architecture §5.
 
 ### Personal library
 
@@ -174,7 +184,7 @@ Saving the same catalogId twice returns 409; deleting a foreign/unknown favorite
 
 AdminOverview is `{memberCount, listingsByStatus, requestsByStatus}` with every enum key present and nonnegative counts. MemberSummary is `{id, name, email, createdAt}` for role Member only. AdminListing extends Listing with owner email and moderation `{reason, removedAt, removedBy: {id, name}}` or null. AdminRequest extends Request with owner/requester emails. Password hashes and bearer tokens are never selected or serialized. q searches relevant title/name/email fields on these Admin-only collections, using safe bounded text search.
 
-ADMIN-05 requires a reason and records the acting Admin. Closed returns 409; Removed returns 409 (no reason overwrite or copy release from a newer listing); Available removal executes the atomic effects in architecture. **Reserved removal is deliberately gated by unresolved PRD Q-1:** proposed temporary behavior is 409 with `"Reserved listing moderation requires an agreed settlement policy."` FR-24 now explicitly rejects Accepted requests and releases their copies, but this does not establish physical return of a Lent book. The exception does not fully implement FR-24. Juan's product clarification must amend this contract before implementing Reserved moderation. There are no account-edit/delete, role-change or arbitrary-request-edit Admin endpoints.
+ADMIN-05 deliberately keeps DELETE with a JSON body. For an authenticated authorized Admin, a missing body/reason, non-string reason, whitespace-only reason or trimmed reason longer than 500 characters returns 400; do not silently discard the body or substitute an empty reason. A valid reason records the acting Admin. Closed returns 409; Removed returns 409 (no reason overwrite or copy release from a newer listing); Available removal executes the atomic effects in architecture. **FR-24 is partially covered:** Reserved removal still returns the proposed temporary 409 `"Reserved listing moderation requires an agreed settlement policy."` Newer unmerged PRD decisions define that branch, but [issue #15](https://github.com/ninjasilver3692077/TheBridge/issues/15) must reconcile its DTOs, transitions and Loan/Rental completion after PR #13 merges. This exception is not full FR-24 compliance and is not the final Reserved behavior. There are no account-edit/delete, role-change or arbitrary-request-edit Admin endpoints.
 
 ## 4. Examples and mutation preconditions
 

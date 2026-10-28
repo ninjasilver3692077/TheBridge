@@ -1,6 +1,6 @@
 # Issue #9 — Architecture review handoff
 
-Status: local documentation prepared for human review. **Issue #9 remains open until Juan and Jorge approve.** This handoff records artifact checks, not a self-review approval or an implemented full-stack application.
+Status: documentation published in [PR #14](https://github.com/ninjasilver3692077/TheBridge/pull/14); review corrections prepared on the same branch. **Issue #9 remains open until Juan and Jorge approve the updated content.** This handoff records artifact checks, not a self-review approval or an implemented full-stack application.
 
 ## Deliverables and provenance
 
@@ -12,13 +12,35 @@ Status: local documentation prepared for human review. **Issue #9 remains open u
 
 Main source: `dc7bd2c`. Current PRD source: PR #13 at `e8545a29e7a4502a282f06f21c044de1e0b5cd79`, reconciled on 2026-10-28. The PRD is marked final and ready for review but remains unmerged and has no recorded human approval. The original 2026-10-27 internal reports used `6f12ef9210f8ffa533fb0e21dd8ccc1deac6f275`; their historical input is preserved. The PRD/brief remain on Juan's branch; no peer-owned artifacts were merged or edited to manufacture a dependency approval.
 
-## Input update on 2026-10-28
+## Input update on 2026-10-28 (contract version 2)
 
 - Contract version 2 uses the FR-13/NFR-6 default of 10 per collection page; the Open Library maximum of 20 is unchanged.
 - A-4/A-5 now distinguish product requirements confirmed by the PRD author from architecture approval; A-1–A-3 remain proposed interpretations.
 - FR-24 now explicitly rejects Accepted requests. Q-1 remains necessary because rejection does not prove physical return of a Lent book, and removing an already Removed listing must not release a newer listing's copy.
 - Both open peer PRs (#7 and #13) requested Edwin's review. After explicit user authorization, [Gate 1 spec approval](https://github.com/ninjasilver3692077/TheBridge/pull/7#issuecomment-6466834313) was posted on #7 at bfc6e29 and a [Request changes review](https://github.com/ninjasilver3692077/TheBridge/pull/13#pullrequestreview-5681311863) on #13 at e8545a2. Neither peer branch was edited. Review notes remain separate from this architecture branch.
 - The PRD update changes no operation IDs or FR/NFR IDs. The architecture and contract remain proposals requiring Juan and Jorge's approval.
+
+## Review corrections on 2026-10-28 (contract version 3)
+
+Both human reviews arrived for 9f12986: [Juan requested changes](https://github.com/ninjasilver3692077/TheBridge/pull/14#pullrequestreview-5682055799), and [Jorge approved](https://github.com/ninjasilver3692077/TheBridge/pull/14#pullrequestreview-5689636672). These review states concern that prior revision. The user then authorized addressing feedback on the existing PR.
+
+| Review item | Correction / disposition |
+| --- | --- |
+| FR-24 traceability | Separate explicit partial row; Available removal covered, Reserved branch pending issue #15. |
+| Transaction retries | At most three body attempts, 25–100 ms retry jitter, three commit calls per transaction; unknown commit retries only the same commit, then 503/refetch without body replay or rollback claim. |
+| Copy write barrier | LibraryBook internal revision distinct from public domain version; Pending activity does not stale COPY-04/05 If-Match, but eligibility is independently revalidated. |
+| Request rejection cause | Nullable server-owned rejectionReason with four explicit causes, no moderation free-text leak. |
+| Expired bearer on public routes | Ignore Authorization and keep anonymous projection/status; protected operations remain 401 and client expiry monitoring remains active. |
+| JWT configuration | Validate secret and numeric 86400-second TTL at auth startup; no raw environment string passed to expiresIn. |
+| Absent email timing | One dummy bcrypt comparison at configured cost; no per-request hash generation or authentication through a dummy result. |
+| Client token storage | Explicit residual XSS risk proposed for reviewer acknowledgement; no fabricated team risk acceptance. |
+| ADMIN-05 reason | Keep DELETE JSON body; missing/invalid/empty/oversize reason returns 400 for authorized Admin requests. |
+| Newer PRD delta | PR #13 at a1fc15f remains unmerged. Issue #15 incorporates reconfirmation, Reserved removal/completion, return-confirmation wording and quick-view rules after its merge; no partial migration of those rules in this correction. |
+| Publication question | Explicit account-holder authorization is documented below and in AI-LOG. It is not evidence of a team-wide AGENTS policy amendment or approval. All GitHub operations use AndresMonca; no teammate's account was used. |
+
+These changes retain the 31 operation IDs and 28 FR/19 NFR identifiers. No application code, dependency, source folder, asset, team policy or peer-owned PRD changes are included.
+
+Current correction checks: lint and build passed; spine lint returned zero findings; contract checks confirmed 31 unchanged operation IDs/method-path pairs, 28 FR/19 NFR references, five valid JSON examples and local links/anchors. The four existing Mermaid blocks are unchanged from the previously parsed diagrams. No backend behavior is claimed as tested. Internal [rubric/input](reviews/review-human-feedback-rubric.md), [technology](reviews/review-human-feedback-technology.md) and [seam](reviews/review-human-feedback-seams.md) checks passed; the seam clarification distinguishing protected-session 401 from login-credentials 401 was applied. [Structure](reviews/review-human-feedback-structure.md) suggested splitting the retry policy into four paragraphs, applied without changing sentences. [Prose](reviews/review-human-feedback-prose.md) records the final clarity check. These reports do not replace human review of the new revision.
 
 ## What is resolved for review
 
@@ -66,6 +88,7 @@ Backend endpoint, transaction, auth, typecheck and Vercel checks are **future re
 
 - Confirm the repository-path exception for real root routes/models/shared types.
 - Review contract DTOs, errors, version preconditions and transaction/write-barrier semantics.
+- Recheck the bounded retry/uncertain commit policy and copy-domain version semantics on the updated revision; acknowledge the documented token-storage residual risk.
 - Confirm A-1–A-3, especially loan/rental completion and changed-term acceptance; A-4/A-5 record requirements already confirmed by the PRD author.
 - Resolve Q-1 before implementing Reserved-listing moderation; the temporary 409 is explicitly not full FR-24 compliance.
 - Keep hosting resources/shared limiter, demo content and grading-source confirmation assigned to their downstream owners.
@@ -75,6 +98,8 @@ Backend endpoint, transaction, auth, typecheck and Vercel checks are **future re
 
 AGENTS.md normally says: “Commit locally from the person's account, but never push or open pull requests; give the person the exact commands to run.” On 2026-10-28 the user explicitly authorized the agent to perform necessary commits, pulls and pushes and handle the remaining publication steps. This is a session authorization for publishing this documentation branch and its draft PR; it does not edit team policy or authorize commits to main, force pushes, merges, deployment, self-review or implementation before spec approval.
 
+The user's later instruction also explicitly authorized publishing peer-review comments from their own AndresMonca account. No separate approval from the whole team is documented and none is claimed. The coordinator should clarify the default policy through the reviewed process if the team wants a permanent change. The recorded reviews are Edwin's operated reviews; the agent never impersonated Juan or Jorge.
+
 Publication uses the following commands from the repository directory, after checking the commit and remote state:
 
 ```powershell
@@ -83,7 +108,7 @@ git log -1 --oneline
 git push -u origin docs/architecture
 ```
 
-Then create a **draft documentation PR** targeting main and request review from `ninjasilver3692077` (Juan) and `jfontx` (Jorge). The agent can perform this through the authenticated GitHub API under the explicit authorization above. [Branch comparison](https://github.com/ninjasilver3692077/TheBridge/compare/main...docs/architecture?expand=1) remains a manual fallback. This planning PR contains no implementation stage to approve on the author's behalf.
+PR #14 already exists as a **draft documentation PR** targeting main. Push corrections to its existing docs/architecture branch and request a new review from `ninjasilver3692077` (Juan) and `jfontx` (Jorge); do not open a second PR. The agent can perform this through the authenticated GitHub API under the explicit authorization above. This planning PR contains no implementation stage to approve on the author's behalf.
 
 Suggested title: `docs: define full-stack architecture and API contract`.
 
@@ -112,6 +137,8 @@ Issue #9 needs an agreed architecture and REST contract before the Express skele
 ## Decisions requiring review
 
 Please review the proposed root graded-module layout, canonical API ownership and offline Admin bootstrap. A-1–A-3 remain product interpretations requiring confirmation; A-4/A-5 now record confirmed PRD requirements. Collection pagination defaults to 10. Q-1 explicitly gates Reserved-listing moderation pending safe physical-return rules; actual hosting/limiter resources and grading-source confirmation have downstream owners.
+
+Version 3 addresses Juan's three blocking observations and six follow-ups: partial FR-24 coverage, bounded transaction/commit retries, separate copy barrier/domain version, rejection causes, public bearer handling, validated JWT configuration, dummy login comparison, documented client-storage risk and required ADMIN-05 reason. Newer PRD reconfirmation/Reserved/completion decisions at a1fc15f remain assigned to issue #15 after PR #13 merges. Juan and Jorge's reviews of 9f12986 must not be treated as approval of this updated content.
 
 Required reviewers: Juan and Jorge. Keep issue #9 open until both approve; subsequent code still requires an approved OpenSpec change.
 

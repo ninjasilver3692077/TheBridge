@@ -474,3 +474,21 @@ Verification checks contract operation uniqueness, all 28 FR/19 NFR identifiers,
 ### Explicit publication authorization
 
 After reviewing the prepared comments, the user explicitly authorized publishing both peer reviews and then instructed the agent to handle necessary commits, pulls, pushes and publication while preserving review gates. Git Credential Manager authenticated as AndresMonca; PR heads and authors were checked before posting. Posted the Gate 1 spec approval on #7 at bfc6e29 and a Request changes review on #13 at e8545a2. No peer code/document was edited. This subsequent authorization permits publishing this architecture branch and draft PR without changing AGENTS, merging, deploying, self-approving or implementing unapproved code.
+
+## Issue #9 / PR #14 — Address both human reviews (2026-10-28)
+
+### Authorization and review provenance
+
+The user had deferred this PR until both reviews arrived, then explicitly instructed the agent to make the required changes following the contract. Juan requested changes on 9f12986; Jorge approved that same revision. Those are human review states for the earlier content, not approval of these corrections. The existing session explicitly authorizes commits, pulls, pushes, PR publication and review comments through the account holder's own AndresMonca identity. There is no documented team-wide approval of a permanent exception to AGENTS; none is claimed, and no policy file or reviewer identity is changed.
+
+### Assistance and changes adopted
+
+Used `bmad-architecture` in update mode with stable AD identifiers. Marked FR-24 coverage partial, bounded the transaction runner to three body attempts with jitter and three commit calls per transaction, separated unknown-commit reconciliation from body replay, and separated LibraryBook internal revision from its public domain version. Incorporated the six review follow-ups: explicit rejection causes, public bearer behavior, JWT startup validation, dummy bcrypt comparison, client-storage residual-risk acknowledgement and ADMIN-05 reason validation. Rechecked primary MongoDB/Mongoose/JWT/bcrypt references; these are documented implementation requirements, not installed code.
+
+The newer PRD at a1fc15f remains unmerged. Reconfirmation and Reserved-moderation/completion reconciliation stays in issue #15 after PR #13 merges, as the issue and Juan's review specify. No peer-owned PRD was edited and no newer product decision was silently replaced. The proposed client-storage risk is not labelled accepted by the team.
+
+### Verification and human follow-up
+
+The architecture method requires independent input/gate/editorial checks; they are internal artifact checks and never formal approval of our own PR. Deterministic checks cover the spine, unchanged operation identifiers, traceability, JSON examples, local links/anchors, review-item consistency and documentation-only scope. The updated revision will be published in the existing branch and both reviewers asked to assess it. Backend retry/auth behavior remains future test evidence; the implementation stories must exercise the added failure cases before approval. Issue #9 remains open; no merge or deployment is performed.
+
+Lint and build passed on this correction, with the existing 147-module frontend build preserved. Spine lint returned zero findings and contract checks passed for 31 unchanged operation IDs, 28 FR/19 NFR references and five JSON examples. Independent rubric/input and technology checks passed. The seam reviewer identified one clarification, now applied: only a protected-operation 401 matching the active session generation/account invalidates that session; AUTH-02 wrong credentials remains a form error. The structure suggestion to split the retry policy into four paragraphs was applied without changing its sentences. The four Mermaid blocks remain unchanged from their previously parsed form. No new browser or backend runtime verification is claimed for these documentation-only changes.

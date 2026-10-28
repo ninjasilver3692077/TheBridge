@@ -29,6 +29,12 @@ The canonical HTTP contract is root [`api-design.md`](../../api-design.md). This
 
 The PRD update fixes collection pagination at 10 by default and explicitly locks Pending offered copies; the contract follows both. A-4/A-5 now record confirmed product requirements, while A-1–A-3 remain proposed interpretations. FR-24 now defines rejection of Accepted requests on removal, but physical return and repeated removal against a reused copy still need clarification. Original 2026-10-27 review reports remain evidence for their original input; this reconciliation does not turn them into approval of the updated PRD.
 
+### Review update and pending PRD reconciliation
+
+Juan requested changes on `9f12986`; Jorge approved that same revision. This update addresses the three blocking observations and six follow-ups; both reviewers must assess the resulting revision before it is treated as agreed. These internal artifact checks never replace either person's review.
+
+PR #13 has since advanced to `a1fc15f` but remains unmerged. Its newer reconfirmation and Reserved-moderation rules are tracked by [issue #15](https://github.com/ninjasilver3692077/TheBridge/issues/15), explicitly dependent on that merge. This PR keeps `e8545a2` as its reconciled input: A-1/A-3/Q-1 are merge-dependent contract gaps, not evidence that the product owner has made no newer decision. Before those stories can be implemented, issue #15 must update request fields/operations, offer-lock ownership, completion preconditions, return-confirmation UI wording and quick-view request rules. FR-24 coverage is explicitly partial below.
+
 ## 2. Decisions and alternatives
 
 | Decision | Proposed choice | Alternative considered and reason not selected |
@@ -116,9 +122,9 @@ erDiagram
 | Entity | Stored fields and constraints |
 | --- | --- |
 | Account | `name`, normalized unique `email`, `passwordHash` excluded by default, fixed `role: Member/Admin`, timestamps. No account-edit, role-change or account-delete API. |
-| LibraryBook | `ownerId` Account reference, catalog metadata snapshot, `condition`, `notes`, status, version, timestamps. Physical identity belongs here; two copies of the same work have different IDs. |
+| LibraryBook | `ownerId` Account reference, catalog metadata snapshot, `condition`, `notes`, status, public `version`, internal `revision`, timestamps. Physical identity belongs here; two copies of the same work have different IDs. |
 | Listing | `libraryBookId` and `ownerId` references, publication-time book/condition/notes snapshots, modality/terms, status, public version, internal revision, timestamps; removal reason and actor retained on moderation. Owner/name is populated explicitly, never the entire Account. |
-| Request | `listingId`, `ownerId`, `requesterId`, optional `offeredBookId`, status, immutable quoted modality/terms and offered-copy summary, listing version, version, timestamps. Participant IDs come from authenticated resources, never the body. |
+| Request | `listingId`, `ownerId`, `requesterId`, optional `offeredBookId`, status, nullable `rejectionReason`, immutable quoted modality/terms and offered-copy summary, listing version, version, timestamps. Participant IDs and rejection reason come from server commands, never the body. |
 | Favorite | `ownerId` reference and catalog metadata snapshot; unique `(ownerId, catalogId)`. Favorites persist between devices. |
 
 MongoDB generates `_id` values; DTOs expose `id` as an opaque 24-hex string and suppress `_id`, `__v`, password hashes and internal search fields. UTC timestamps use ISO 8601; COP prices are positive integer pesos, never formatted currency strings; allowed durations are 7, 10, 14 or 21 days. DTO fields, nullability and payloads are fixed in `api-design.md`.
@@ -129,9 +135,17 @@ LibraryBook statuses are Available, Published, Reserved, Lent, Transferred. List
 
 ### Mutation authority
 
-Only server domain services mutate state. A client cannot set owner, role, listing/request status, removal actor, totals, activity or versions. `version` is a monotonically increasing integer for public representation changes; mutation preconditions are defined in the API contract. An internal `revision` is a separate write barrier, never serialized and never treated as the quoted terms version.
+Only server domain services mutate state. A client cannot set owner, role, listing/request status, rejection reason, removal actor, totals, activity or versions. `version` is a monotonically increasing integer for versioned domain changes; mutation preconditions are defined in the API contract. An internal `revision` is a separate write barrier, never serialized and never treated as the quoted terms version. LibraryBook `version` changes when its stored book metadata, condition, notes or lifecycle status changes. Derived `activity`, `currentListing` and `lastModeration` projections, internal revisions and their bookkeeping timestamps are outside that precondition token; this is a domain version, not an ETag for the entire GET projection.
 
-Use Mongoose transactions on an Atlas deployment that supports them for multi-document writes. Every database operation in a transaction uses the same session and runs sequentially. On conflicting conditional writes, retry only transient transaction failures; after retry, re-read and return a domain conflict when the precondition no longer holds. Do not use a process variable or mutex as a reservation lock.
+Use a Mongoose session on an Atlas deployment that supports multi-document transactions. Every database operation in a transaction uses the same session and runs sequentially. A central runner owns explicit start/commit/abort/end through the driver's Core API; do not nest it inside the automatically retrying `withTransaction()` or `Connection#transaction()` helpers. Use fresh reads/plain query results on each attempt rather than reusing mutated Mongoose document instances. Do not use a process variable or mutex as a reservation lock.
+
+**Bounded retry policy:** at most three transaction-body attempts per command (the initial attempt plus two retries). Retry a known-aborted `TransientTransactionError` only, with fresh precondition checks and random jitter of 25–100 ms between attempts.
+
+Domain validation, duplicate keys and stale state/version return their declared error immediately. Exhausted write contention returns 409; known backing-service unavailability returns 503.
+
+Independently cap commit calls at three per transaction. For `UnknownTransactionCommitResult`, retry only that same commit/session/transaction identity, never replay the body; if still unknown, return sanitized 503 saying the outcome is unconfirmed. The client refetches to reconcile and never automatically replays the mutation. No 503 with an unknown commit outcome promises rollback.
+
+Driver operation/selection timeouts must be finite and fit the deployed request budget; no hidden application retry loop may exceed these caps. Abort confirmed-uncommitted work and end sessions in cleanup; do not report an uncertain commit as safely aborted.
 
 Required unique indexes:
 
@@ -144,7 +158,7 @@ Required unique indexes:
 
 Create and verify these indexes in an explicit migration/bootstrap step; `unique` is not a Mongoose validator. Map duplicate-key errors to 409. **Every Pending request creation and every edit/accept/withdraw/remove/complete command conditionally writes the same Listing internal revision in its transaction.** Reads alone are insufficient: after a race, a retried insertion must re-read status/quote and cannot create Pending after reservation or closure. Merely inserting a Pending request increments internal revision but does not change the public Listing version, so other Pending quotes remain current. Terms edits increment public version; acceptance compares the request's quoted version against that public version before changing state.
 
-State checks and conditional revision/version increments also touch the relevant LibraryBook even if its visible status remains Available, so concurrent offer creation and publication contend on the same document rather than passing independent reads. Transaction retries use fresh snapshots; public If-Match still detects user-visible stale updates.
+State checks conditionally increment only the relevant LibraryBook's internal `revision` when its stored domain fields remain unchanged, so concurrent offer creation and publication contend on the same document rather than passing independent reads. A new Pending offer leaves the copy Available and does not increment public `version`; COPY-04/05 still return 409 while that offer is active because eligibility is checked separately. After that offer is rejected/cancelled, the owner's previous If-Match remains current if no versioned field changed. A transition to Published, Reserved, Lent or Transferred increments public `version` as well as the internal barrier. Transaction retries re-read both tokens and eligibility from a fresh snapshot. The same distinction keeps Pending insertion from invalidating Listing quotes.
 
 ### State transition effects
 
@@ -152,16 +166,16 @@ State checks and conditional revision/version increments also touch the relevant
 | --- | --- | --- |
 | Publish | Member owns Available copy; no active outgoing exchange offer; no open listing | Create Available listing; set copy Published. |
 | Edit listing | Owner; listing Available; matching version | Replace modality/terms; increment version; Pending requests remain Pending with their original quote. A-3 governs subsequent acceptance. |
-| Withdraw | Owner; listing Available; matching version | Soft-close listing with `closureReason: Withdrawn`; return copy Available; reject all Pending requests. Preserve history. |
+| Withdraw | Owner; listing Available; matching version | Soft-close listing with `closureReason: Withdrawn`; return copy Available; reject all Pending requests with `rejectionReason: ListingWithdrawn`. Preserve history. |
 | Send request | Member is not owner; listing Available; current quoted version | Create Pending request; validate an owned Available offered copy for Exchange; reject duplicates and occupied offers. |
-| Accept | Owner; request Pending; listing Available; quote/version still current | Set winner Accepted and listing Reserved; reject competing Pending requests. Loan/Rental copy becomes Lent; Sale/Exchange copy Reserved; Exchange offered copy Reserved. |
-| Reject | Owner; request Pending | Set Rejected; release derived Pending exchange activity. |
+| Accept | Owner; request Pending; listing Available; quote/version still current | Set winner Accepted and listing Reserved; reject competing Pending requests with `rejectionReason: CompetingRequestAccepted`. Loan/Rental copy becomes Lent; Sale/Exchange copy Reserved; Exchange offered copy Reserved. |
+| Reject | Owner; request Pending | Set Rejected with `rejectionReason: OwnerRejected`; release derived Pending exchange activity. |
 | Cancel | Requester; request Pending | Set Cancelled; release derived Pending exchange activity. |
 | Complete | Owner; request Accepted; listing Reserved | Close listing and set request Completed. Loan/Rental copy returns Available (A-1); Sale/Exchange copies become Transferred, with no automatic transfer into the other library. |
-| Remove Available listing | Admin; nonempty reason; matching version | Set Removed; preserve reason/actor; return copy Available; reject Pending requests. |
+| Remove Available listing | Admin; nonempty reason; matching version | Set Removed; preserve reason/actor; return copy Available; reject Pending requests with `rejectionReason: ListingRemoved`. |
 | Remove Reserved listing | Admin | Product conflict Q-1 must be resolved before implementing this branch. Do not release a Lent/Reserved copy or orphan an Accepted request. |
 
-All losers of a concurrent accept/withdraw/remove operation receive 409 without partial changes. Creation/acceptance revalidate offered-copy eligibility and the current quote while the listing is Available. Completion instead requires the accepted participants' reserved/lent state; it must not compare the old quoted version against the incremented post-acceptance listing version. Request history remains readable to its participants after a listing is Closed or Removed, even though a Removed listing's public detail is 404.
+Confirmed losers of a concurrent accept/withdraw/remove operation receive 409 without partial changes; an unresolved commit outcome follows the 503 reconciliation rule above. Creation/acceptance revalidate offered-copy eligibility and the current quote while the listing is Available. Completion instead requires the accepted participants' reserved/lent state; it must not compare the old quoted version against the incremented post-acceptance listing version. Request history remains readable to its participants after a listing is Closed or Removed, even though a Removed listing's public detail is 404. Rejection reasons are fixed machine-readable values; the Admin's free-text removal reason remains in owner/Admin projections, not in another requester's DTO.
 
 ## 5. Authentication, Admin bootstrap and security
 
@@ -171,7 +185,15 @@ JWTs carry `sub`, `role`, `iss`, `aud`, `iat`, `exp`, signed with an allowlisted
 
 Use bcryptjs asynchronous hashing with a proposed cost of 12; reject passwords below eight characters or above 72 UTF-8 bytes rather than silently truncating. Normalize email consistently before lookup/indexing. Login returns one generic wrong-credentials message. Registration rejects privileged fields such as `role` or `passwordHash` with 400.
 
-Client logout clears the token and account cache. Every login/logout/expiry increments a session-generation value; each private service request captures that generation/account and discards both results and failures if the generation no longer matches. Abort old requests where possible; clearing a store alone does not prevent a late response for account A from populating account B's screen. Stateless JWTs already issued remain cryptographically valid until expiry; immediate global revocation is not claimed. One app-shell/session observer checks expiry on startup, on tab visibility/focus, before protected actions and with a timer while any page remains mounted, including public pages; it handles current-session server 401 centrally and clears cached private data. An expired active session redirects to login with the FR-4 message and a validated same-origin relative return route. Never redirect to an arbitrary URL.
+After validating LoginInput, perform one asynchronous bcrypt comparison even if the normalized email is absent: compare against a valid dummy hash at the same configured cost and still reject. Provision that hash once per configured cost, never generate it on every failed lookup. An unknown account can never authenticate through the dummy result. Keep the same 401 body for absent-account and wrong-password cases; this reduces a timing signal without claiming perfect timing equality. Existing auth rate limiting still applies.
+
+At HW13 startup, reject missing/default/example `JWT_SECRET` values and values shorter than 32 UTF-8 bytes; the operator must supply a cryptographically random secret, since length alone does not prove entropy. Parse `JWT_TTL_SECONDS` as a positive safe integer equal to 86400 under FR-4, rejecting malformed/fractional/other values. Pass a number, not the raw environment string, to jsonwebtoken `expiresIn`. Validate nonempty issuer/audience, keep HS256 allowlisted and fail readiness without logging secret values if any required setting is invalid.
+
+Public operations ignore the Authorization header for identity and authorization, including missing, malformed or expired bearer tokens; they return the same public projection/status that an anonymous request would receive, subject to normal validation/origin/rate-limit rules. They never expose private fields because a token was supplied. Member/Admin operations require valid authentication and return 401 for an expired token. The client expiry observer remains active on public pages, so ignoring a public header does not keep an expired session signed in.
+
+Client logout clears the token and account cache. Every login/logout/expiry increments a session-generation value; each private service request captures that generation/account and discards both results and failures if the generation no longer matches. Abort old requests where possible; clearing a store alone does not prevent a late response for account A from populating account B's screen. Stateless JWTs already issued remain cryptographically valid until expiry; immediate global revocation is not claimed. One app-shell/session observer checks expiry on startup, on tab visibility/focus, before protected actions and with a timer while any page remains mounted, including public pages. Only a 401 from a protected operation whose captured generation/account still matches the active session invalidates that session and clears cached private data. AUTH-02 invalid-credentials 401 remains a login-form error and never triggers the expiry redirect. An expired active session redirects to login with the FR-4 message and a validated same-origin relative return route. Never redirect to an arbitrary URL.
+
+HW13's mandated token storage in localStorage is an explicit residual risk proposed for review: same-origin JavaScript, including a compromised third-party script, can read and exfiltrate bearer tokens. React text rendering, avoiding HTML injection, HTTPS, secret redaction and the 24-hour expiry reduce exposure but do not make storage safe against XSS or revoke a stolen token on local logout. This is not recorded as team risk acceptance yet; Juan/Jorge must acknowledge the trade-off before auth implementation. An HttpOnly-cookie design would require a separately approved course/contract change.
 
 ### Admin bootstrap
 
@@ -207,7 +229,7 @@ Future `.env.example` variables:
 | --- | --- |
 | `NODE_ENV`, `PORT` | Runtime mode and local listener port. |
 | `MONGODB_URI` | Atlas URI scoped to the environment; required after HW11. |
-| `JWT_SECRET`, `JWT_ISSUER`, `JWT_AUDIENCE`, `JWT_TTL_SECONDS` | Server token policy; proposed TTL 86400. |
+| `JWT_SECRET`, `JWT_ISSUER`, `JWT_AUDIENCE`, `JWT_TTL_SECONDS` | Validated at HW13 startup under §5; numeric TTL must be 86400. No signing-secret fallback. |
 | `CLIENT_ORIGINS` | Exact comma-separated allowed browser origins; development includes localhost:5173. |
 | `RATE_LIMIT_STORE_URI` | Deployment-wide limiter storage; required if the shared-store approach is selected. |
 | `ADMIN_NAME`, `ADMIN_EMAIL`, `ADMIN_PASSWORD` | Bootstrap command inputs only, not client/runtime defaults. |
@@ -257,7 +279,8 @@ Do not import localStorage data silently into accounts. Any optional personal-da
 | FR-10–FR-12 | LISTING write operations, one-open-listing index, transaction boundary. |
 | FR-13–FR-16 | LISTING public reads/stats; summary and newest listings derived from the same available dataset. |
 | FR-17–FR-21 | REQUEST operations, quote/version checks, atomic state machine. |
-| FR-22–FR-24 | ADMIN operations, restricted projections, reason retention; Q-1 before Reserved moderation. |
+| FR-22–FR-23 | ADMIN overview/collections and restricted projections. |
+| FR-24 — partial | ADMIN-05 covers Available removal, owner reason retention and refusal of repeat removal. Reserved removal remains 409; its full transition/Loan completion coverage is pending issue #15 after PR #13 merges. This proposal does not fully satisfy FR-24. |
 | FR-25–FR-28 | Role-aware navigation, auth return routes, existing theme/About and browser fallback. |
 | NFR-1–NFR-7 | Single origin, lint, HTTP envelope/validation/status/pagination, root design file before code. |
 | NFR-8–NFR-14 | Hashing, JWT, origin allowlist, typed validation, safe text, environment secrets, Helmet and deployment-wide rate limiting. |
@@ -280,9 +303,13 @@ Before the Express skeleton: Juan/Jorge approve layout, API source, runtime, gra
 
 Questions Q-1–Q-3 do not prevent writing the Express skeleton. They are explicit gates on the affected downstream stories. This proposal is reviewable without claiming that those product/deployment decisions are already agreed.
 
+For A-1/A-3/Q-1, Juan's newer PRD has already supplied product decisions in PR #13; [issue #15](https://github.com/ninjasilver3692077/TheBridge/issues/15) owns their incorporation after merge. The questions remain open in this input version until the contract, transition matrix and DTOs are reconciled together. Do not implement the older cancel/resubmit or Reserved-409 interpretation as the final behavior of those newer requirements.
+
 ## 9. Acceptance evidence to require downstream
 
 Use real request/response tests for valid CRUD, pagination/filter totals, invalid bodies/IDs, unauthenticated 401, wrong-role 403, foreign private resources 404 and state/version conflict 409. Test duplicate registration, role injection, password omission from all projections and expired JWT redirects. Delay an account-A response until after B logs in and assert neither its data nor its 401 changes B's session. Race two accepts, accept-vs-withdraw and new-Pending-vs-accept/withdraw/remove; assert exactly one winner, no late Pending on a terminal listing and consistent copies/requests after rollback. Include exchange copy contention and publication-vs-offer creation.
+
+Inject retryable transaction failures to prove at most three body attempts and three commit calls per transaction; unknown commit results must never replay the body or claim rollback. Assert public copy version is unchanged by Pending activity/internal-barrier writes, unchanged If-Match still works after release, active-offer eligibility returns 409, and actual copy status edits do increment version. Check every rejection path's `rejectionReason`, no leaking of moderation text to requesters, public expired/malformed-token equivalence versus protected 401, missing ADMIN-05 reason 400, numeric 86400-second token expiry, startup rejection of invalid JWT settings and one dummy bcrypt comparison for an absent email. These are required downstream tests, not backend tests executed in this documentation PR.
 
 For public deployment, verify root 200, `/api/health`, JSON API 404, direct React deep links, private no-store responses, malformed/oversized JSON envelopes, unknown methods, allowed/disallowed Origin behavior, persistent data after cold starts, shared auth rate limiting and Admin bootstrap rerun behavior. Verify all four modalities and both roles with two Members and one Admin. A written plan or passing frontend build is not evidence that any of these backend checks already pass.
 
@@ -295,5 +322,6 @@ Primary sources checked for the implementation choices:
 - [Node releases](https://github.com/nodejs/node/releases) and [Vercel Node runtime](https://vercel.com/docs/functions/runtimes/node-js): runtime and shared-function boundaries.
 - [Vercel Express](https://vercel.com/docs/frameworks/backend/express), [Vite](https://vercel.com/docs/frameworks/frontend/vite) and [rewrites](https://vercel.com/docs/routing/rewrites): proposed single-origin composition; deployed routing still requires the tests above.
 - [Mongoose transactions](https://mongoosejs.com/docs/transactions.html) and [MongoDB partial indexes](https://www.mongodb.com/docs/manual/core/index-partial/): transactional/uniqueness design.
+- [MongoDB Node transaction APIs and error labels](https://www.mongodb.com/docs/drivers/node/current/crud/transactions/), rechecked 2026-10-28: explicit Core API ownership separates body retries from unknown-commit retries; the three-attempt cap and jitter are proposed application policy, not driver defaults.
 - [jsonwebtoken](https://github.com/auth0/node-jsonwebtoken) and [bcryptjs](https://github.com/dcodeIO/bcrypt.js): token verification and password-byte limit.
 - Package metadata: `https://registry.npmjs.org/<package>/latest`; exact checked versions recorded above, not an instruction to install an unpinned latest release.

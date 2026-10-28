@@ -61,19 +61,19 @@ flowchart LR
 
 - **Binds:** FR-1–FR-4, FR-17–FR-25; NFR-8–NFR-14.
 - **Prevents:** browser flags, submitted owner fields or decoded-only JWTs granting privileges.
-- **Rule:** verify JWT signature/issuer/audience/expiry, load Account and enforce stored role/ownership on every protected operation. Registration creates Member only; Admin uses an explicit idempotent offline bootstrap. Public projections omit email; hashes are never returned. Session changes invalidate in-flight private results/failures by a generation/account guard, not just by clearing stores.
+- **Rule:** verify JWT signature/issuer/audience/expiry, load Account and enforce stored role/ownership on every protected operation. Public operations ignore bearer headers and never upgrade projections. Validate secret and numeric 86400-second TTL at auth startup; use one dummy bcrypt comparison for an absent login email. Registration creates Member only; Admin uses an explicit idempotent offline bootstrap. Public projections omit email; hashes are never returned. Session changes invalidate in-flight private results/failures by a generation/account guard, not just by clearing stores. Client-token storage has a documented residual XSS risk requiring explicit reviewer acknowledgement.
 
 ### AD-6 — Atomic publication and request transitions
 
 - **Binds:** FR-9–FR-12, FR-17–FR-24.
 - **Prevents:** double acceptance, partially released copies and process-local locking failures.
-- **Rule:** domain services execute guarded version/status writes with one Atlas transaction/session, sequentially. Pending creation and all Listing lifecycle commands conditionally write a common internal Listing revision; it is distinct from public/quoted version, so inserting Pending does not stale existing quotes. Required active-state unique indexes enforce open listing, active member request, accepted winner and offered-copy exclusivity. Race losers receive 409 and no partial effects. Offered-copy guards must contend on the copy document, not only read it.
+- **Rule:** domain services execute guarded writes sequentially in one Atlas transaction/session through a bounded Core API runner: at most three body attempts, jitter 25–100 ms, at most three commit calls per transaction; no nested automatic transaction retry helper. Unknown commit results retry the same commit only, then return 503 for reconciliation without replaying the body or promising rollback. Confirmed conflicts return 409. Pending creation and Listing lifecycle commands conditionally write one internal Listing revision, distinct from quoted version. LibraryBook contention-only writes increment internal revision, never its public domain version; COPY-04/05 eligibility is separately revalidated. Domain field/status changes increment public version. Required active-state unique indexes enforce open listing, active member request, accepted winner and offered-copy exclusivity. Offered-copy guards contend on the copy document, not only read it.
 
 ### AD-7 — Preserve quotes, history and participant access
 
 - **Binds:** FR-11–FR-12, FR-18–FR-21; assumptions A-1–A-3 and confirmed product requirement A-4.
 - **Prevents:** silently accepting edited terms, deleting request history or promising unavailable books.
-- **Rule:** listings retain publication-time book/condition/notes snapshots. Requests retain request-time metadata, quoted modality/terms/version and offered-copy summaries; offered nullability follows quotedModality, never a later listing edit. A stale quote blocks acceptance with 409 until resubmission. Withdrawal is soft closure; participant summaries survive and report current retained listing status. Completion timing remains an explicit approval assumption. Offered-copy exclusivity follows FR-9/FR-19; Reserved moderation is gated by Q-1 and cannot silently release a Lent copy.
+- **Rule:** listings retain publication-time book/condition/notes snapshots. Requests retain request-time metadata, quoted modality/terms/version and offered-copy summaries; offered nullability follows quotedModality, never a later listing edit. A stale quote blocks acceptance under the current input version; issue #15 must replace A-3 with the newer merged PRD's reconfirmation contract before those stories. Withdrawal is soft closure; participant summaries survive and report current retained listing status. Request rejectionReason distinguishes owner rejection, competing acceptance, withdrawal and removal without leaking moderation text. Completion timing and Reserved moderation remain explicit merge-dependent contract gaps; FR-24 is partial, Q-1 cannot silently release a Lent copy. Offered-copy exclusivity follows FR-9/FR-19.
 
 ### AD-8 — One origin, distinct API and browser routing
 
@@ -98,7 +98,7 @@ flowchart LR
 | Concern | Convention |
 | --- | --- |
 | Response/error | data envelope; paginated meta; exactly error string/code status on failures. |
-| Versions | integer version plus strong If-Match on existing-resource writes; 409 on stale state. |
+| Versions | public domain version plus strong If-Match on existing-resource writes; separate internal revision on Listing/LibraryBook; derived copy projections do not change version, but mutation eligibility is always checked. |
 | Status authority | Only server services update states; Request direction/activity are derived. |
 | Search and totals | Same authorized available-only filter for listing rows/stats; pagination never changes totals. Filter-option facets span all Available listings independently of page/filters. |
 | Shared types | At least Account, LibraryBook, Listing, Request plus envelopes; no Mongoose types on the wire. |
@@ -140,10 +140,13 @@ flowchart TB
 | FR-1–FR-4 / FR-25 | Auth service, middleware and role-aware navigation | AD-1, AD-2, AD-5 |
 | FR-5–FR-9 | Catalog/favorites/library adapters and copy services | AD-1, AD-4, AD-9 |
 | FR-10–FR-16 | Listing services, public reads and statistics | AD-2, AD-4, AD-6, AD-8 |
-| FR-17–FR-24 | Request transition/moderation services | AD-5, AD-6, AD-7 |
+| FR-17–FR-23 | Request transition/moderation services | AD-5, AD-6, AD-7 |
+| FR-24 — partial | Available ADMIN-05 covered; Reserved branch pending merged PRD reconciliation in issue #15 | AD-6, AD-7 |
 | FR-26–FR-28 | Existing theme/About and router fallback | AD-1, AD-8 |
 | NFR-1–NFR-19 | Contract, security and rollout gates | AD-1–AD-10 |
 
 ## Deferred and Approval Gates
 
 Architecture §8 owns the precise assumptions and responsible reviewers. Q-1 gates Reserved moderation until Juan settles safe availability of physically Lent copies; it does not gate the Express skeleton. A-1–A-3 require explicit product confirmation before their affected stories. A-4/A-5 record product requirements confirmed in PR #13 at e8545a2, while technical enforcement and architecture approval remain pending. Actual hosting URL/region, shared rate-limiter provider and grading-source collection are deployment/submission gates; their required behavior is fixed here even though resources are not provisioned. Demo seed content belongs to the coordinator/team. Payments, realtime, logistics, extra roles and automatic ownership transfer are outside this phase.
+
+The newer PR #13 at a1fc15f already defines product decisions for A-1/A-3/Q-1 but remains unmerged. Issue #15, dependent on that merge, must reconcile reconfirmation, reservation ownership, Reserved moderation and completion together before affected implementation. This PR's three blocking review corrections and six follow-ups do not claim to close that dependency or secure approval of the updated architecture. Juan requested changes and Jorge approved the previous 9f12986 revision; both must review the updated content.

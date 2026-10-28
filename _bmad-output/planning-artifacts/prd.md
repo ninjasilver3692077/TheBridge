@@ -66,6 +66,7 @@ Milestone 2 delivered the full experience in the browser, but every visitor saw 
 - **Requester** — the Member who sends a Request.
 - **Offered Book** — the Requester's Available Library Book proposed in an Exchange Request.
 - **Request Status** — Pending, Accepted, Rejected, Cancelled, or Completed.
+- **Needs reconfirmation** — a mark on a Pending Request, not a Request Status. It is set when the Modality or Terms of the Listing change (FR-11) and cleared when the Requester reconfirms the Request.
 - **Favorite** — a Catalog book a Member saved for later.
 - **Visitor** — anyone using TheBridge, with or without a Session. What a Visitor can do, Members and Admins can also do.
 - **Session** — the signed-in state after login, tied to one Account and one Role; it ends on logout or expiry.
@@ -217,7 +218,7 @@ An Owner can change the Modality or Terms of their Listing while it is Available
 - Pending Requests stay Pending after an edit, and each keeps the Modality and Terms it was sent under.
 - If the Modality or Terms change, every Pending Request on the Listing is marked as needing reconfirmation. The Owner cannot accept it until the Requester reconfirms it under the new Modality and Terms (for an Exchange, by choosing an Offered Book); the Requester can also cancel it.
 - If the new Modality is not Exchange, the Offered Book of each Pending Request is free again when the edit is saved.
-- If the new Modality is Exchange, a Pending Request without an Offered Book needs the Requester to choose one before it can be accepted.
+- If the new Modality is Exchange, a Pending Request keeps its Offered Book Reserved until the Requester reconfirms it with the same or another Available Library Book; if the Requester chooses another, the previous Offered Book is free again. A Pending Request without an Offered Book needs the Requester to choose one before it can be accepted.
 
 #### FR-12: Withdraw a Listing
 
@@ -298,6 +299,7 @@ A Member can see Received and Sent Requests in separate tabs with the counterpar
 **Consequences (testable):**
 - Received shows only Requests on the Member's Listings; Sent shows only Requests the Member sent.
 - A change made by the counterpart appears the next time the Member opens or refreshes Requests; there are no real-time updates.
+- A Pending Request that needs reconfirmation shows the Requester a Reconfirm action and a message that the Listing changed, and shows the Owner that the Request is waiting for reconfirmation.
 
 #### FR-19: Accept or reject a Request
 
@@ -328,7 +330,7 @@ An Owner can mark an Accepted Request as Completed. For Sale and Exchange this i
 **Milestone 2:** New.
 
 **Consequences (testable):**
-- For Loan and Rental, the Library Book stays Lent from acceptance until the Owner marks the Request Completed after the physical return; only then does it return to Available and the Listing become Closed, and the Owner can publish the book again.
+- For Loan and Rental, the Library Book stays Lent from acceptance until the Owner marks the Request Completed after the physical return; only then does it return to Available and the Listing become Closed, unless the Listing is Removed, in which case it stays Removed. The Owner can then publish the book again.
 - The Completed action for a Loan or Rental is labeled as confirming the return.
 - For Sale and Exchange, the Listing becomes Closed and the Library Book becomes Transferred; in an Exchange, the Offered Book also becomes Transferred. Books do not move to the other Member's library automatically.
 
@@ -364,7 +366,7 @@ An Admin can remove any Listing that is not Closed or Removed, with a required r
 - The Listing becomes Removed, disappears from the Marketplace, and shows the not found page to every Visitor.
 - Pending Requests on it become Rejected, and their Offered Books return to Available.
 - An Accepted Sale or Exchange Request becomes Rejected, and the Library Book and any Offered Book return to Available.
-- An Accepted Loan or Rental Request stays Accepted and the Library Book stays Lent, because the copy is still with the borrower. The Owner can still mark that Request Completed after the physical return (FR-21), and only then does the Library Book return to Available.
+- An Accepted Loan or Rental Request stays Accepted and the Library Book stays Lent, because the copy is still with the borrower. The Owner can still mark that Request Completed after the physical return (FR-21); the Listing stays Removed, and only then does the Library Book return to Available.
 - Removing a Listing that is already Removed is rejected and changes nothing; it never frees a Library Book that is linked to another Listing.
 - The Owner sees the Listing as Removed with the reason in My Books.
 

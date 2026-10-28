@@ -462,3 +462,15 @@ Pending review by Juan and Jorge. All new architecture choices remain proposed. 
 ### Learning
 
 An API contract must describe enough data for both sides to implement independently, including the participant's view of an exchange and the global options behind a paginated list. Explicit product gates are more useful than silently inventing state transitions for books that may already be physically lent.
+
+## Issue #9 — Reconcile the updated PRD (2026-10-28)
+
+The user asked to check and perform remaining assigned work. Live GitHub issue and pull-request metadata confirmed issue #9 is Edwin's only open assigned implementation/planning task; PRs #7 and #13 both request Edwin's review. Issue #11 names Edwin as a future reviewer, but its owner has not opened the baseline-spec PR. Peer reviews were conducted from separate worktrees using the BMAD review layers; notes and copy-ready Spanish comments remain outside this branch. No peer-owned source, PRD, approval or GitHub comment was modified.
+
+PR #13 advanced from 6f12ef9 to e8545a2 and became ready for review. Reconciled its explicit page-size default (10), Pending offered-copy guard, confirmed product assumptions and Accepted-request moderation effect into architecture, contract version 2, decisions, spine and handoff. The Open Library cap remains 20. Completion timing, changed-term acceptance and safe physical availability after moderation still require product decisions; this work does not resolve them on Juan's behalf or approve our own architecture.
+
+Verification checks contract operation uniqueness, all 28 FR/19 NFR identifiers, JSON examples, pagination consistency, relative links/anchors and BMAD spine lint. These are documentation checks; the frontend lint/build evidence above remains dated 2026-10-27 and no new runtime validation is claimed. AGENTS still requires local commits only; the user publishes the branch and opens the draft PR.
+
+### Explicit publication authorization
+
+After reviewing the prepared comments, the user explicitly authorized publishing both peer reviews and then instructed the agent to handle necessary commits, pulls, pushes and publication while preserving review gates. Git Credential Manager authenticated as AndresMonca; PR heads and authors were checked before posting. Posted the Gate 1 spec approval on #7 at bfc6e29 and a Request changes review on #13 at e8545a2. No peer code/document was edited. This subsequent authorization permits publishing this architecture branch and draft PR without changing AGENTS, merging, deploying, self-approving or implementing unapproved code.

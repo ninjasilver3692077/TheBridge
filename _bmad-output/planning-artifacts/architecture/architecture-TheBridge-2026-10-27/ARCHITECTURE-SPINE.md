@@ -7,9 +7,9 @@ paradigm: layered modular monolith
 scope: Milestone 3 client and Express API consistency
 status: final
 created: 2026-10-27
-updated: 2026-10-27
+updated: 2026-10-28
 binds: [FR-1..FR-28, NFR-1..NFR-19]
-sources: [issue-9, PR-13-at-6f12ef9, main-at-dc7bd2c, HW11..HW15]
+sources: [issue-9, PR-13-at-e8545a2, main-at-dc7bd2c, HW11..HW15]
 companions: [../../architecture.md, ../../../../api-design.md]
 ---
 
@@ -43,7 +43,7 @@ flowchart LR
 
 - **Binds:** all API operations and NFR-3–NFR-7/NFR-15.
 - **Prevents:** parallel frontend/backend implementations choosing incompatible fields and errors.
-- **Rule:** root api-design.md is canonical for operation IDs, fields/nullability, enums, preconditions, errors and pagination. Root src/types.ts is the sole shared DTO module; serializers strip persistence/internal/private fields. Approved contract changes precede code.
+- **Rule:** root api-design.md is canonical for operation IDs, fields/nullability, enums, preconditions, errors and pagination (default 10, per FR-13/NFR-6). Root src/types.ts is the sole shared DTO module; serializers strip persistence/internal/private fields. Approved contract changes precede code.
 
 ### AD-3 — Real graded modules without duplicate implementations
 
@@ -71,9 +71,9 @@ flowchart LR
 
 ### AD-7 — Preserve quotes, history and participant access
 
-- **Binds:** FR-11–FR-12, FR-18–FR-21; assumptions A-1–A-4.
+- **Binds:** FR-11–FR-12, FR-18–FR-21; assumptions A-1–A-3 and confirmed product requirement A-4.
 - **Prevents:** silently accepting edited terms, deleting request history or promising unavailable books.
-- **Rule:** listings retain publication-time book/condition/notes snapshots. Requests retain request-time metadata, quoted modality/terms/version and offered-copy summaries; offered nullability follows quotedModality, never a later listing edit. A stale quote blocks acceptance with 409 until resubmission. Withdrawal is soft closure; participant summaries survive and report current retained listing status. Completion and exchange exclusivity follow architecture's explicit approval assumptions; Reserved moderation is gated by Q-1 and cannot silently release a Lent copy.
+- **Rule:** listings retain publication-time book/condition/notes snapshots. Requests retain request-time metadata, quoted modality/terms/version and offered-copy summaries; offered nullability follows quotedModality, never a later listing edit. A stale quote blocks acceptance with 409 until resubmission. Withdrawal is soft closure; participant summaries survive and report current retained listing status. Completion timing remains an explicit approval assumption. Offered-copy exclusivity follows FR-9/FR-19; Reserved moderation is gated by Q-1 and cannot silently release a Lent copy.
 
 ### AD-8 — One origin, distinct API and browser routing
 
@@ -91,7 +91,7 @@ flowchart LR
 
 - **Binds:** all weekly deliveries and all contributors.
 - **Prevents:** an architecture draft being interpreted as authorization to implement/deploy or as proof of completed grading.
-- **Rule:** issue 9 ends with Juan/Jorge review; downstream code needs an approved OpenSpec change. HW11 uses a disposable in-memory owner fixture only; HW13 has no production demo fallback. All PRD assumptions and Q gates remain explicit. Agents commit locally; people publish/merge under AGENTS.md.
+- **Rule:** issue 9 ends with Juan/Jorge review; downstream code needs an approved OpenSpec change. HW11 uses a disposable in-memory owner fixture only; HW13 has no production demo fallback. Remaining architecture assumptions and Q gates stay explicit. Agents commit locally; people publish/merge under AGENTS.md.
 
 ## Consistency Conventions
 
@@ -146,4 +146,4 @@ flowchart TB
 
 ## Deferred and Approval Gates
 
-Architecture §8 owns the precise assumptions and responsible reviewers. Q-1 gates Reserved moderation until Juan settles the conflict with Lent/Accepted state; it does not gate the Express skeleton. A-1–A-5 require explicit product confirmation before their affected stories. Actual hosting URL/region, shared rate-limiter provider and grading-source collection are deployment/submission gates; their required behavior is fixed here even though resources are not provisioned. Demo seed content belongs to the coordinator/team. Payments, realtime, logistics, extra roles and automatic ownership transfer are outside this phase.
+Architecture §8 owns the precise assumptions and responsible reviewers. Q-1 gates Reserved moderation until Juan settles safe availability of physically Lent copies; it does not gate the Express skeleton. A-1–A-3 require explicit product confirmation before their affected stories. A-4/A-5 record product requirements confirmed in PR #13 at e8545a2, while technical enforcement and architecture approval remain pending. Actual hosting URL/region, shared rate-limiter provider and grading-source collection are deployment/submission gates; their required behavior is fixed here even though resources are not provisioned. Demo seed content belongs to the coordinator/team. Payments, realtime, logistics, extra roles and automatic ownership transfer are outside this phase.

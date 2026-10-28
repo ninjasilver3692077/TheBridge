@@ -1,21 +1,22 @@
 ---
 title: "TheBridge REST API contract"
 status: proposed
-version: 1
+version: 2
 created: 2026-10-27
+updated: 2026-10-28
 issue: 9
-input_prd_commit: 6f12ef9210f8ffa533fb0e21dd8ccc1deac6f275
+input_prd_commit: e8545a29e7a4502a282f06f21c044de1e0b5cd79
 ---
 
 # TheBridge REST API contract
 
-This is the canonical HTTP design required before HW11 implementation. It is a proposal for Juan/Jorge review, based on draft PR #13. Architecture, staged rollout, assumptions A-1–A-5 and product gates Q-1–Q-3 are defined in [architecture.md](_bmad-output/planning-artifacts/architecture.md). No endpoint is claimed to exist yet.
+This is the canonical HTTP design required before HW11 implementation. It is a proposal for Juan/Jorge review, reconciled with PR #13 at the input commit above. That PR is ready for review but remains unmerged and has no recorded human approval. Architecture, staged rollout, decisions A-1–A-5 and product gates Q-1–Q-3 are defined in [architecture.md](_bmad-output/planning-artifacts/architecture.md). No endpoint is claimed to exist yet.
 
 ## 1. Global rules
 
 Base path: `/api`. JSON request bodies require `Content-Type: application/json`; 32 KiB body limit. HTTPS is required in deployed environments. Dates are UTC ISO 8601 strings. Database IDs are 24-hex strings exposed as `id`; malformed IDs return 400 and well-formed unknown IDs return 404. Catalog IDs such as `/works/OL45804W` are separate strings, not database IDs.
 
-One-resource successes are `{ "data": resource }`. Collections are `{ "data": [...], "meta": { "page": 1, "limit": 20, "total": 0, "totalPages": 0 } }`. `total` counts the authorized, filtered collection before pagination; empty results return 200 with an empty array. `totalPages` is `ceil(total / limit)`. Delete/withdraw successes return 200 JSON, not an empty 204. Unknown fields/operators are refused rather than forwarded to database queries.
+One-resource successes are `{ "data": resource }`. Collections are `{ "data": [...], "meta": { "page": 1, "limit": 10, "total": 0, "totalPages": 0 } }`. `total` counts the authorized, filtered collection before pagination; empty results return 200 with an empty array. `totalPages` is `ceil(total / limit)`. Delete/withdraw successes return 200 JSON, not an empty 204. Unknown fields/operators are refused rather than forwarded to database queries.
 
 Every API error, including parser, auth, validation, origin-policy, rate-limit, method and fallback errors, has exactly this shape; `code` equals the HTTP status:
 
@@ -35,7 +36,7 @@ Every API error, including parser, auth, validation, origin-policy, rate-limit, 
 | 429 | Auth rate limit exceeded; send `Retry-After`. |
 | 500 / 503 | Sanitized unexpected fault / unavailable backing service. |
 
-**Pagination:** every database collection endpoint accepts `page` (integer 1–10000, default 1) and `limit` (integer 1–100, default 20). Reject arrays, objects, operators and numeric fractions with 400. Pages beyond the end return an empty array with the actual total. Default sort is descending `createdAt`, then descending `id`, for deterministic ties. `q` is a trimmed string of at most 100 characters; server search ignores case/accents and escapes regex syntax. No arbitrary sort expressions are accepted.
+**Pagination:** every database collection endpoint accepts `page` (integer 1–10000, default 1) and `limit` (integer 1–100, default 10, following FR-13/NFR-6). Reject arrays, objects, operators and numeric fractions with 400. Pages beyond the end return an empty array with the actual total. Default sort is descending `createdAt`, then descending `id`, for deterministic ties. `q` is a trimmed string of at most 100 characters; server search ignores case/accents and escapes regex syntax. No arbitrary sort expressions are accepted.
 
 **Concurrency:** mutable resources expose `version`, initially 1. PATCH/DELETE on an existing copy/listing/request and POST Request creation require a strong `If-Match` header such as `"3"`; it refers to the target copy/listing/request version, or to the listing version for POST Request. Missing/malformed headers return 400; a valid but stale version returns 409. The server increments public versions on representation changes; body-supplied versions/status/owner fields are rejected. GET collections return versions so controls can send this header. All Pending creation and lifecycle commands also write one internal Listing revision in the same transaction; it is not returned and does not invalidate quotes when only a Pending request is inserted.
 
@@ -173,7 +174,7 @@ Saving the same catalogId twice returns 409; deleting a foreign/unknown favorite
 
 AdminOverview is `{memberCount, listingsByStatus, requestsByStatus}` with every enum key present and nonnegative counts. MemberSummary is `{id, name, email, createdAt}` for role Member only. AdminListing extends Listing with owner email and moderation `{reason, removedAt, removedBy: {id, name}}` or null. AdminRequest extends Request with owner/requester emails. Password hashes and bearer tokens are never selected or serialized. q searches relevant title/name/email fields on these Admin-only collections, using safe bounded text search.
 
-ADMIN-05 requires a reason and records the acting Admin. Closed returns 409; Removed returns 409 (no reason overwrite); Available removal executes the atomic effects in architecture. **Reserved removal is deliberately gated by unresolved PRD Q-1:** proposed temporary behavior is 409 with `"Reserved listing moderation requires an agreed settlement policy."` Do not claim that exception fully implements draft FR-24, which currently says any non-Closed listing. Juan's product clarification must amend this contract before implementing Reserved moderation. There are no account-edit/delete, role-change or arbitrary-request-edit Admin endpoints.
+ADMIN-05 requires a reason and records the acting Admin. Closed returns 409; Removed returns 409 (no reason overwrite or copy release from a newer listing); Available removal executes the atomic effects in architecture. **Reserved removal is deliberately gated by unresolved PRD Q-1:** proposed temporary behavior is 409 with `"Reserved listing moderation requires an agreed settlement policy."` FR-24 now explicitly rejects Accepted requests and releases their copies, but this does not establish physical return of a Lent book. The exception does not fully implement FR-24. Juan's product clarification must amend this contract before implementing Reserved moderation. There are no account-edit/delete, role-change or arbitrary-request-edit Admin endpoints.
 
 ## 4. Examples and mutation preconditions
 

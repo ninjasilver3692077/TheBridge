@@ -10,7 +10,15 @@ Status: local documentation prepared for human review. **Issue #9 remains open u
 - [Architecture spine](ARCHITECTURE-SPINE.md) and `.memlog.md`: BMAD invariants and append-only decision provenance.
 - [AI log](../../../../AI-LOG.md): assistance, corrections, verification and remaining human review.
 
-Main source: `dc7bd2c`. Draft PRD source: PR #13 at `6f12ef9210f8ffa533fb0e21dd8ccc1deac6f275`. The PRD/brief remain on Juan's branch; no peer-owned artifacts were merged or edited to manufacture a dependency approval.
+Main source: `dc7bd2c`. Current PRD source: PR #13 at `e8545a29e7a4502a282f06f21c044de1e0b5cd79`, reconciled on 2026-10-28. The PRD is marked final and ready for review but remains unmerged and has no recorded human approval. The original 2026-10-27 internal reports used `6f12ef9210f8ffa533fb0e21dd8ccc1deac6f275`; their historical input is preserved. The PRD/brief remain on Juan's branch; no peer-owned artifacts were merged or edited to manufacture a dependency approval.
+
+## Input update on 2026-10-28
+
+- Contract version 2 uses the FR-13/NFR-6 default of 10 per collection page; the Open Library maximum of 20 is unchanged.
+- A-4/A-5 now distinguish product requirements confirmed by the PRD author from architecture approval; A-1–A-3 remain proposed interpretations.
+- FR-24 now explicitly rejects Accepted requests. Q-1 remains necessary because rejection does not prove physical return of a Lent book, and removing an already Removed listing must not release a newer listing's copy.
+- Both open peer PRs (#7 and #13) requested Edwin's review. After explicit user authorization, [Gate 1 spec approval](https://github.com/ninjasilver3692077/TheBridge/pull/7#issuecomment-6466834313) was posted on #7 at bfc6e29 and a [Request changes review](https://github.com/ninjasilver3692077/TheBridge/pull/13#pullrequestreview-5681311863) on #13 at e8545a2. Neither peer branch was edited. Review notes remain separate from this architecture branch.
+- The PRD update changes no operation IDs or FR/NFR IDs. The architecture and contract remain proposals requiring Juan and Jorge's approval.
 
 ## What is resolved for review
 
@@ -58,16 +66,16 @@ Backend endpoint, transaction, auth, typecheck and Vercel checks are **future re
 
 - Confirm the repository-path exception for real root routes/models/shared types.
 - Review contract DTOs, errors, version preconditions and transaction/write-barrier semantics.
-- Confirm A-1–A-5, especially loan/rental completion, pending offers and changed-term acceptance.
+- Confirm A-1–A-3, especially loan/rental completion and changed-term acceptance; A-4/A-5 record requirements already confirmed by the PRD author.
 - Resolve Q-1 before implementing Reserved-listing moderation; the temporary 409 is explicitly not full FR-24 compliance.
 - Keep hosting resources/shared limiter, demo content and grading-source confirmation assigned to their downstream owners.
 - Record both approvals before merging this architecture and treating its proposed choices as agreed.
 
-## Publication by the user
+## Publication authorization and commands
 
-AGENTS.md, Starting a session: “Commit locally from the person's account, but never push or open pull requests; give the person the exact commands to run.” Consequently the agent prepares a local commit and this handoff; the person publishes it.
+AGENTS.md normally says: “Commit locally from the person's account, but never push or open pull requests; give the person the exact commands to run.” On 2026-10-28 the user explicitly authorized the agent to perform necessary commits, pulls and pushes and handle the remaining publication steps. This is a session authorization for publishing this documentation branch and its draft PR; it does not edit team policy or authorize commits to main, force pushes, merges, deployment, self-review or implementation before spec approval.
 
-From the repository directory, after checking the commit:
+Publication uses the following commands from the repository directory, after checking the commit and remote state:
 
 ```powershell
 git status
@@ -75,7 +83,7 @@ git log -1 --oneline
 git push -u origin docs/architecture
 ```
 
-Then open [the branch comparison](https://github.com/ninjasilver3692077/TheBridge/compare/main...docs/architecture?expand=1), create a **draft documentation PR** targeting main, and request review from `ninjasilver3692077` (Juan) and `jfontx` (Jorge). This planning PR contains no implementation stage to approve on the author's behalf.
+Then create a **draft documentation PR** targeting main and request review from `ninjasilver3692077` (Juan) and `jfontx` (Jorge). The agent can perform this through the authenticated GitHub API under the explicit authorization above. [Branch comparison](https://github.com/ninjasilver3692077/TheBridge/compare/main...docs/architecture?expand=1) remains a manual fallback. This planning PR contains no implementation stage to approve on the author's behalf.
 
 Suggested title: `docs: define full-stack architecture and API contract`.
 
@@ -89,7 +97,7 @@ Issue #9 needs an agreed architecture and REST contract before the Express skele
 ## Review inputs
 
 - Main: dc7bd2c.
-- Draft PRD: PR #13 at 6f12ef9; no peer-owned PRD files changed.
+- PRD input: PR #13 at e8545a2, ready for review but unmerged; no peer-owned PRD files changed.
 - Canonical HTTP contract: api-design.md.
 - Main artifact: _bmad-output/planning-artifacts/architecture.md.
 
@@ -103,7 +111,7 @@ Issue #9 needs an agreed architecture and REST contract before the Express skele
 
 ## Decisions requiring review
 
-Please review the proposed root graded-module layout, canonical API ownership and offline Admin bootstrap. A-1–A-5 remain product assumptions. Q-1 explicitly gates Reserved-listing moderation pending settlement rules; actual hosting/limiter resources and grading-source confirmation have downstream owners.
+Please review the proposed root graded-module layout, canonical API ownership and offline Admin bootstrap. A-1–A-3 remain product interpretations requiring confirmation; A-4/A-5 now record confirmed PRD requirements. Collection pagination defaults to 10. Q-1 explicitly gates Reserved-listing moderation pending safe physical-return rules; actual hosting/limiter resources and grading-source confirmation have downstream owners.
 
 Required reviewers: Juan and Jorge. Keep issue #9 open until both approve; subsequent code still requires an approved OpenSpec change.
 

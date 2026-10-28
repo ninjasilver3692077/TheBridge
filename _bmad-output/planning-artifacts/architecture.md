@@ -2,12 +2,12 @@
 title: "TheBridge full-stack architecture"
 status: proposed
 created: 2026-10-27
-updated: 2026-10-27
+updated: 2026-10-28
 issue: 9
 branch: docs/architecture
 owner: Edwin Montaño
 required_reviewers: [Juan Esteban González, Jorge Fontalvo]
-input_prd_commit: 6f12ef9210f8ffa533fb0e21dd8ccc1deac6f275
+input_prd_commit: e8545a29e7a4502a282f06f21c044de1e0b5cd79
 ---
 
 # TheBridge full-stack architecture
@@ -16,16 +16,18 @@ input_prd_commit: 6f12ef9210f8ffa533fb0e21dd8ccc1deac6f275
 
 This proposal gives frontend and backend contributors one implementation boundary for issue [#9](https://github.com/ninjasilver3692077/TheBridge/issues/9). **Juan and Jorge must approve it before the architecture/API contract is treated as agreed.** This branch contains documentation, not an Express implementation, a deployment, or a completed security audit.
 
-**Review first:** [A-1–A-5 and Q-1–Q-3](#product-assumptions-and-questions-for-review) identify the decisions still needing confirmation. Q-1 blocks Reserved-listing moderation until the PRD owner defines settlement; it does not block the Express skeleton. The architecture and API proposal can be reviewed independently of provisioning hosting resources.
+**Review first:** [A-1–A-5 and Q-1–Q-3](#product-assumptions-and-questions-for-review) distinguish pending architecture decisions from product requirements now confirmed by the PRD author. Q-1 blocks Reserved-listing moderation until the PRD owner defines safe settlement; it does not block the Express skeleton. The architecture and API proposal can be reviewed independently of provisioning hosting resources.
 
-Inputs checked on 2026-10-27:
+Inputs reconciled on 2026-10-28:
 
 - Existing application and policies at `main` commit `dc7bd2c`.
-- Draft [PRD](https://github.com/ninjasilver3692077/TheBridge/blob/6f12ef9210f8ffa533fb0e21dd8ccc1deac6f275/_bmad-output/planning-artifacts/prd.md), FR-1–FR-28 and NFR-1–NFR-19, from PR #13. Its assumptions are not product approvals.
-- [Product brief](https://github.com/ninjasilver3692077/TheBridge/blob/6f12ef9210f8ffa533fb0e21dd8ccc1deac6f275/_bmad-output/planning-artifacts/product-brief.md) and [rubric addendum](https://github.com/ninjasilver3692077/TheBridge/blob/6f12ef9210f8ffa533fb0e21dd8ccc1deac6f275/_bmad-output/planning-artifacts/briefs/brief-TheBridge-2026-10-26/addendum.md).
+- [PRD](https://github.com/ninjasilver3692077/TheBridge/blob/e8545a29e7a4502a282f06f21c044de1e0b5cd79/_bmad-output/planning-artifacts/prd.md), FR-1–FR-28 and NFR-1–NFR-19, from PR #13. It is marked final and ready for review, but remains unmerged and has no recorded human approval. Its introduction records Juan's confirmation of the former drafting assumptions; this does not approve the architecture.
+- [Product brief](https://github.com/ninjasilver3692077/TheBridge/blob/e8545a29e7a4502a282f06f21c044de1e0b5cd79/_bmad-output/planning-artifacts/product-brief.md) and [rubric addendum](https://github.com/ninjasilver3692077/TheBridge/blob/e8545a29e7a4502a282f06f21c044de1e0b5cd79/_bmad-output/planning-artifacts/briefs/brief-TheBridge-2026-10-26/addendum.md).
 - Original HW11–HW15 README/rubric files in the supplied course ZIP; current storage, catalog, validation, filters, routing and login modules.
 
 The canonical HTTP contract is root [`api-design.md`](../../api-design.md). This document owns boundaries, persistence, deployment and migration. The [architecture spine](architecture/architecture-TheBridge-2026-10-27/ARCHITECTURE-SPINE.md) records cross-team invariants. Do not independently maintain a second endpoint table in architecture, OpenSpec, or client code: changes cite the same operation IDs and update the contract in an approved PR first.
+
+The PRD update fixes collection pagination at 10 by default and explicitly locks Pending offered copies; the contract follows both. A-4/A-5 now record confirmed product requirements, while A-1–A-3 remain proposed interpretations. FR-24 now defines rejection of Accepted requests on removal, but physical return and repeated removal against a reused copy still need clarification. Original 2026-10-27 review reports remain evidence for their original input; this reconciliation does not turn them into approval of the updated PRD.
 
 ## 2. Decisions and alternatives
 
@@ -138,7 +140,7 @@ Required unique indexes:
 - Listing `libraryBookId` where status is Available or Reserved: one open listing per copy.
 - Request `(listingId, requesterId)` where status is Pending or Accepted: one active request per member/listing.
 - Request `listingId` where status is Accepted: at most one winner.
-- Request `offeredBookId` where it is an ObjectId and status is Pending or Accepted: one active exchange offer per offered copy, subject to assumption A-4.
+- Request `offeredBookId` where it is an ObjectId and status is Pending or Accepted: one active exchange offer per offered copy, following the confirmed product requirement in A-4.
 
 Create and verify these indexes in an explicit migration/bootstrap step; `unique` is not a Mongoose validator. Map duplicate-key errors to 409. **Every Pending request creation and every edit/accept/withdraw/remove/complete command conditionally writes the same Listing internal revision in its transaction.** Reads alone are insufficient: after a race, a retried insertion must re-read status/quote and cannot create Pending after reservation or closure. Merely inserting a Pending request increments internal revision but does not change the public Listing version, so other Pending quotes remain current. Terms edits increment public version; acceptance compares the request's quoted version against that public version before changing state.
 
@@ -165,7 +167,7 @@ All losers of a concurrent accept/withdraw/remove operation receive 409 without 
 
 ### Sessions and client lifecycle
 
-JWTs carry `sub`, `role`, `iss`, `aud`, `iat`, `exp`, signed with an allowlisted HS256 algorithm and a strong server secret. Proposed issuer/audience are `thebridge-api`/`thebridge-client`. Twenty-four-hour expiry follows draft FR-4 and remains assumption A-5. Middleware verifies signature/claims, loads the Account and checks the stored role before authorizing an operation. Decode-only client checks never authorize server actions.
+JWTs carry `sub`, `role`, `iss`, `aud`, `iat`, `exp`, signed with an allowlisted HS256 algorithm and a strong server secret. Proposed issuer/audience are `thebridge-api`/`thebridge-client`. Twenty-four-hour expiry follows FR-4, now confirmed by the PRD author (A-5). Middleware verifies signature/claims, loads the Account and checks the stored role before authorizing an operation. Decode-only client checks never authorize server actions.
 
 Use bcryptjs asynchronous hashing with a proposed cost of 12; reject passwords below eight characters or above 72 UTF-8 bytes rather than silently truncating. Normalize email consistently before lookup/indexing. Login returns one generic wrong-credentials message. Registration rejects privileged fields such as `role` or `passwordHash` with 400.
 
@@ -261,7 +263,7 @@ Do not import localStorage data silently into accounts. Any optional personal-da
 | NFR-8–NFR-14 | Hashing, JWT, origin allowlist, typed validation, safe text, environment secrets, Helmet and deployment-wide rate limiting. |
 | NFR-15–NFR-19 | Shared types, service boundaries, no code comments, English UI, responsive/accessibility and async feedback. |
 
-Before the Express skeleton: Juan/Jorge approve layout, API source, runtime, graded-path strategy and bootstrap approach; PRD FR IDs are available in draft. Before each domain implementation: approve its OpenSpec change against this contract and resolve the relevant product gates below. Do not mark issue #9 complete until both required human reviews are recorded.
+Before the Express skeleton: Juan/Jorge approve layout, API source, runtime, graded-path strategy and bootstrap approach; PRD FR IDs are available in PR #13, which is ready for review but not approved. Before each domain implementation: approve its OpenSpec change against this contract and resolve the relevant product gates below. Do not mark issue #9 complete until both required human reviews are recorded.
 
 ### Product assumptions and questions for review
 
@@ -269,10 +271,10 @@ Before the Express skeleton: Juan/Jorge approve layout, API source, runtime, gra
 | --- | --- | --- |
 | A-1 | Completing Loan/Rental records physical return, not initial pickup; otherwise FR-21 would make an absent copy Available. | Juan confirms wording with PRD before completion story. |
 | A-2 | Owner withdrawal closes with reason Withdrawn instead of physical deletion, preserving participants' request history. | Juan/Jorge approve contract semantics for FR-12. |
-| A-3 | Pending requests keep quoted terms; after listing edit, acceptance conflicts until requester cancels/resubmits on the new version. | Juan confirms this safety interpretation of draft FR-11 before editing/acceptance stories. |
-| A-4 | One Pending/Accepted exchange offer per offered copy; copy mutations are blocked by that activity, matching the existing client behavior. | Juan/Jorge confirm against FR-7/FR-9/FR-17 before exchange implementation. |
-| A-5 | Eight-character minimum, 24-hour session, account-only server favorites, cancellation and no automatic ownership transfer follow PRD assumptions. | PRD owner confirms; architecture does not silently approve them. |
-| Q-1 | FR-24 allows removing Reserved listings and releasing their copies, including Lent books with Accepted requests. The resulting request/copy settlement is unspecified. | Juan must define it before that branch is implemented; API currently specifies 409 for Reserved removal as an explicit proposed exception, not full FR-24 compliance. |
+| A-3 | Pending requests keep quoted terms; after listing edit, acceptance conflicts until requester cancels/resubmits on the new version. | Juan confirms this safety interpretation of FR-11 before editing/acceptance stories; preserving Pending alone does not define consent to changed terms. |
+| A-4 | One Pending/Accepted exchange offer per offered copy; copy mutations are blocked by that activity, matching the existing client behavior. | Pending exclusivity/mutation blocking is explicit in FR-9 at e8545a2; Accepted reservation follows FR-19. Product requirement confirmed; technical enforcement still needs Juan/Jorge architecture approval. |
+| A-5 | Eight-character minimum, 24-hour session, account-only server favorites, cancellation and no automatic ownership transfer follow FR-1/FR-4/FR-6/FR-20/FR-21. | The PRD introduction records Juan's confirmation at e8545a2. These are product requirements, not pending drafting assumptions; PR #13 and this architecture still require review. |
+| Q-1 | FR-24 now explicitly rejects Pending/Accepted requests and releases their copies, including Lent books. Rejection does not establish physical return; repeating removal of an old Removed listing must not release a copy used by a newer listing. | Juan must clarify safe copy availability before that branch is implemented; API currently specifies 409 for Reserved/Removed removal as an explicit proposed exception, not full FR-24 compliance. |
 | Q-2 | Shared limiter backend, Vercel project/account/region and actual origins/URLs are not provisioned here. | Coordinator resolves in deployment/security stories and supplies real verification evidence. |
 | Q-3 | Instructor's evaluator root and directory-source handling need confirmation. | Coordinator confirms before weekly submission; root actual modules avoid the known path mismatch. |
 

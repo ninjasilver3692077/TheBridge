@@ -23,7 +23,7 @@ These restrictions applied to Milestone 2, the React frontend prototype, and des
 - Bootstrap Admin with an explicit idempotent offline command and one-off environment secrets; registration always creates Member and no HTTP promotion endpoint exists.
 - Reserve/close publications through conditional, versioned transactions and active-state unique indexes; client state never authorizes ownership or status changes.
 - Target one Vercel origin with API routing before SPA fallback. A later approved hosting story changes `/TheBridge/`, deployment scripts and coordinator-owned documentation; this proposal leaves the current app untouched.
-- Architecture assumptions A-1–A-5 need product confirmation. Q-1 explicitly gates moderation of Reserved listings because the draft PRD does not define settlement of Lent copies and Accepted requests. Actual origins, limiter infrastructure, demo data and grading-root confirmation remain owned follow-up gates.
+- PRD #13 at e8545a2 confirms the product requirements recorded in A-4/A-5 and fixes collection pagination at 10 by default. Architecture interpretations A-1–A-3 still need confirmation. Q-1 gates Reserved moderation: FR-24 now rejects Accepted requests, but returning a Lent copy to Available still needs a physical-return policy; repeated removal must not release a newer listing's copy. Actual origins, limiter infrastructure, demo data and grading-root confirmation remain owned follow-up gates.
 
 These proposals are documentation for review, not proof of implementation, deployment, human approval or completed course grading.
 

@@ -114,7 +114,7 @@ function describeActivity(book, request) {
   };
 }
 
-export function applyRequestActivity(books, requests) {
+function applyRequestActivity(books, requests) {
   const activeByBook = new Map();
 
   requests.forEach((request) => {

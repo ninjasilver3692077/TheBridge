@@ -30,7 +30,6 @@ function CreateListingPage() {
 
   return (
     <AppShell
-      activePage="create-listing"
       title="Create Listing"
       subtitle="Choose how you want to share your book"
     >

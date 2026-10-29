@@ -4,7 +4,7 @@ import { markBookPublished } from "./myBooksStorage.js";
 const STORAGE_KEY = "thebridge:user-listings";
 export const LISTINGS_EVENT = "thebridge:listings-updated";
 
-export function loadUserListings() {
+function loadUserListings() {
   try {
     const stored = JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]");
     return Array.isArray(stored) ? stored : [];
@@ -21,7 +21,7 @@ export function findListingById(id) {
   return loadAllListings().find((listing) => listing.id === id);
 }
 
-export function saveUserListing(listing) {
+function saveUserListing(listing) {
   localStorage.setItem(
     STORAGE_KEY,
     JSON.stringify([...loadUserListings(), listing]),
@@ -54,7 +54,7 @@ function listingOffer(modality, values) {
   return { price: Number(values.salePrice), duration: null };
 }
 
-export function createUserListing(book, modality, values) {
+function createUserListing(book, modality, values) {
   return {
     id: `user-listing-${Date.now()}`,
     sourceBookId: book.id,

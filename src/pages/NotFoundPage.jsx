@@ -5,7 +5,6 @@ import { buttonPrimary, eyebrow, pageLead } from "../styles/ui.js";
 function NotFoundPage() {
   return (
     <AppShell
-      activePage=""
       title="Page not found"
       subtitle="The requested page does not exist"
     >

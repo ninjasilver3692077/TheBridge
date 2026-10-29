@@ -427,3 +427,40 @@ Pending team review before submission.
 ### Learning
 
 Refactors for a line limit are safest when each extraction matches an existing responsibility and the rendered output is compared before and after. Comparing the rendered HTML found no differences, which made it possible to split large components without changing the interface.
+
+
+## Story 0.1 - Remove Dead Code
+
+### Prompt or task
+
+Remove code and files with no consumers from the application and drop the "Listing Details" entry from the navigation, keeping the listing detail routes and the protected brand and hero assets.
+
+### AI suggestions
+
+- Plan the change with `/opsx:propose` as `0-1-remove-dead-code` and implement it with `/opsx:apply` after the spec was approved.
+- Delete the two iCloud conflict copies (`useListingForm 2.js`, `MyBooksHeader 2.jsx`), the unused `SearchBar.jsx`, the legacy HTML prototype (`legacy/`, `js/`, `css/`, `assets/`), and the three seller photo SVGs.
+- Remove `searchAddBookCatalog`, `isSimulatedSearchError`, `extraCatalogBooks`, `addBookCatalog`, and the `sellerPhotos` field, then drop the `activePage` prop from `AppShell` and the pages.
+- Remove the "Listing Details" navigation entry with its sidebar special case and `NavIcon` case, un-export symbols without consumers, and strip the UTF-8 BOM from seven files.
+- Archive the change with `/opsx:archive`, which synced the delta into `openspec/specs/app-navigation/spec.md`.
+
+### Changes adopted
+
+- All deletions and removals listed above, in commits `5d755ff` (code) and `9969915` (archive).
+- `FieldError` stays exported, as the proposal allows.
+- Listing detail routes remain reachable from the listings, and `public/assets/brand/thebridge-logo.svg` and `public/assets/hero/find-your-bridge.webp` were not touched.
+
+### Human changes and review
+
+The spec was approved by the reviewer at Gate 1 (`bfc6e29`) before any code was written. The reviewer asked to check the five mobile bar destinations and `aria-current`, including a detail page where no entry may be marked. At Gate 2 the reviewer ran `bmad-code-review` on `9969915`, found no functional regressions, and requested this log entry.
+
+### Tests and verification
+
+- `npm run lint` and `npm run build`: both exit with code 0.
+- `openspec validate --all --strict --no-interactive`: passes.
+- `npx knip`: reports only `FieldError`, the planned exception.
+- `git ls-files | grep -E ' 2\.|^legacy/|^js/|^css/|^assets/|SearchBar|seller-copy'` prints nothing.
+- Reviewer browser check on the build with base `/TheBridge/`: 36 route and width combinations (375, 768, 1280, and 1440 px), navigation and `aria-current`, quick view and Escape, adding a book, publishing a Sale listing, sending and accepting requests, and theme persistence, with no JavaScript errors or local HTTP failures. Catalog searches used controlled Open Library responses, so the external service availability was not tested.
+
+### Learning
+
+Deleting by consumer count is safe only when each removal has a grep or Knip check that proves nothing references it, and the spec's verification line per task made that check repeatable. A commit co-author line records that AI helped, but the team log is what documents what was adopted and how it was verified.

@@ -15,7 +15,6 @@ function MarketplacePage() {
 
   return (
     <AppShell
-      activePage="marketplace"
       title="Marketplace"
       subtitle="Books shared by people in your community"
     >

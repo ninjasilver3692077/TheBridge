@@ -55,7 +55,6 @@ function MyBooksPage() {
 
   return (
     <AppShell
-      activePage="my-books"
       title="My Books"
       subtitle="Manage the books in your personal library"
     >

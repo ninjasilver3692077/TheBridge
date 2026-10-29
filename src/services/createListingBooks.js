@@ -1,6 +1,6 @@
 import { isBookFree, loadMyBooksWithActivity } from "./myBooksStorage.js";
 
-export function loadAvailableMyBooks() {
+function loadAvailableMyBooks() {
   return loadMyBooksWithActivity().filter(
     (book) =>
       book &&

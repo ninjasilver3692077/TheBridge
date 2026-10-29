@@ -12,7 +12,6 @@ function LoginPage() {
 
   return (
     <AppShell
-      activePage=""
       title="Sign in"
       subtitle="Access your personal TheBridge space"
     >

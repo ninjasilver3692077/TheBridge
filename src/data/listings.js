@@ -18,11 +18,6 @@ export const listings = [
     "owner": "Alex R.",
     "university": "Universidad de La Sabana",
     "status": "Available",
-    "sellerPhotos": [
-      "assets/listings/seller-copy-good.svg",
-      "assets/listings/seller-copy-like-new.svg",
-      "assets/listings/seller-copy-used.svg"
-    ],
     "createdAt": "2026-09-25"
   },
   {
@@ -44,11 +39,6 @@ export const listings = [
     "owner": "Sofia M.",
     "university": "Universidad de La Sabana",
     "status": "Available",
-    "sellerPhotos": [
-      "assets/listings/seller-copy-like-new.svg",
-      "assets/listings/seller-copy-good.svg",
-      "assets/listings/seller-copy-used.svg"
-    ],
     "createdAt": "2026-09-24"
   },
   {
@@ -70,11 +60,6 @@ export const listings = [
     "owner": "Mateo C.",
     "university": "Universidad de La Sabana",
     "status": "Available",
-    "sellerPhotos": [
-      "assets/listings/seller-copy-good.svg",
-      "assets/listings/seller-copy-like-new.svg",
-      "assets/listings/seller-copy-used.svg"
-    ],
     "createdAt": "2026-09-23"
   },
   {
@@ -96,11 +81,6 @@ export const listings = [
     "owner": "Valentina P.",
     "university": "Universidad de La Sabana",
     "status": "Available",
-    "sellerPhotos": [
-      "assets/listings/seller-copy-like-new.svg",
-      "assets/listings/seller-copy-good.svg",
-      "assets/listings/seller-copy-used.svg"
-    ],
     "createdAt": "2026-09-22"
   },
   {
@@ -122,11 +102,6 @@ export const listings = [
     "owner": "Daniel G.",
     "university": "Universidad de La Sabana",
     "status": "Available",
-    "sellerPhotos": [
-      "assets/listings/seller-copy-good.svg",
-      "assets/listings/seller-copy-like-new.svg",
-      "assets/listings/seller-copy-used.svg"
-    ],
     "createdAt": "2026-09-21"
   },
   {
@@ -148,11 +123,6 @@ export const listings = [
     "owner": "Camila T.",
     "university": "Universidad de La Sabana",
     "status": "Available",
-    "sellerPhotos": [
-      "assets/listings/seller-copy-like-new.svg",
-      "assets/listings/seller-copy-good.svg",
-      "assets/listings/seller-copy-used.svg"
-    ],
     "createdAt": "2026-09-20"
   },
   {
@@ -174,11 +144,6 @@ export const listings = [
     "owner": "Nicolas B.",
     "university": "Universidad de La Sabana",
     "status": "Available",
-    "sellerPhotos": [
-      "assets/listings/seller-copy-good.svg",
-      "assets/listings/seller-copy-like-new.svg",
-      "assets/listings/seller-copy-used.svg"
-    ],
     "createdAt": "2026-09-19"
   },
   {
@@ -200,11 +165,6 @@ export const listings = [
     "owner": "Laura V.",
     "university": "Universidad de La Sabana",
     "status": "Available",
-    "sellerPhotos": [
-      "assets/listings/seller-copy-like-new.svg",
-      "assets/listings/seller-copy-good.svg",
-      "assets/listings/seller-copy-used.svg"
-    ],
     "createdAt": "2026-09-18"
   },
   {
@@ -226,11 +186,6 @@ export const listings = [
     "owner": "Samuel R.",
     "university": "Universidad de La Sabana",
     "status": "Available",
-    "sellerPhotos": [
-      "assets/listings/seller-copy-like-new.svg",
-      "assets/listings/seller-copy-good.svg",
-      "assets/listings/seller-copy-used.svg"
-    ],
     "createdAt": "2026-09-17"
   },
   {
@@ -252,11 +207,6 @@ export const listings = [
     "owner": "Mariana L.",
     "university": "Universidad de La Sabana",
     "status": "Available",
-    "sellerPhotos": [
-      "assets/listings/seller-copy-good.svg",
-      "assets/listings/seller-copy-like-new.svg",
-      "assets/listings/seller-copy-used.svg"
-    ],
     "createdAt": "2026-09-16"
   },
   {
@@ -278,11 +228,6 @@ export const listings = [
     "owner": "Gabriela N.",
     "university": "Universidad de La Sabana",
     "status": "Available",
-    "sellerPhotos": [
-      "assets/listings/seller-copy-good.svg",
-      "assets/listings/seller-copy-like-new.svg",
-      "assets/listings/seller-copy-used.svg"
-    ],
     "createdAt": "2026-09-15"
   },
   {
@@ -304,11 +249,6 @@ export const listings = [
     "owner": "Juan S.",
     "university": "Universidad de La Sabana",
     "status": "Available",
-    "sellerPhotos": [
-      "assets/listings/seller-copy-good.svg",
-      "assets/listings/seller-copy-like-new.svg",
-      "assets/listings/seller-copy-used.svg"
-    ],
     "createdAt": "2026-09-14"
   },
   {
@@ -330,11 +270,6 @@ export const listings = [
     "owner": "Isabella C.",
     "university": "Universidad de La Sabana",
     "status": "Available",
-    "sellerPhotos": [
-      "assets/listings/seller-copy-good.svg",
-      "assets/listings/seller-copy-like-new.svg",
-      "assets/listings/seller-copy-used.svg"
-    ],
     "createdAt": "2026-09-13"
   },
   {
@@ -356,11 +291,6 @@ export const listings = [
     "owner": "Felipe A.",
     "university": "Universidad de La Sabana",
     "status": "Available",
-    "sellerPhotos": [
-      "assets/listings/seller-copy-good.svg",
-      "assets/listings/seller-copy-like-new.svg",
-      "assets/listings/seller-copy-used.svg"
-    ],
     "createdAt": "2026-09-12"
   },
   {
@@ -382,11 +312,6 @@ export const listings = [
     "owner": "Sara J.",
     "university": "Universidad de La Sabana",
     "status": "Available",
-    "sellerPhotos": [
-      "assets/listings/seller-copy-like-new.svg",
-      "assets/listings/seller-copy-good.svg",
-      "assets/listings/seller-copy-used.svg"
-    ],
     "createdAt": "2026-09-11"
   },
   {
@@ -408,11 +333,6 @@ export const listings = [
     "owner": "David M.",
     "university": "Universidad de La Sabana",
     "status": "Available",
-    "sellerPhotos": [
-      "assets/listings/seller-copy-good.svg",
-      "assets/listings/seller-copy-like-new.svg",
-      "assets/listings/seller-copy-used.svg"
-    ],
     "createdAt": "2026-09-10"
   },
   {
@@ -434,11 +354,6 @@ export const listings = [
     "owner": "Ana P.",
     "university": "Universidad de La Sabana",
     "status": "Available",
-    "sellerPhotos": [
-      "assets/listings/seller-copy-good.svg",
-      "assets/listings/seller-copy-like-new.svg",
-      "assets/listings/seller-copy-used.svg"
-    ],
     "createdAt": "2026-09-09"
   },
   {
@@ -460,11 +375,6 @@ export const listings = [
     "owner": "Juliana F.",
     "university": "Universidad de La Sabana",
     "status": "Available",
-    "sellerPhotos": [
-      "assets/listings/seller-copy-like-new.svg",
-      "assets/listings/seller-copy-good.svg",
-      "assets/listings/seller-copy-used.svg"
-    ],
     "createdAt": "2026-09-08"
   },
   {
@@ -486,11 +396,6 @@ export const listings = [
     "owner": "Miguel D.",
     "university": "Universidad de La Sabana",
     "status": "Available",
-    "sellerPhotos": [
-      "assets/listings/seller-copy-like-new.svg",
-      "assets/listings/seller-copy-good.svg",
-      "assets/listings/seller-copy-used.svg"
-    ],
     "createdAt": "2026-09-07"
   },
   {
@@ -512,11 +417,6 @@ export const listings = [
     "owner": "Paula K.",
     "university": "Universidad de La Sabana",
     "status": "Available",
-    "sellerPhotos": [
-      "assets/listings/seller-copy-like-new.svg",
-      "assets/listings/seller-copy-good.svg",
-      "assets/listings/seller-copy-used.svg"
-    ],
     "createdAt": "2026-09-06"
   },
   {
@@ -538,11 +438,6 @@ export const listings = [
     "owner": "Esteban Q.",
     "university": "Universidad de La Sabana",
     "status": "Available",
-    "sellerPhotos": [
-      "assets/listings/seller-copy-good.svg",
-      "assets/listings/seller-copy-like-new.svg",
-      "assets/listings/seller-copy-used.svg"
-    ],
     "createdAt": "2026-09-05"
   },
   {
@@ -564,11 +459,6 @@ export const listings = [
     "owner": "Manuela H.",
     "university": "Universidad de La Sabana",
     "status": "Available",
-    "sellerPhotos": [
-      "assets/listings/seller-copy-good.svg",
-      "assets/listings/seller-copy-like-new.svg",
-      "assets/listings/seller-copy-used.svg"
-    ],
     "createdAt": "2026-09-04"
   },
   {
@@ -590,11 +480,6 @@ export const listings = [
     "owner": "Tomas E.",
     "university": "Universidad de La Sabana",
     "status": "Available",
-    "sellerPhotos": [
-      "assets/listings/seller-copy-good.svg",
-      "assets/listings/seller-copy-like-new.svg",
-      "assets/listings/seller-copy-used.svg"
-    ],
     "createdAt": "2026-09-03"
   },
   {
@@ -616,11 +501,6 @@ export const listings = [
     "owner": "Maria C.",
     "university": "Universidad de La Sabana",
     "status": "Available",
-    "sellerPhotos": [
-      "assets/listings/seller-copy-like-new.svg",
-      "assets/listings/seller-copy-good.svg",
-      "assets/listings/seller-copy-used.svg"
-    ],
     "createdAt": "2026-09-02"
   }
 ];

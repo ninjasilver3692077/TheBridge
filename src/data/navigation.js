@@ -1,4 +1,4 @@
-﻿export const navigationItems = [
+export const navigationItems = [
   { id: "home", label: "Home", path: "/", icon: "home" },
   {
     id: "marketplace",
@@ -13,12 +13,6 @@
     label: "Create Listing",
     path: "/create-listing",
     icon: "edit",
-  },
-  {
-    id: "listing",
-    label: "Listing Details",
-    path: "/listing/book-01",
-    icon: "listing",
   },
   { id: "requests", label: "Requests", path: "/requests", icon: "requests" },
   { id: "about", label: "About", path: "/about", icon: "about" },

@@ -1,4 +1,4 @@
-﻿export const listingModalities = [
+export const listingModalities = [
   {
     id: "Exchange",
     label: "Exchange",

@@ -5,7 +5,6 @@ import TopHeader from "./TopHeader.jsx";
 
 function AppShell({
   children,
-  activePage = "home",
   title = "TheBridge",
   subtitle = "Find your next book connection",
 }) {
@@ -42,7 +41,6 @@ function AppShell({
   return (
     <div className="min-h-screen bg-canvas text-ink">
       <Sidebar
-        activePage={activePage}
         collapsed={sidebarCollapsed}
         onToggle={() => setSidebarCollapsed((current) => !current)}
       />
@@ -65,7 +63,7 @@ function AppShell({
         </main>
       </div>
 
-      <BottomNavigation activePage={activePage} />
+      <BottomNavigation />
     </div>
   );
 }

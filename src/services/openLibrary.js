@@ -18,7 +18,7 @@ function pickLanguage(languages = []) {
   return languages.includes("eng") ? "eng" : languages[0] || null;
 }
 
-export function normalizeOpenLibraryBooks(docs = []) {
+function normalizeOpenLibraryBooks(docs = []) {
   return docs.slice(0, 20).map((book) => {
     const year = book.first_publish_year || null;
 

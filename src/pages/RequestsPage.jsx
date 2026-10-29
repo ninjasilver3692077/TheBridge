@@ -58,7 +58,6 @@ function RequestsPage() {
 
   return (
     <AppShell
-      activePage="requests"
       title="Requests"
       subtitle="Manage book requests between members"
     >

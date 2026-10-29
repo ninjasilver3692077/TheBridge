@@ -366,6 +366,7 @@ An Admin can remove any Listing that is not Closed or Removed, with a required r
 - The Listing becomes Removed, disappears from the Marketplace, and shows the not found page to every Visitor.
 - Pending Requests on it become Rejected, and their Offered Books return to Available.
 - An Accepted Sale or Exchange Request becomes Rejected, and the Library Book and any Offered Book return to Available.
+- Removing an Available Listing that has no Accepted Request, with or without Pending Requests, returns its Library Book to Available, so the Owner can publish it again. Acceptance case: publish a book, remove its Listing as Admin before accepting any Request, and check that the Listing is Removed and the Library Book is Available.
 - An Accepted Loan or Rental Request stays Accepted and the Library Book stays Lent, because the copy is still with the borrower. The Owner can still mark that Request Completed after the physical return (FR-21); the Listing stays Removed, and only then does the Library Book return to Available.
 - Removing a Listing that is already Removed is rejected and changes nothing; it never frees a Library Book that is linked to another Listing.
 - The Owner sees the Listing as Removed with the reason in My Books.

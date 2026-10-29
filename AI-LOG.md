@@ -428,6 +428,70 @@ Pending team review before submission.
 
 Refactors for a line limit are safest when each extraction matches an existing responsibility and the rendered output is compared before and after. Comparing the rendered HTML found no differences, which made it possible to split large components without changing the interface.
 
+## Issue #9 — Full-stack architecture and API contract (2026-10-27)
+
+### Task and workflow
+
+The user delegated the complete issue #9 documentation task after reviewing its step-by-step plan. The assigned workflow was `bmad-agent-architect` followed by `bmad-architecture`, on branch `docs/architecture`. The audience is Juan and Jorge as required reviewers and the contributors who will implement the client/API integration.
+
+### Inputs and assistance adopted
+
+- Updated from `main` at `dc7bd2c` and read the integrated AGENTS/CONTRIBUTING policies.
+- Read the issue, existing client services, the draft PRD at PR #13 commit `6f12ef9210f8ffa533fb0e21dd8ccc1deac6f275`, its brief/addendum, and the original HW11–HW15 rubrics. Juan-owned draft artifacts were read without copying or editing them on this branch.
+- Resolved the local BMAD architect/workflow configuration and recorded constraints, proposals and assumptions through the shared memlog script.
+- Proposed one canonical root `api-design.md`, real root graded route/model/type modules, a layered Express boundary, transactional request transitions, controlled Admin bootstrap and a single-origin Vercel target.
+- Checked current package metadata and primary runtime, hosting, database and authentication documentation; no dependency was added to the application.
+- Ran independent input-reconciliation and architecture-gate checks required by the skill. These are internal artifact checks, not the human code review or approval required by the team.
+
+### Corrections during verification
+
+Input reconciliation identified missing participant-visible exchange metadata, incomplete LibraryBook/activity references, filter options lost through pagination, an untestable HW11 create sequence without fixture copies, expiry monitoring limited to protected views, and missing weekly deployment/AI-LOG gates. These were corrected in the documentation. The React seed version was corrected from the package.json lower bound to lockfile-resolved 19.3.0.
+
+### Human review and remaining decisions
+
+Pending review by Juan and Jorge. All new architecture choices remain proposed. Product assumptions are indexed as A-1–A-5; Q-1 explicitly gates moderation of Reserved listings until the PRD owner defines how Accepted requests and Lent books are settled. Hosting resources, the shared limiter and grading-source confirmation have named follow-up gates. No human approval, backend behavior, production URL or course grade is invented.
+
+### Verification and scope
+
+- `npm run lint`: passed with zero errors and warnings.
+- `npm run build`: passed; the existing frontend bundle and SPA fallback were generated.
+- BMAD spine mechanical lint: passed with zero findings.
+- Contract/document checks cover operation-ID uniqueness, method/path uniqueness, FR/NFR traceability, JSON examples and relative links; detailed results and the independent-review disposition are recorded in the architecture handoff.
+- No application code, package files, assets, deployment settings, peer-owned PRD or team policies were changed. Publication and PR creation remain a human action under AGENTS.md.
+
+### Learning
+
+An API contract must describe enough data for both sides to implement independently, including the participant's view of an exchange and the global options behind a paginated list. Explicit product gates are more useful than silently inventing state transitions for books that may already be physically lent.
+
+## Issue #9 — Reconcile the updated PRD (2026-10-28)
+
+The user asked to check and perform remaining assigned work. Live GitHub issue and pull-request metadata confirmed issue #9 is Edwin's only open assigned implementation/planning task; PRs #7 and #13 both request Edwin's review. Issue #11 names Edwin as a future reviewer, but its owner has not opened the baseline-spec PR. Peer reviews were conducted from separate worktrees using the BMAD review layers; notes and copy-ready Spanish comments remain outside this branch. No peer-owned source, PRD, approval or GitHub comment was modified.
+
+PR #13 advanced from 6f12ef9 to e8545a2 and became ready for review. Reconciled its explicit page-size default (10), Pending offered-copy guard, confirmed product assumptions and Accepted-request moderation effect into architecture, contract version 2, decisions, spine and handoff. The Open Library cap remains 20. Completion timing, changed-term acceptance and safe physical availability after moderation still require product decisions; this work does not resolve them on Juan's behalf or approve our own architecture.
+
+Verification checks contract operation uniqueness, all 28 FR/19 NFR identifiers, JSON examples, pagination consistency, relative links/anchors and BMAD spine lint. These are documentation checks; the frontend lint/build evidence above remains dated 2026-10-27 and no new runtime validation is claimed. AGENTS still requires local commits only; the user publishes the branch and opens the draft PR.
+
+### Explicit publication authorization
+
+After reviewing the prepared comments, the user explicitly authorized publishing both peer reviews and then instructed the agent to handle necessary commits, pulls, pushes and publication while preserving review gates. Git Credential Manager authenticated as AndresMonca; PR heads and authors were checked before posting. Posted the Gate 1 spec approval on #7 at bfc6e29 and a Request changes review on #13 at e8545a2. No peer code/document was edited. This subsequent authorization permits publishing this architecture branch and draft PR without changing AGENTS, merging, deploying, self-approving or implementing unapproved code.
+
+## Issue #9 / PR #14 — Address both human reviews (2026-10-28)
+
+### Authorization and review provenance
+
+The user had deferred this PR until both reviews arrived, then explicitly instructed the agent to make the required changes following the contract. Juan requested changes on 9f12986; Jorge approved that same revision. Those are human review states for the earlier content, not approval of these corrections. The existing session explicitly authorizes commits, pulls, pushes, PR publication and review comments through the account holder's own AndresMonca identity. There is no documented team-wide approval of a permanent exception to AGENTS; none is claimed, and no policy file or reviewer identity is changed.
+
+### Assistance and changes adopted
+
+Used `bmad-architecture` in update mode with stable AD identifiers. Marked FR-24 coverage partial, bounded the transaction runner to three body attempts with jitter and three commit calls per transaction, separated unknown-commit reconciliation from body replay, and separated LibraryBook internal revision from its public domain version. Incorporated the six review follow-ups: explicit rejection causes, public bearer behavior, JWT startup validation, dummy bcrypt comparison, client-storage residual-risk acknowledgement and ADMIN-05 reason validation. Rechecked primary MongoDB/Mongoose/JWT/bcrypt references; these are documented implementation requirements, not installed code.
+
+The newer PRD at a1fc15f remains unmerged. Reconfirmation and Reserved-moderation/completion reconciliation stays in issue #15 after PR #13 merges, as the issue and Juan's review specify. No peer-owned PRD was edited and no newer product decision was silently replaced. The proposed client-storage risk is not labelled accepted by the team.
+
+### Verification and human follow-up
+
+The architecture method requires independent input/gate/editorial checks; they are internal artifact checks and never formal approval of our own PR. Deterministic checks cover the spine, unchanged operation identifiers, traceability, JSON examples, local links/anchors, review-item consistency and documentation-only scope. The updated revision will be published in the existing branch and both reviewers asked to assess it. Backend retry/auth behavior remains future test evidence; the implementation stories must exercise the added failure cases before approval. Issue #9 remains open; no merge or deployment is performed.
+
+Lint and build passed on this correction, with the existing 147-module frontend build preserved. Spine lint returned zero findings and contract checks passed for 31 unchanged operation IDs, 28 FR/19 NFR references and five JSON examples. Independent rubric/input and technology checks passed. The seam reviewer identified one clarification, now applied: only a protected-operation 401 matching the active session generation/account invalidates that session; AUTH-02 wrong credentials remains a form error. The structure suggestion to split the retry policy into four paragraphs was applied without changing its sentences. The four Mermaid blocks remain unchanged from their previously parsed form. No new browser or backend runtime verification is claimed for these documentation-only changes.
 
 ## Story 0.1 - Remove Dead Code
 

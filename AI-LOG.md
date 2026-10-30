@@ -557,3 +557,13 @@ The three documents were cross-checked for leftover statements about an unmerged
 ### Learning
 
 A decision that changes a state machine has to be traced through every place that restates it (contract, matrix, assumptions table, spine, traceability), because each copy otherwise keeps the old answer.
+
+### Review correction (PR #19, requested by Andrés)
+
+Andrés found three contract contradictions in `3f55f67`; all three were confirmed against the text and fixed in this PR:
+
+- **Terminal requests after a released offer.** The nullability rule now applies only to unflagged Pending and to Accepted requests. Rejected, Cancelled and Completed requests keep their last offer, or null if it was released, hold no copy, and have `needsReconfirmation` false.
+- **Snapshots that REQUEST-08 replaces.** A new "Quote snapshots" rule in `api-design.md` §2 lists the only two changes allowed: a listing edit to a non-Exchange modality releases the offer, and REQUEST-08 replaces the quote, `listing.modality` and the offer together. Juan chose not to keep earlier quotes as history, since no FR requires it.
+- **Reserved status versus a Pending hold.** A Pending offer keeps its copy Available and blocks it through derived activity; keeping, moving or releasing it changes only the internal revision. The PRD's "keeps its Offered Book Reserved" is mapped to that hold, and status Reserved still starts at acceptance.
+
+Two acceptance cases were added to architecture §9: reconfirm an offer and then cancel or reject it, and end a flagged request whose offer was released through each rejection path. These remain downstream tests; no backend exists yet.

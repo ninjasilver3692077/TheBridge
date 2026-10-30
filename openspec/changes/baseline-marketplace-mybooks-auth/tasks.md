@@ -11,7 +11,7 @@
 - [x] 2.1 Run `openspec validate baseline-marketplace-mybooks-auth --strict`; verify it exits with code 0 and prints "is valid"
 - [x] 2.2 Run `git diff --name-only main`; verify every path starts with `openspec/changes/baseline-marketplace-mybooks-auth/` and no file under `src/`, `public/`, or the project root changed
 - [x] 2.3 Run `npm run lint` and `npm run build`; verify both exit with code 0
-- [ ] 2.4 Run `npm run dev`, sign in, and walk through each scenario in the three specs on `/marketplace`, `/my-books`, `/add-book`, and `/login`, at 375px and 1280px; verify each one behaves as written, and fix the spec (not the code) wherever it does not
+- [x] 2.4 Run `npm run dev`, sign in, and walk through each scenario in the three specs on `/marketplace`, `/my-books`, `/add-book`, and `/login`, at 375px and 1280px; verify each one behaves as written, and fix the spec (not the code) wherever it does not
 
 ## Workflow follow-up
 

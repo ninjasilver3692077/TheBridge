@@ -556,7 +556,7 @@ Pending. Jorge reviews the spec at Gate 1; the manual browser pass in task 2.4 i
 - `openspec validate baseline-marketplace-mybooks-auth --strict`: passes.
 - `npm run lint` and `npm run build`: both exit with code 0.
 - The filtering, statistics, offer-label, price-format, request-activity, and library-book logic was run in Node against the real modules with a stand-in for `localStorage`, and its output matched every number and string used in the scenarios. The accent-insensitive search was checked with a synthetic listing because the sample data has no accented text.
-- Browser-only behavior (focus handling, dialog layering, scroll lock, live regions, responsive layout) was traced in the source but not run; task 2.4 covers it.
+- Manual browser pass (task 2.4) done by the owner on /login, /marketplace, /my-books, and /add-book at 375px and 1280px; every scenario matched the specs.
 
 ### Learning
 

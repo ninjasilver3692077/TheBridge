@@ -528,3 +528,32 @@ The spec was approved by the reviewer at Gate 1 (`bfc6e29`) before any code was 
 ### Learning
 
 Deleting by consumer count is safe only when each removal has a grep or Knip check that proves nothing references it, and the spec's verification line per task made that check repeatable. A commit co-author line records that AI helped, but the team log is what documents what was adopted and how it was verified.
+
+## Issue #15 — Reconcile architecture and API contract with the merged PRD (2026-10-30)
+
+### Task and workflow
+
+Incorporate the PRD decisions of PR #13 that issue #9 had left open: Request reconfirmation after a Listing edit (FR-11, FR-18, FR-19), Reserved-listing removal (FR-24), and Loan/Rental completion after the physical return, also on a Removed Listing (FR-21). Documentation only, on `docs/reconcile-architecture-prd`; the PRD was not edited.
+
+### Assistance and changes adopted
+
+- Read FR-11, FR-15 and FR-17 to FR-24 in the merged PRD and traced each rule through `api-design.md`, architecture §4 and §8, and the spine.
+- Added the `needsReconfirmation` field to Request and one operation, REQUEST-08 (`PATCH /api/requests/:id/reconfirm`); no existing operation ID changed.
+- Rewrote the transition matrix: edit flags Pending requests and releases or keeps Offered Books, accept refuses a flagged request, reconfirm swaps the Offered Book atomically, complete also applies to a Loan/Rental on a Removed Listing, and removal covers Reserved Listings by modality.
+- Closed A-1, A-3 and Q-1, replaced the "unmerged PR #13" statements, updated traceability (FR-24 is no longer partial) and added the downstream tests to §9.
+
+### Design choices that go beyond the PRD text
+
+- A listing edit also increments the version of requests that are already flagged, so a requester holding an older If-Match gets 409 instead of agreeing to terms they have not seen.
+- A released Offered Book is stored as null, which keeps the one-active-offer-per-copy index valid; the request keeps its original quoted modality until it is reconfirmed.
+- An edit that does not change modality or terms flags nothing, following the wording of FR-11.
+
+These need Edwin's and Jorge's review as contract decisions; the PRD does not state them.
+
+### Verification and scope
+
+The three documents were cross-checked for leftover statements about an unmerged PRD, a partial FR-24 and the temporary Reserved 409, and the new table rows were checked for column counts. No code, runtime or backend behavior was exercised; the new rules are required downstream tests, not tested behavior.
+
+### Learning
+
+A decision that changes a state machine has to be traced through every place that restates it (contract, matrix, assumptions table, spine, traceability), because each copy otherwise keeps the old answer.

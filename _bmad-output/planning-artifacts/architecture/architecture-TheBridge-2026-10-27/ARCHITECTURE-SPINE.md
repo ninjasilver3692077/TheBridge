@@ -7,9 +7,9 @@ paradigm: layered modular monolith
 scope: Milestone 3 client and Express API consistency
 status: final
 created: 2026-10-27
-updated: 2026-10-28
+updated: 2026-10-30
 binds: [FR-1..FR-28, NFR-1..NFR-19]
-sources: [issue-9, PR-13-at-e8545a2, main-at-dc7bd2c, HW11..HW15]
+sources: [issue-9, issue-15, PR-13-merged-at-50edc11, main-at-dc7bd2c, HW11..HW15]
 companions: [../../architecture.md, ../../../../api-design.md]
 ---
 
@@ -71,9 +71,9 @@ flowchart LR
 
 ### AD-7 — Preserve quotes, history and participant access
 
-- **Binds:** FR-11–FR-12, FR-18–FR-21; assumptions A-1–A-3 and confirmed product requirement A-4.
+- **Binds:** FR-11–FR-12, FR-18–FR-21, FR-24; decisions A-1, A-3 and A-4, all confirmed by the merged PRD.
 - **Prevents:** silently accepting edited terms, deleting request history or promising unavailable books.
-- **Rule:** listings retain publication-time book/condition/notes snapshots. Requests retain request-time metadata, quoted modality/terms/version and offered-copy summaries; offered nullability follows quotedModality, never a later listing edit. A stale quote blocks acceptance under the current input version; issue #15 must replace A-3 with the newer merged PRD's reconfirmation contract before those stories. Withdrawal is soft closure; participant summaries survive and report current retained listing status. Request rejectionReason distinguishes owner rejection, competing acceptance, withdrawal and removal without leaking moderation text. Completion timing and Reserved moderation remain explicit merge-dependent contract gaps; FR-24 is partial, Q-1 cannot silently release a Lent copy. Offered-copy exclusivity follows FR-9/FR-19.
+- **Rule:** listings retain publication-time book/condition/notes snapshots. Requests retain request-time metadata, quoted modality/terms/version and offered-copy summaries; offered nullability follows quotedModality except while a request is flagged. A listing edit that changes modality or terms flags every Pending request `needsReconfirmation` without rewriting its quote; the owner cannot accept it until the requester reconfirms (REQUEST-08) or cancels, and an offer released or never chosen is picked at reconfirmation. Withdrawal is soft closure; participant summaries survive and report current retained listing status. Request rejectionReason distinguishes owner rejection, competing acceptance, withdrawal and removal without leaking moderation text. Loan/Rental completion records the physical return, also on a Removed listing; removing a Reserved listing rejects an Accepted Sale/Exchange request but leaves an Accepted Loan/Rental request and its Lent copy untouched until that return. Offered-copy exclusivity follows FR-9/FR-19.
 
 ### AD-8 — One origin, distinct API and browser routing
 
@@ -141,12 +141,12 @@ flowchart TB
 | FR-5–FR-9 | Catalog/favorites/library adapters and copy services | AD-1, AD-4, AD-9 |
 | FR-10–FR-16 | Listing services, public reads and statistics | AD-2, AD-4, AD-6, AD-8 |
 | FR-17–FR-23 | Request transition/moderation services | AD-5, AD-6, AD-7 |
-| FR-24 — partial | Available ADMIN-05 covered; Reserved branch pending merged PRD reconciliation in issue #15 | AD-6, AD-7 |
+| FR-24 | ADMIN-05 covers Available and Reserved removal; Loan/Rental completion after removal | AD-6, AD-7 |
 | FR-26–FR-28 | Existing theme/About and router fallback | AD-1, AD-8 |
 | NFR-1–NFR-19 | Contract, security and rollout gates | AD-1–AD-10 |
 
 ## Deferred and Approval Gates
 
-Architecture §8 owns the precise assumptions and responsible reviewers. Q-1 gates Reserved moderation until Juan settles safe availability of physically Lent copies; it does not gate the Express skeleton. A-1–A-3 require explicit product confirmation before their affected stories. A-4/A-5 record product requirements confirmed in PR #13 at e8545a2, while technical enforcement and architecture approval remain pending. Actual hosting URL/region, shared rate-limiter provider and grading-source collection are deployment/submission gates; their required behavior is fixed here even though resources are not provisioned. Demo seed content belongs to the coordinator/team. Payments, realtime, logistics, extra roles and automatic ownership transfer are outside this phase.
+Architecture §8 owns the precise assumptions and responsible reviewers. Q-2 and Q-3 do not gate the Express skeleton. A-1, A-3, A-4 and A-5 record product requirements confirmed by the merged PRD and Q-1 is closed, while technical enforcement and architecture approval remain pending. Actual hosting URL/region, shared rate-limiter provider and grading-source collection are deployment/submission gates; their required behavior is fixed here even though resources are not provisioned. Demo seed content belongs to the coordinator/team. Payments, realtime, logistics, extra roles and automatic ownership transfer are outside this phase.
 
-The newer PR #13 at a1fc15f already defines product decisions for A-1/A-3/Q-1 but remains unmerged. Issue #15, dependent on that merge, must reconcile reconfirmation, reservation ownership, Reserved moderation and completion together before affected implementation. This PR's three blocking review corrections and six follow-ups do not claim to close that dependency or secure approval of the updated architecture. Juan requested changes and Jorge approved the previous 9f12986 revision; both must review the updated content.
+Issue #15 reconciled reconfirmation, reservation ownership, Reserved moderation and completion with the PRD merged in PR #13, so the affected stories are no longer blocked by A-1, A-3 or Q-1. Juan requested changes and Jorge approved the previous 9f12986 revision; both must review the updated content.

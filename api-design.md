@@ -1,18 +1,18 @@
 ---
 title: "TheBridge REST API contract"
 status: proposed
-version: 3
+version: 4
 created: 2026-10-27
-updated: 2026-10-28
+updated: 2026-10-30
 issue: 9
-input_prd_commit: e8545a29e7a4502a282f06f21c044de1e0b5cd79
+input_prd_commit: 50edc11165184a186a5afb660a6ffb145feb1cb8
 ---
 
 # TheBridge REST API contract
 
-This is the canonical HTTP design required before HW11 implementation. It is a proposal for Juan/Jorge review, reconciled with PR #13 at the input commit above. That PR is ready for review but remains unmerged and has no recorded human approval. Architecture, staged rollout, decisions A-1–A-5 and product gates Q-1–Q-3 are defined in [architecture.md](_bmad-output/planning-artifacts/architecture.md). No endpoint is claimed to exist yet.
+This is the canonical HTTP design required before HW11 implementation. It is a proposal for Juan/Jorge review, reconciled with the PRD merged into `main` through PR #13 (input commit above). Architecture, staged rollout, decisions A-1–A-5 and product gate Q-2–Q-3 are defined in [architecture.md](_bmad-output/planning-artifacts/architecture.md). No endpoint is claimed to exist yet.
 
-Version 3 addresses PR #14 review feedback on transaction bounds, copy-version ownership, rejection reasons and auth boundaries. PR #13 now has newer unmerged decisions at `a1fc15f`; their reconfirmation/Reserved-moderation contract is deliberately pending [issue #15](https://github.com/ninjasilver3692077/TheBridge/issues/15) after merge. ADMIN-05/FR-24 are explicitly partial in this version; do not implement the older A-1/A-3/Q-1 branches as the final newer-PRD behavior.
+Version 4 reconciles the contract with the merged PRD ([issue #15](https://github.com/ninjasilver3692077/TheBridge/issues/15)): Request reconfirmation after a Listing edit (FR-11, FR-18, FR-19) through the `needsReconfirmation` field and REQUEST-08, release and choice of Offered Books, Reserved-listing removal by ADMIN-05 (FR-24), and Completion of an accepted Loan or Rental on a Removed Listing (FR-21). It closes A-1, A-3 and Q-1. Existing operation IDs are unchanged; REQUEST-08 is the only new operation. Version 3 addressed PR #14 review feedback on transaction bounds, copy-version ownership, rejection reasons and auth boundaries.
 
 ## 1. Global rules
 
@@ -57,9 +57,9 @@ Root `src/types.ts` will define these contracts once and both runtimes will impo
 | Account | `id`, `name`, `email`, `role: Member/Admin`, `createdAt`, `updatedAt`. Only own-account/Admin projections include email. |
 | PublicMember | `id`, `name`. |
 | BookMetadata | `catalogId`, `title`, `author`, `genre`, `coverUrl`, `year`, `publisher`, `isbn`, `language`. `genre` defaults to `Uncategorized`; cover/year/publisher/isbn/language may be null; all response keys are present. |
-| LibraryBook | `id`, `book: BookMetadata`, `condition`, `notes`, `status`, `currentListing`, `activity`, `lastModeration`, `version`, timestamps. currentListing is null or `{id, modality, status, version}` for its Available/Reserved listing. Activity is null or `{requestId, status, kind, counterpart: PublicMember}`; kind is ReceivedRequest or OfferedExchange, and status is Pending or Accepted. lastModeration is null or `{listingId, reason, removedAt}`. |
+| LibraryBook | `id`, `book: BookMetadata`, `condition`, `notes`, `status`, `currentListing`, `activity`, `lastModeration`, `version`, timestamps. currentListing is null or `{id, modality, status, version}` for its Available/Reserved listing; it is null for a Lent copy whose Listing was Removed, and activity then still shows the Accepted request. Activity is null or `{requestId, status, kind, counterpart: PublicMember}`; kind is ReceivedRequest or OfferedExchange, and status is Pending or Accepted. lastModeration is null or `{listingId, reason, removedAt}`. |
 | Listing | `id`, `libraryBookId`, `owner: PublicMember`, `book`, `condition`, `description`, `modality`, `terms`, `status`, `closureReason`, `version`, timestamps. book/condition/description are publication-time snapshots; closureReason is null, Withdrawn or Completed. |
-| Request | `id`, `listingId`, `owner: PublicMember`, `requester: PublicMember`, `listing: RequestListingSummary`, `offeredBookId`, `offeredBook`, `status`, `rejectionReason`, `quotedListingVersion`, `quotedModality`, `quotedTerms`, `version`, timestamps. offeredBookId/offeredBook are null exactly when quotedModality is not Exchange, regardless of later listing edits; offeredBook is an immutable `{id, book: BookMetadata, condition}` snapshot visible only to the participants/Admin. rejectionReason is defined below and never supplied by the client. |
+| Request | `id`, `listingId`, `owner: PublicMember`, `requester: PublicMember`, `listing: RequestListingSummary`, `offeredBookId`, `offeredBook`, `status`, `rejectionReason`, `needsReconfirmation`, `quotedListingVersion`, `quotedModality`, `quotedTerms`, `version`, timestamps. `needsReconfirmation` is true only on a Pending request whose Listing changed Modality or Terms after the quote; it is server-set, never supplied by the client. While it is false, offeredBookId/offeredBook are null exactly when quotedModality is not Exchange. While it is true they may also be null: the offer was released because the Listing is no longer Exchange, or the request was quoted under another Modality and has not chosen an Offered Book yet. offeredBook is an immutable `{id, book: BookMetadata, condition}` snapshot visible only to the participants/Admin. rejectionReason is defined below and never supplied by the client. |
 | RequestListingSummary | `id`, `title`, `author`, `coverUrl`, `modality`, `status`. Metadata/modality are immutable request-time snapshots, with modality equal to quotedModality; status is the current retained Listing status. |
 | Favorite | `id`, `book: BookMetadata`, `createdAt`. Favorite ID is independent of catalogId. |
 | AuthSession | `token`, `expiresAt`, `account: Account`. |
@@ -79,7 +79,7 @@ Condition is exactly `Like new`, `Good condition` or `Used copy`. Notes and mode
 
 These limits are proposed validation boundaries; Juan/Jorge confirm them with the PRD. Reject inconsistent non-null terms with 400. A Listing's book/condition/description snapshot is captured from its LibraryBook at publication and survives later copy edits or deletion; description captures notes at that time. Terms updates never accept arbitrary book/owner/condition replacements. Request creation captures the visible listing metadata, modality/terms, public version and offered-copy summary; later listing/copy edits never rewrite that quote.
 
-`Request.rejectionReason` is null unless status is Rejected. Rejected always has exactly one enum value: `OwnerRejected` (REQUEST-05), `CompetingRequestAccepted` (another request wins REQUEST-04), `ListingWithdrawn` (LISTING-07), or `ListingRemoved` (the currently supported ADMIN-05 branch). Server commands set reason and status in the same transaction and increment Request version. This field is included in participant/Admin projections and does not contain the Admin's free-text moderation reason. It distinguishes status-message causes without exposing private moderation text. Non-Rejected states, including Cancelled, use null. Future issue #15 transitions must preserve this distinction.
+`Request.rejectionReason` is null unless status is Rejected. Rejected always has exactly one enum value: `OwnerRejected` (REQUEST-05), `CompetingRequestAccepted` (another request wins REQUEST-04), `ListingWithdrawn` (LISTING-07), or `ListingRemoved` (ADMIN-05, for Pending requests and for an Accepted Sale or Exchange request). Server commands set reason and status in the same transaction and increment Request version. This field is included in participant/Admin projections and does not contain the Admin's free-text moderation reason. It distinguishes status-message causes without exposing private moderation text. Non-Rejected states, including Cancelled, use null. Reconfirmation (REQUEST-08) rejects nothing and sets no reason.
 
 ## 3. Operations
 
@@ -134,7 +134,7 @@ Register literal routes `stats` and `mine` before `:id`. All public list results
 
 #### Listing payloads and lifecycle
 
-CreateListingInput is `{libraryBookId, modality, terms}`. Server loads the authenticated Member's Available copy, atomically checks active/open relationships, creates the listing and marks the copy Published. Missing/foreign copy returns 404; occupied copy/open listing returns 409. EditListingInput is the full replacement `{modality, terms}` even though the method is PATCH; book identity/owner are immutable. Only Available listings can be edited/withdrawn. Pending requests retain their quoted terms and remain Pending after edit; accepting a stale quote conflicts under A-3.
+CreateListingInput is `{libraryBookId, modality, terms}`. Server loads the authenticated Member's Available copy, atomically checks active/open relationships, creates the listing and marks the copy Published. Missing/foreign copy returns 404; occupied copy/open listing returns 409. EditListingInput is the full replacement `{modality, terms}` even though the method is PATCH; book identity/owner are immutable. Only Available listings can be edited/withdrawn. When the replacement changes Modality or Terms, every Pending request on the Listing keeps its quoted Modality and Terms, stays Pending and is marked `needsReconfirmation` (FR-11); a replacement identical to the stored values changes nothing, including the version. If the new Modality is not Exchange, the Offered Book of each such request is released in the same transaction (`offeredBookId` becomes null and the copy is Available again). If it is Exchange, each Offered Book stays Reserved until the requester reconfirms with REQUEST-08. The owner cannot accept a flagged request.
 
 LISTING-07 is semantic withdrawal: it sets Closed/Withdrawn, releases the copy and rejects Pending requests atomically. A repeated or otherwise invalid state transition returns 409. Request participants still see retained summaries.
 
@@ -153,6 +153,7 @@ Allowed modality/condition query values are the corresponding enums; genre is a 
 | REQUEST-05 | PATCH `/api/requests/:id/reject` | Member, listing owner | Empty object, request If-Match | 200 `data: Request` Rejected | FR-19 |
 | REQUEST-06 | PATCH `/api/requests/:id/cancel` | Member, requester | Empty object, request If-Match | 200 `data: Request` Cancelled | FR-20 |
 | REQUEST-07 | PATCH `/api/requests/:id/complete` | Member, listing owner | Empty object, request If-Match | 200 `data: Request` Completed | FR-21 |
+| REQUEST-08 | PATCH `/api/requests/:id/reconfirm` | Member, requester | [ReconfirmInput](#request-payloads-and-transitions), request If-Match | 200 `data: Request` still Pending | FR-11, FR-18, FR-19 |
 
 #### Request payloads and transitions
 
@@ -160,7 +161,9 @@ SendRequestInput is `{offeredBookId}` for Exchange and `{}` otherwise; missing E
 
 `direction` is received or sent, default received. Requests are restricted to the token account, never an arbitrary account query parameter. q searches the authorized listing title/author and counterpart name only. Status filters use the Request status enum. Request summaries remain accessible after public listing removal/closure; a Member who is neither owner nor requester receives 404. No full public account/email projection is populated.
 
-Only Pending requests can be accepted, rejected or cancelled. Only Accepted requests on Reserved listings can be completed. Repeated, stale or terminal transitions return 409; no generic arbitrary-status update route exists. Accept is one transaction for the winner, listing, copy, offered copy and competitors. Read the state effects and A-1/A-3/A-4 in architecture §4/§8; client tabs refresh after successful mutations rather than guessing those effects.
+Only Pending requests can be accepted, rejected, cancelled or reconfirmed. A Pending request with `needsReconfirmation` true cannot be accepted (409); it can still be rejected or cancelled, and the requester clears it with REQUEST-08. Only Accepted requests can be completed: on a Reserved Listing, or, for a Loan or Rental, on a Removed Listing, because ADMIN-05 leaves that request Accepted. Repeated, stale or terminal transitions return 409; no generic arbitrary-status update route exists. Accept is one transaction for the winner, listing, copy, offered copy and competitors. Read the state effects and A-4 in architecture §4/§8; client tabs refresh after successful mutations rather than guessing those effects.
+
+ReconfirmInput is `{offeredBookId}` while the Listing's current Modality is Exchange and `{}` otherwise. It follows the 400, 404 and 409 rules of SendRequestInput, and the request's own current Offered Book does not count as occupied. REQUEST-08 requires a Pending request with `needsReconfirmation` true on an Available Listing, otherwise 409, and follows the participant rules of REQUEST-06. One transaction re-quotes the request to the Listing's current version, Modality and Terms, clears `needsReconfirmation`, increments the request version and, for Exchange, reserves the chosen book and frees the previous one when it differs. Every Listing edit that changes Modality or Terms increments the version of each Pending request on it, including requests already flagged, so a requester holding an older If-Match receives 409 and must refetch before agreeing to terms not yet seen. A quick view sends requests through REQUEST-01 with the same rules as the detail page (FR-15); the API has no quick-view operation.
 
 ### Favorites
 
@@ -180,11 +183,11 @@ Saving the same catalogId twice returns 409; deleting a foreign/unknown favorite
 | ADMIN-02 | GET `/api/admin/listings` | Admin | page, limit, q, optional status | 200 collection of AdminListing | FR-23 |
 | ADMIN-03 | GET `/api/admin/requests` | Admin | page, limit, q, optional status | 200 collection of AdminRequest | FR-23 |
 | ADMIN-04 | GET `/api/admin/members` | Admin | page, limit, optional q | 200 collection of MemberSummary | FR-23 |
-| ADMIN-05 | DELETE `/api/admin/listings/:id` | Admin | `{reason}`, If-Match | 200 `data: AdminListing` Removed | FR-24, with Q-1 gate |
+| ADMIN-05 | DELETE `/api/admin/listings/:id` | Admin | `{reason}`, If-Match | 200 `data: AdminListing` Removed | FR-24 |
 
 AdminOverview is `{memberCount, listingsByStatus, requestsByStatus}` with every enum key present and nonnegative counts. MemberSummary is `{id, name, email, createdAt}` for role Member only. AdminListing extends Listing with owner email and moderation `{reason, removedAt, removedBy: {id, name}}` or null. AdminRequest extends Request with owner/requester emails. Password hashes and bearer tokens are never selected or serialized. q searches relevant title/name/email fields on these Admin-only collections, using safe bounded text search.
 
-ADMIN-05 deliberately keeps DELETE with a JSON body. For an authenticated authorized Admin, a missing body/reason, non-string reason, whitespace-only reason or trimmed reason longer than 500 characters returns 400; do not silently discard the body or substitute an empty reason. A valid reason records the acting Admin. Closed returns 409; Removed returns 409 (no reason overwrite or copy release from a newer listing); Available removal executes the atomic effects in architecture. **FR-24 is partially covered:** Reserved removal still returns the proposed temporary 409 `"Reserved listing moderation requires an agreed settlement policy."` Newer unmerged PRD decisions define that branch, but [issue #15](https://github.com/ninjasilver3692077/TheBridge/issues/15) must reconcile its DTOs, transitions and Loan/Rental completion after PR #13 merges. This exception is not full FR-24 compliance and is not the final Reserved behavior. There are no account-edit/delete, role-change or arbitrary-request-edit Admin endpoints.
+ADMIN-05 deliberately keeps DELETE with a JSON body. For an authenticated authorized Admin, a missing body/reason, non-string reason, whitespace-only reason or trimmed reason longer than 500 characters returns 400; do not silently discard the body or substitute an empty reason. A valid reason records the acting Admin. Closed returns 409; Removed returns 409 and changes nothing, so a repeated removal never overwrites the reason or frees a copy that belongs to a newer listing. Available and Reserved listings execute the atomic effects in architecture §4 (FR-24): Pending requests become Rejected with `ListingRemoved` and their Offered Books return to Available; an Accepted Sale or Exchange request becomes Rejected with `ListingRemoved` and its Library Book and Offered Book return to Available; an Accepted Loan or Rental request stays Accepted and its Library Book stays Lent until the owner completes the request after the physical return (REQUEST-07). A Lent copy cannot be published again until then. There are no account-edit/delete, role-change or arbitrary-request-edit Admin endpoints.
 
 ## 4. Examples and mutation preconditions
 

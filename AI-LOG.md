@@ -528,3 +528,36 @@ The spec was approved by the reviewer at Gate 1 (`bfc6e29`) before any code was 
 ### Learning
 
 Deleting by consumer count is safe only when each removal has a grep or Knip check that proves nothing references it, and the spec's verification line per task made that check repeatable. A commit co-author line records that AI helped, but the team log is what documents what was adopted and how it was verified.
+
+## Issue #10 - Baseline specs for Marketplace, My Books, and auth (2026-10-30)
+
+### Prompt or task
+
+Run `/opsx:propose` for the change `baseline-marketplace-mybooks-auth`, describing the current behavior of Marketplace, My Books, Add Book, and sign-in as `auth`, `marketplace`, and `my-books` specs, without changing code.
+
+### AI suggestions
+
+- Read the current client (`App.jsx`, `LoginPage.jsx`, the Marketplace, My Books, and Add Book pages with their components, hooks, and services) and write the proposal, three spec deltas, design, and tasks.
+- Keep Add Book inside `my-books`, and keep the Open Library catalog search and Favorites out of `marketplace`, because the issue sends catalog search to changes 0-1 to 0-3.
+- Describe what the code does instead of what the PRD asks for, and list the differences in `design.md` as observed gaps.
+- Use the sample data's real values in scenarios (24 listings, "COP 36,833" average sale price, "The Hobbit" for Loan plus Fantasy).
+
+### Changes adopted
+
+- Everything above, as committed on `docs/spec-baseline-daniel`. No file under `src/` or `public/` changed.
+- Two statements were corrected during drafting after checking the code: the activity note on a Published book appears below the "Listed as" line instead of replacing the action, and the confirm step shows the language as its English name.
+
+### Human changes and review
+
+Pending. Jorge reviews the spec at Gate 1; the manual browser pass in task 2.4 is still to be done by the owner.
+
+### Tests and verification
+
+- `openspec validate baseline-marketplace-mybooks-auth --strict`: passes.
+- `npm run lint` and `npm run build`: both exit with code 0.
+- The filtering, statistics, offer-label, price-format, request-activity, and library-book logic was run in Node against the real modules with a stand-in for `localStorage`, and its output matched every number and string used in the scenarios. The accent-insensitive search was checked with a synthetic listing because the sample data has no accented text.
+- Browser-only behavior (focus handling, dialog layering, scroll lock, live regions, responsive layout) was traced in the source but not run; task 2.4 covers it.
+
+### Learning
+
+Running the pure logic against the real modules caught wording that reading alone would have missed, so scenario values are safer when copied from program output than from memory of the code. Behavior that lives only in the browser still needs a manual pass before the spec can be called verified.

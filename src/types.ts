@@ -52,7 +52,6 @@ export interface CurrentListingSummary {
   id: string;
   modality: Modality;
   status: ListingStatus;
-  version: number;
 }
 
 export interface LibraryBookActivity {
@@ -77,7 +76,6 @@ export interface LibraryBook extends Timestamps {
   currentListing: CurrentListingSummary | null;
   activity: LibraryBookActivity | null;
   lastModeration: ModerationNote | null;
-  version: number;
 }
 
 export interface Listing extends Timestamps {
@@ -91,7 +89,6 @@ export interface Listing extends Timestamps {
   terms: ListingTerms;
   status: ListingStatus;
   closureReason: ListingClosureReason | null;
-  version: number;
 }
 
 export interface OwnListing extends Listing {
@@ -131,11 +128,8 @@ export interface BookRequest extends Timestamps {
   offeredBook: OfferedBookSnapshot | null;
   status: RequestStatus;
   rejectionReason: RejectionReason | null;
-  needsReconfirmation: boolean;
-  quotedListingVersion: number;
   quotedModality: Modality;
   quotedTerms: ListingTerms;
-  version: number;
 }
 
 export interface Favorite {

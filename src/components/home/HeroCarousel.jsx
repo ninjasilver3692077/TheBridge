@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
+import { heroImages } from "../../data/homeContent.js";
 import CoverWall from "./CoverWall.jsx";
 
-const HERO_IMAGES = ["library-01.webp", "library-02.webp", "library-03.webp"].map(
+const HERO_IMAGES = heroImages.map(
   (file) => `${import.meta.env.BASE_URL}assets/hero/${file}`,
 );
 

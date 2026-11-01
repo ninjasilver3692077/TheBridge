@@ -1,6 +1,7 @@
 import {
   BrowserRouter,
   Navigate,
+  Outlet,
   Route,
   Routes,
   useParams,
@@ -17,11 +18,11 @@ import NotFoundPage from "./pages/NotFoundPage.jsx";
 import RequestsPage from "./pages/RequestsPage.jsx";
 import { findListingById } from "./services/listingsStorage.js";
 
-function ProtectedRoute({ children }) {
+function ProtectedRoute() {
   const isAuthenticated =
     localStorage.getItem("thebridge:authenticated") === "true";
 
-  return isAuthenticated ? children : <Navigate to="/login" replace />;
+  return isAuthenticated ? <Outlet /> : <Navigate to="/login" replace />;
 }
 
 function ListingRoute() {
@@ -39,41 +40,12 @@ function App() {
         <Route path="/marketplace" element={<MarketplacePage />} />
         <Route path="/listing/:id" element={<ListingRoute />} />
 
-        <Route
-          path="/my-books"
-          element={
-            <ProtectedRoute>
-              <MyBooksPage />
-            </ProtectedRoute>
-          }
-        />
-
-        <Route
-          path="/add-book"
-          element={
-            <ProtectedRoute>
-              <AddBookPage />
-            </ProtectedRoute>
-          }
-        />
-
-        <Route
-          path="/create-listing"
-          element={
-            <ProtectedRoute>
-              <CreateListingPage />
-            </ProtectedRoute>
-          }
-        />
-
-        <Route
-          path="/requests"
-          element={
-            <ProtectedRoute>
-              <RequestsPage />
-            </ProtectedRoute>
-          }
-        />
+        <Route element={<ProtectedRoute />}>
+          <Route path="/my-books" element={<MyBooksPage />} />
+          <Route path="/add-book" element={<AddBookPage />} />
+          <Route path="/create-listing" element={<CreateListingPage />} />
+          <Route path="/requests" element={<RequestsPage />} />
+        </Route>
 
         <Route path="/about" element={<AboutPage />} />
         <Route path="/login" element={<LoginPage />} />

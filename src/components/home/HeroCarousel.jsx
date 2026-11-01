@@ -1,7 +1,9 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
+import useRotatingIndex from "../../hooks/useRotatingIndex.js";
+import { heroImages } from "../../data/homeContent.js";
 import CoverWall from "./CoverWall.jsx";
 
-const HERO_IMAGES = ["library-01.webp", "library-02.webp", "library-03.webp"].map(
+const HERO_IMAGES = heroImages.map(
   (file) => `${import.meta.env.BASE_URL}assets/hero/${file}`,
 );
 
@@ -12,27 +14,10 @@ const imageTreatment =
 
 function HeroCarousel() {
   const [failed, setFailed] = useState(() => new Set());
-  const [activeIndex, setActiveIndex] = useState(0);
   const available = HERO_IMAGES.filter((src) => !failed.has(src));
   const count = available.length;
+  const activeIndex = useRotatingIndex(count, ROTATION_MS);
   const activeSrc = count > 0 ? available[activeIndex % count] : null;
-
-  useEffect(() => {
-    if (count < 2) {
-      return undefined;
-    }
-
-    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
-      return undefined;
-    }
-
-    const timer = window.setInterval(
-      () => setActiveIndex((current) => (current + 1) % count),
-      ROTATION_MS,
-    );
-
-    return () => window.clearInterval(timer);
-  }, [count]);
 
   const markFailed = (src) =>
     setFailed((current) => new Set(current).add(src));

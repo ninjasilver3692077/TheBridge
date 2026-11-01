@@ -6,19 +6,11 @@ import NavIcon from "./NavIcon.jsx";
 function SidebarNavigation({ collapsed }) {
   const location = useLocation();
 
-  const isCurrentRoute = (item) => {
-    if (item.path === "/") {
-      return location.pathname === "/";
-    }
-
-    return location.pathname === item.path;
-  };
-
   return (
     <nav className="mt-8 flex-1 overflow-y-auto" aria-label="TheBridge sections">
       <ul className="space-y-1">
         {navigationItems.map((item) => {
-          const isActive = isCurrentRoute(item);
+          const isActive = location.pathname === item.path;
 
           return (
             <li key={item.id}>

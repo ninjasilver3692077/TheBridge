@@ -16,13 +16,12 @@ function ListingRequestModal({ listing, open, onClose, onSent }) {
     return null;
   }
 
-  const availableBooks =
-    listing.modality === "Exchange" ? loadAvailableExchangeBooks() : [];
+  const isExchange = listing.modality === "Exchange";
+  const availableBooks = isExchange ? loadAvailableExchangeBooks() : [];
 
   const handleSubmit = (event) => {
     event.preventDefault();
-
-    if (listing.modality === "Exchange" && !selectedBookId) {
+    if (isExchange && !selectedBookId) {
       setError("Select one of your available books to continue.");
       return;
     }
@@ -59,7 +58,7 @@ function ListingRequestModal({ listing, open, onClose, onSent }) {
         <RequestOfferRows listing={listing} />
 
         <form onSubmit={handleSubmit}>
-          {listing.modality === "Exchange" && (
+          {isExchange && (
             <ExchangeBookOptions
               books={availableBooks}
               selectedBookId={selectedBookId}
@@ -69,9 +68,7 @@ function ListingRequestModal({ listing, open, onClose, onSent }) {
           )}
 
           <RequestDialogActions
-            sendDisabled={
-              listing.modality === "Exchange" && availableBooks.length === 0
-            }
+            sendDisabled={isExchange && availableBooks.length === 0}
             onCancel={onClose}
           />
         </form>

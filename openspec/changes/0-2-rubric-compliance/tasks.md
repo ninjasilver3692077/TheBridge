@@ -9,8 +9,8 @@
 ## 2. Components under ~80 lines
 
 - [x] 2.1 Nest the four protected routes under one `<Route element={<ProtectedRoute />}>` that renders `<Outlet />`; verify that while logged out `/my-books`, `/add-book`, `/create-listing`, and `/requests` redirect to `/login`, and after logging in each page opens
-- [ ] 2.2 Create `src/hooks/useStoredState.js` and use it in `RequestsPage`, `MyBooksPage`, and `useListingFilters`; verify that accepting a request updates the Requests list, adding a book appears in My Books, and publishing a listing appears in Marketplace, all without a page reload
-- [ ] 2.3 Split `ListingFieldControls.jsx` into `FieldError.jsx`, `DurationSelect.jsx`, and `PriceInput.jsx`; extract `ExchangeBookOption.jsx` from `ExchangeBookOptions`; name the modality check once in `ListingRequestModal`; verify that Create Listing shows its price and duration validation errors and that an Exchange request can still be sent from a listing
+- [x] 2.2 Create `src/hooks/useStoredState.js` and use it in `RequestsPage`, `MyBooksPage`, and `useListingFilters`; verify that accepting a request updates the Requests list, adding a book appears in My Books, and publishing a listing appears in Marketplace, all without a page reload
+- [x] 2.3 Split `ListingFieldControls.jsx` into `FieldError.jsx`, `DurationSelect.jsx`, and `PriceInput.jsx`; extract `ExchangeBookOption.jsx` from `ExchangeBookOptions`; name the modality check once in `ListingRequestModal`; verify that Create Listing shows its price and duration validation errors and that an Exchange request can still be sent from a listing
 
 ## 3. Verify
 

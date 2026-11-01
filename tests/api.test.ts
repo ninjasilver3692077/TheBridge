@@ -91,6 +91,18 @@ test("invalid gzip body is 400", async () => {
   assert.equal(body.code, 400);
 });
 
+for (const encoding of ["br", "zstd"]) {
+  test(`invalid ${encoding} body is 400`, async () => {
+    const { response, body } = await call("/api/health", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "Content-Encoding": encoding },
+      body: Buffer.from("not compressed"),
+    });
+    assert.equal(response.status, 400);
+    assert.equal(body.code, 400);
+  });
+}
+
 test("valid gzip body still reaches the route", async () => {
   const { response } = await call("/api/health", {
     method: "POST",

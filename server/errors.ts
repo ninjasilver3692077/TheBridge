@@ -24,13 +24,15 @@ function isDuplicateKeyError(error: unknown): boolean {
   return typeof error === "object" && error !== null && "code" in error && error.code === 11000;
 }
 
+const decompressionErrorCode = /^(Z_|ERR__ERROR_|ZSTD_error)/;
+
 function isInvalidEncodedBody(error: unknown): boolean {
   return (
     typeof error === "object" &&
     error !== null &&
     "code" in error &&
     typeof error.code === "string" &&
-    error.code.startsWith("Z_")
+    decompressionErrorCode.test(error.code)
   );
 }
 

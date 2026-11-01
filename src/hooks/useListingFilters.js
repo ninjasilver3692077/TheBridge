@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import {
   computeListingStats,
   filterListings,
@@ -8,22 +8,13 @@ import {
   LISTINGS_EVENT,
   loadAllListings,
 } from "../services/listingsStorage.js";
+import { useStoredState } from "./useStoredState.js";
+
+const listingEvents = [LISTINGS_EVENT];
 
 export function useListingFilters() {
   const [filters, setFilters] = useState(initialListingFilters);
-  const [allListings, setAllListings] = useState(loadAllListings);
-
-  useEffect(() => {
-    const refreshListings = () => setAllListings(loadAllListings());
-
-    window.addEventListener(LISTINGS_EVENT, refreshListings);
-    window.addEventListener("storage", refreshListings);
-
-    return () => {
-      window.removeEventListener(LISTINGS_EVENT, refreshListings);
-      window.removeEventListener("storage", refreshListings);
-    };
-  }, []);
+  const allListings = useStoredState(loadAllListings, listingEvents);
 
   const filteredListings = useMemo(
     () => filterListings(allListings, filters),

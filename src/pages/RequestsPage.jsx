@@ -1,8 +1,9 @@
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import AppShell from "../components/AppShell.jsx";
 import RequestList from "../components/requests/RequestList.jsx";
 import RequestsHeader from "../components/requests/RequestsHeader.jsx";
 import RequestsTabs from "../components/requests/RequestsTabs.jsx";
+import { useStoredState } from "../hooks/useStoredState.js";
 import { loadMyBooks } from "../services/myBooksStorage.js";
 import { getRequestStatusMessage } from "../services/requestStatus.js";
 import {
@@ -11,23 +12,13 @@ import {
   updateRequestStatus,
 } from "../services/requestsStorage.js";
 
+const requestEvents = [REQUESTS_EVENT];
+
 function RequestsPage() {
   const [activeTab, setActiveTab] = useState("received");
-  const [requests, setRequests] = useState(loadRequests);
+  const requests = useStoredState(loadRequests, requestEvents);
   const [myBooks] = useState(loadMyBooks);
   const [announcement, setAnnouncement] = useState("");
-
-  useEffect(() => {
-    const refreshRequests = () => setRequests(loadRequests());
-
-    window.addEventListener(REQUESTS_EVENT, refreshRequests);
-    window.addEventListener("storage", refreshRequests);
-
-    return () => {
-      window.removeEventListener(REQUESTS_EVENT, refreshRequests);
-      window.removeEventListener("storage", refreshRequests);
-    };
-  }, []);
 
   const myBooksById = useMemo(
     () => new Map(myBooks.map((book) => [book.id, book])),
@@ -49,7 +40,6 @@ function RequestsPage() {
 
   const handleStatusChange = (requestId, status) => {
     const updatedRequest = updateRequestStatus(requestId, status);
-    setRequests(loadRequests());
 
     if (updatedRequest) {
       setAnnouncement(getRequestStatusMessage(updatedRequest));

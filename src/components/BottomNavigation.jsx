@@ -3,11 +3,7 @@ import { navigationItems } from "../data/navigation.js";
 import { focusRing } from "../styles/ui.js";
 import NavIcon from "./navigation/NavIcon.jsx";
 
-const mobileIds = ["home", "marketplace", "my-books", "requests", "about"];
-
-const mobileItems = navigationItems.filter((item) =>
-  mobileIds.includes(item.id),
-);
+const mobileItems = navigationItems.filter((item) => item.mobile);
 
 function BottomNavigation() {
   const location = useLocation();
@@ -19,10 +15,7 @@ function BottomNavigation() {
     >
       <ul className="mx-auto grid max-w-xl grid-cols-5 gap-1">
         {mobileItems.map((item) => {
-          const isActive =
-            item.path === "/"
-              ? location.pathname === "/"
-              : location.pathname === item.path;
+          const isActive = location.pathname === item.path;
 
           return (
             <li key={item.id}>

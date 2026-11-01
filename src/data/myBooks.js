@@ -82,3 +82,5 @@ export const baseMyBooks = [
     addedAt: "2026-09-08",
   },
 ];
+
+export const myBookFilters = ["All", "Available", "Published", "Loaned"];

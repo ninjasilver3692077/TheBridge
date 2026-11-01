@@ -2,11 +2,10 @@
 
 Agreed collaboration rules. They live outside the managed block so context refreshes never replace them; change them only through a reviewed pull request.
 
-- Never write code without an OpenSpec change whose spec was approved by someone other than its author; plan with `/opsx:propose`, implement with `/opsx:apply`.
-- One branch and one pull request per story, `feat/<epic>-<story>-<slug>`; never commit to `main`. Open the pull request as a draft with the spec only, and push code only after the reviewer approves the spec (see `CONTRIBUTING.md`, Story cycle).
-- Never review your own change; the reviewer runs `bmad-code-review` in a fresh session.
-- When the implementation must differ from the spec, update the spec (and the PRD or architecture if affected) before the code.
-- API contract changes go through a pull request to `_bmad-output/planning-artifacts/architecture.md` before any code.
+- `api-design.md` is the spec: implement what it says. No OpenSpec proposal, epics or sprint file is required before code.
+- One branch and one pull request per task, `feat/<hw>-<slug>` (for example `feat/hw11-listings-crud`); never commit to `main`. Spec changes and code travel together in that pull request.
+- One review per pull request: someone other than the author reads the diff and approves on GitHub before the coordinator merges. Never review your own change.
+- When the implementation must differ from `api-design.md`, update `api-design.md` in the same pull request and say so in its description.
 - Never add comments to code files (course requirement); express intent through naming instead.
 - Never modify or replace `public/assets/brand/thebridge-logo.svg` or `public/assets/hero/find-your-bridge.webp` without team agreement.
 - Vercel deploys `main` automatically; only the coordinator merges to `main` and manages the Vercel project and its environment variables.
@@ -19,8 +18,8 @@ People state the goal in plain language (an issue number, "apply 0-1", "review D
 
 - Start with `git status` and `git fetch`. For new work, update `main` and create the branch named in the issue; to continue or review, switch to the existing branch. Never work on `main`.
 - Read the issue with `gh issue view <number>` (or ask the person to paste it) and follow its task card.
-- Route to the right workflow: `/opsx:propose` to plan, `/opsx:apply` to implement an approved spec, `bmad-code-review` to review someone else's change, or the BMAD agent the issue names.
-- If the goal is unclear, run `bmad-help` and propose the next step.
+- Implement the issue directly against `api-design.md` and the course README for that week; to review someone else's pull request, read its diff (optionally with `/code-review`).
+- If the goal is unclear, check the open issues and the next HW deadline and propose the next step.
 - Commit locally from the person's account, but never push or open pull requests; give the person the exact commands to run.
 
 <!-- bmad:context -->

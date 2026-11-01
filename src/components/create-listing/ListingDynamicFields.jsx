@@ -1,5 +1,6 @@
 import DesiredBookPicker from "./DesiredBookPicker.jsx";
-import { DurationSelect, PriceInput } from "./ListingFieldControls.jsx";
+import DurationSelect from "./DurationSelect.jsx";
+import PriceInput from "./PriceInput.jsx";
 
 function ListingDynamicFields({ modality, values, errors, onChange }) {
   if (modality === "Exchange") {

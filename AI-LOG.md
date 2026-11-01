@@ -529,6 +529,83 @@ The spec was approved by the reviewer at Gate 1 (`bfc6e29`) before any code was 
 
 Deleting by consumer count is safe only when each removal has a grep or Knip check that proves nothing references it, and the spec's verification line per task made that check repeatable. A commit co-author line records that AI helped, but the team log is what documents what was adopted and how it was verified.
 
+## Story 0.2 - Rubric Compliance
+
+### Prompt or task
+
+Apply the approved `0-2-rubric-compliance` change: move content out of components, bring every `.jsx` file to 80 lines or fewer, and fix the Home hero carousel that requests three images that were never added.
+
+### AI suggestions
+
+- Implement with `/opsx:apply` on the same branch and pull request, after the spec was approved at Gate 1 (`bb7da73`).
+- Move the hero file list, quick searches, My Books filter statuses, and mobile bar selection to `src/data/`, and the MARC language table to `formatLanguage` in `src/services/languages.js`.
+- Nest the four protected routes under one `ProtectedRoute` layout route that renders `<Outlet />`.
+- Replace the three repeated "reload on storage events" effects with `useStoredState(load, eventNames)`.
+- Split `ListingFieldControls.jsx` into `FieldError`, `DurationSelect`, and `PriceInput`, extract `ExchangeBookOption`, and name `isExchange` once in `ListingRequestModal`.
+- Reduce the active-route check in both navigations to `location.pathname === item.path`.
+
+### Changes adopted
+
+- All of the above, in commit `34b11cb`; task ticks in `1d4cd20`.
+- `MyBooksPage` builds its counter seed from `myBookFilters`, so the chips and counters share one source.
+- Storage keys, event names, and service APIs were not changed (that belongs to `0-3`).
+- The change was archived with `/opsx:archive` after all 8 tasks passed, which synced the new `home-hero` capability into `openspec/specs/home-hero/spec.md`; `openspec validate --all --strict` passes.
+
+### Human changes and review
+
+The spec was approved by the reviewer at Gate 1 before any code was written. During implementation the AI marked task 2.2 as done after verifying only part of it; the owner asked why, the task was unticked, and it was ticked again only after the full check below.
+
+### Tests and verification
+
+- `npm run lint` and `npm run build`: both exit with code 0; no `.jsx` file exceeds 80 lines.
+- Protected routes: logged out, `/my-books`, `/add-book`, `/create-listing`, and `/requests` redirect to `/login`; logged in, each opens its page.
+- Two-tab check on the dev server: adding a book through Add Book updated an already open My Books (11 to 12 books), publishing a Sale listing updated an already open Marketplace (25 to 26 listings), and accepting a request updated Requests, all without reload.
+- Create Listing shows the price and duration errors for an empty Rental; an Exchange request shows the book error, clears it on selection, and is sent.
+- All ten routes render without horizontal overflow at 375 and 1280 px in light and dark mode.
+- Hero (task 1.1): the three photographs are `library-01.webp`, `library-02.webp`, and `library-03.webp` (1600x1063, 1600x900, 1600x1200; 137 KB, 190 KB, 203 KB), converted from the Unsplash originals listed below; the second was cropped from a vertical original to a horizontal band. On the dev server they rotate every 7 seconds in order with a three-position indicator hidden from assistive technology; with reduced motion emulated one photograph stays fixed for 15 seconds; with one request aborted the hero rotates between two with two positions; with all three aborted it shows the cover wall and no indicator.
+- Visual check (task 3.2): 10 routes at 375 and 1280 px in light and dark mode were captured on `main` and on this branch with a seeded `Math.random`, empty storage, and animations disabled, then compared pixel by pixel. Every screen is identical or differs only by noise that also appears between two runs of the same build; Home differs only inside the hero. Open Library requests were blocked in both builds, so catalog data was not compared.
+- Console: Home shows no errors with the new images. The remaining console messages are an Open Library CORS error from localhost and a missing `favicon.ico`, both outside this change.
+- Photograph sources, each page opened and checked: `library-01` by vmokry, https://unsplash.com/photos/books-on-shelf-G-4wX5tZNuE; `library-02` by sevtovp, https://unsplash.com/photos/an-ornate-librarys-ceiling-and-bookshelves-are-featured-8IMmLCEayfQ; `library-03` by space_launch_system, https://unsplash.com/photos/a-library-with-books-on-shelves-fvWUPOG99cY. All three are under the Unsplash License (https://unsplash.com/license), which allows free use without attribution.
+- The first set of photographs, 365x273 and 627x350 files whose reported sources (iStock, Vecteezy) had no links and whose reported terms could not be matched to a free license, was replaced. A later set of credits with Unsplash and Pexels links was not used: both Unsplash links returned 404 and the Pexels link was a search page.
+- Text over the hero stays legible with each photograph in light and dark mode at 375 and 1280 px, checked on screenshots with the photograph forced as the active one.
+
+### Learning
+
+A verification line that lists several observable results needs each one checked, and a check that navigates to a page proves less than one against a page that is already mounted. The log should say which of the two was run.
+
+## Issue #10 - Baseline specs for Marketplace, My Books, and auth (2026-10-30)
+
+### Prompt or task
+
+Run `/opsx:propose` for the change `baseline-marketplace-mybooks-auth`, describing the current behavior of Marketplace, My Books, Add Book, and sign-in as `auth`, `marketplace`, and `my-books` specs, without changing code.
+
+### AI suggestions
+
+- Read the current client (`App.jsx`, `LoginPage.jsx`, the Marketplace, My Books, and Add Book pages with their components, hooks, and services) and write the proposal, three spec deltas, design, and tasks.
+- Keep Add Book inside `my-books`, and keep the Open Library catalog search and Favorites out of `marketplace`, because the issue sends catalog search to changes 0-1 to 0-3.
+- Describe what the code does instead of what the PRD asks for, and list the differences in `design.md` as observed gaps.
+- Use the sample data's real values in scenarios (24 listings, "COP 36,833" average sale price, "The Hobbit" for Loan plus Fantasy).
+
+### Changes adopted
+
+- Everything above, as committed on `docs/spec-baseline-daniel`. No file under `src/` or `public/` changed.
+- Two statements were corrected during drafting after checking the code: the activity note on a Published book appears below the "Listed as" line instead of replacing the action, and the confirm step shows the language as its English name.
+
+### Human changes and review
+
+Pending. Jorge reviews the spec at Gate 1; the manual browser pass in task 2.4 is still to be done by the owner.
+
+### Tests and verification
+
+- `openspec validate baseline-marketplace-mybooks-auth --strict`: passes.
+- `npm run lint` and `npm run build`: both exit with code 0.
+- The filtering, statistics, offer-label, price-format, request-activity, and library-book logic was run in Node against the real modules with a stand-in for `localStorage`, and its output matched every number and string used in the scenarios. The accent-insensitive search was checked with a synthetic listing because the sample data has no accented text.
+- Manual browser pass (task 2.4) done by the owner on /login, /marketplace, /my-books, and /add-book at 375px and 1280px; every scenario matched the specs.
+
+### Learning
+
+Running the pure logic against the real modules caught wording that reading alone would have missed, so scenario values are safer when copied from program output than from memory of the code. Behavior that lives only in the browser still needs a manual pass before the spec can be called verified.
+
 ## Issue #15 — Reconcile architecture and API contract with the merged PRD (2026-10-30)
 
 ### Task and workflow
@@ -567,6 +644,12 @@ Andrés found three contract contradictions in `3f55f67`; all three were confirm
 - **Reserved status versus a Pending hold.** A Pending offer keeps its copy Available and blocks it through derived activity; keeping, moving or releasing it changes only the internal revision. The PRD's "keeps its Offered Book Reserved" is mapped to that hold, and status Reserved still starts at acceptance.
 
 Two acceptance cases were added to architecture §9: reconfirm an offer and then cancel or reject it, and end a flagged request whose offer was released through each rejection path. These remain downstream tests; no backend exists yet.
+
+### Gate 2 correction (PR #17, requested by Andrés)
+
+Andrés found that the hero carousel kept rotating when reduced motion was turned on while Home stayed open: the effect read the media query once and only re-ran when the image count changed. The rotation now lives in `src/hooks/useRotatingIndex.js`, which listens to the media query `change` event, clears the interval when the preference turns on, restarts it when it turns off, and removes the listener on unmount. `HeroCarousel.jsx` dropped from 75 to 59 lines.
+
+Verification: lint and build exit 0. On the dev server with Home open and no reload, the active photograph moved from 01 to 02 after 7 seconds, stayed on 02 for 15 seconds after reduced motion was emulated, and resumed to 03 after 7 seconds once the preference returned to no preference.
 
 ## Story M3 foundation / PR #21 — Express API base on Vercel (2026-11-01)
 

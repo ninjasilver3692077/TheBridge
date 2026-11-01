@@ -600,3 +600,22 @@ Andrés found three contract contradictions in `3f55f67`; all three were confirm
 - **Reserved status versus a Pending hold.** A Pending offer keeps its copy Available and blocks it through derived activity; keeping, moving or releasing it changes only the internal revision. The PRD's "keeps its Offered Book Reserved" is mapped to that hold, and status Reserved still starts at acceptance.
 
 Two acceptance cases were added to architecture §9: reconfirm an offer and then cancel or reject it, and end a flagged request whose offer was released through each rejection path. These remain downstream tests; no backend exists yet.
+
+
+## Issue #23 — Milestone 3 contract preparation (2026-11-01)
+
+### Task and assistance
+
+The account holder delegated assigned TheBridge tasks. Codex read issue #23, its explicit scope cuts shared by #22–#25, the canonical API design, team policy at main b0d5c33 and the original HW11/HW12 README files from the supplied ZIP. AI proposed contract edits before Express domain code, as HW11 requires.
+
+### Adopted and pending work
+
+API design version 5 removes client version preconditions and reconfirmation, blocks edits while Pending requests exist and selects the Mongoose transaction helper instead of the custom retry runner. Architecture/spine explicitly separate this delivery profile from the retained future design. No peer-owned PRD or Account/auth implementation was edited. No models/routes/seed or completed endpoint/deployment evidence is claimed in this first commit.
+
+### Human review and validation
+
+The coordinator supplied the scope cuts in the issue. Daniel is the assigned task reviewer; review is pending. Foundation #21 is under review and #22 authentication must merge first. Checks cover Markdown diff, unchanged operation paths except deferred REQUEST-08, DTO/header/example consistency and JSON syntax. These are documentation checks, not passing database, endpoint or preview tests.
+
+### Course reflection
+
+AI helped reconcile the API design before backend implementation. The important REST distinction is separating server state conflicts (409) from transport/version preconditions intentionally omitted from this delivery. Schema/validation results and curl evidence will be recorded only after implementation against the actual authentication dependency.

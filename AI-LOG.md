@@ -549,6 +549,7 @@ Apply the approved `0-2-rubric-compliance` change: move content out of component
 - All of the above, in commit `34b11cb`; task ticks in `1d4cd20`.
 - `MyBooksPage` builds its counter seed from `myBookFilters`, so the chips and counters share one source.
 - Storage keys, event names, and service APIs were not changed (that belongs to `0-3`).
+- The change was archived with `/opsx:archive` after all 8 tasks passed, which synced the new `home-hero` capability into `openspec/specs/home-hero/spec.md`; `openspec validate --all --strict` passes.
 
 ### Human changes and review
 

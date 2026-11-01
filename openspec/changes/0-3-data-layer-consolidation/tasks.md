@@ -2,9 +2,9 @@
 
 ## 1. Storage and services
 
-- [ ] 1.1 Create `src/services/storage.js` (`readStorage`, `writeStorage`, `STORAGE_EVENTS`, `today`) and route every service's localStorage reads, writes, event dispatches, and date stamps through it; verify `grep -rn 'JSON.parse(localStorage\|toISOString().split' src` matches only `storage.js`
+- [ ] 1.1 Create `src/services/storage.js` (`readStorage`, `writeStorage`, `STORAGE_EVENTS`, `today`) and route every service's JSON localStorage reads, writes, event dispatches, and date stamps through it (the scalar login flag stays inside `authStorage`, task 1.3); verify `grep -rn 'JSON.parse(localStorage\|toISOString().split' src` matches only `storage.js`
 - [ ] 1.2 Merge `thebridge:book-added` into `STORAGE_EVENTS.myBooks` and update `MyBooksPage`; verify `grep -rn 'book-added' src` prints nothing and a book added in Add Book appears in My Books without reloading
-- [ ] 1.3 Create `src/services/authStorage.js` (`isAuthenticated`, `logIn`) and add the write side to `src/services/favorites.js`; switch `App.jsx`, `LoginPage`, and `useMarketplace` to them and remove the direct-access pitfall line from `AGENTS.md`; verify `grep -rn localStorage src | grep -v '^src/services/'` matches only the theme line in `AppShell.jsx`, and that login, the protected-route redirect, and toggling favorites still work
+- [ ] 1.3 Create `src/services/authStorage.js` (`isAuthenticated`, `logIn`; it reads and writes the raw string `"true"` under `thebridge:authenticated` itself, format unchanged) and add the write side to `src/services/favorites.js`; switch `App.jsx`, `LoginPage`, and `useMarketplace` to them and remove the direct-access pitfall line from `AGENTS.md`; verify `grep -rn localStorage src | grep -v '^src/services/'` matches only the theme line in `AppShell.jsx`, and that login, the protected-route redirect, and toggling favorites still work; with `thebridge:authenticated` set to `"true"` in DevTools before the change, a reload stays authenticated, and with the key removed it redirects to login
 
 ## 2. Book shape and search rule
 

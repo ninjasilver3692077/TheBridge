@@ -20,7 +20,7 @@ See `proposal.md` (Why). After `0-1` and `0-2`:
 ## Decisions
 
 ### `storage.js` API
-- `readStorage(key, fallback)` parses the key and returns the value only when its shape matches `fallback` (array or plain object); otherwise it returns `fallback`.
+- `readStorage(key, fallback)` parses the key and returns the value only when its shape matches `fallback` (array or plain object); otherwise it returns `fallback`. It handles JSON collections and objects only; the scalar login flag is outside its scope (see Auth).
 - `writeStorage(key, value, eventName)` stringifies, writes, and dispatches `eventName` when given.
 - `STORAGE_EVENTS = { listings, requests, myBooks }` holds the event names.
 - `today()` returns `YYYY-MM-DD`.
@@ -39,7 +39,7 @@ Because the event names live in `storage.js`, `librarySeed` and `myBooksStorage`
 `validateCatalogQuery(query)` in `src/services/catalogSearch.js` returns `""` or one of the two messages; both `useMarketplace` and `useCatalogSearch` call it. Minimum 3 characters, the stricter of today's two rules, because 2-character queries return mostly noise from Open Library.
 
 ### Auth
-`src/services/authStorage.js` exports `isAuthenticated()` and `logIn()`, wrapping the existing `thebridge:authenticated` key unchanged, so current sessions survive. The name matches the `authStorage` module that `architecture.md` assigns to the Session token, so the backend auth story extends this file instead of renaming it.
+`src/services/authStorage.js` exports `isAuthenticated()` and `logIn()`, wrapping the existing `thebridge:authenticated` key unchanged, so current sessions survive. The flag is the plain string `"true"`, not JSON, so `authStorage` reads it directly with `localStorage.getItem(...) === "true"` and writes it with `setItem(..., "true")`, without `readStorage`/`writeStorage`; the format on disk does not change. A flag saved before this change keeps authenticating, and an absent key does not. The name matches the `authStorage` module that `architecture.md` assigns to the Session token, so the backend auth story extends this file instead of renaming it.
 
 ## Risks / Trade-offs
 

@@ -1,6 +1,6 @@
-# Pages - Link
+# Live site
 
-https://ninjasilver3692077.github.io/TheBridge/
+https://thebridge-sepia.vercel.app
 
 # Integrants
 
@@ -76,13 +76,19 @@ Implemented screens and flows:
 - Login and protected routes
 - 404 fallback
 
-The application is deployed with GitHub Pages at:
+The application is deployed on Vercel at:
 
-https://ninjasilver3692077.github.io/TheBridge/
+https://thebridge-sepia.vercel.app
 
 ## Deployment
 
-GitHub Pages serves the `gh-pages` branch. Run `npm run deploy` from an up-to-date `main` to build the app and publish the `dist/` folder. The build also creates `dist/404.html`, so direct visits and reloads on routes such as `/listing/book-03` still load the React application.
+Vercel serves the client at `/` and the Express API at `/api` from one project (`vercel.json`); every merge to `main` deploys. The public URL is recorded in `deployment.txt`.
+
+## Local development
+
+1. Copy `.env.example` to `.env` and set `MONGODB_URI` (required), `CLIENT_ORIGINS` (comma-separated browser origins allowed by CORS) and `PORT`.
+2. Run `npm run dev:server` (API on port 3000) and `npm run dev` (client on port 5173, `/api` proxied to the API).
+3. Before a pull request: `npm run lint`, `npm run typecheck`, `npm test` and `npm run build`. The HTTP tests use a simulated MongoDB connection and need no credentials.
 
 ## Figma Wireframes
 

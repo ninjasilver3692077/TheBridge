@@ -650,3 +650,26 @@ Two acceptance cases were added to architecture §9: reconfirm an offer and then
 Andrés found that the hero carousel kept rotating when reduced motion was turned on while Home stayed open: the effect read the media query once and only re-ran when the image count changed. The rotation now lives in `src/hooks/useRotatingIndex.js`, which listens to the media query `change` event, clears the interval when the preference turns on, restarts it when it turns off, and removes the listener on unmount. `HeroCarousel.jsx` dropped from 75 to 59 lines.
 
 Verification: lint and build exit 0. On the dev server with Home open and no reload, the active photograph moved from 01 to 02 after 7 seconds, stayed on 02 for 15 seconds after reduced motion was emulated, and resumed to 03 after 7 seconds once the preference returned to no preference.
+
+## Story M3 foundation / PR #21 — Express API base on Vercel (2026-11-01)
+
+### Task and workflow
+
+Claude Code (Opus 5.5) built the Express 5 + TypeScript foundation (shared types, CORS, helmet, rate limits, JSON error envelope, pagination, OPS-01 health, `vercel.json`) and moved deployment from GitHub Pages to Vercel. A later Claude Code session (Sonnet 5.5) addressed the human review by Andrés on `a92b037`.
+
+### Changes adopted after review
+
+- Health now checks the current `mongoose.connection.readyState` and reconnects when it is not connected, so a dropped connection returns 503 instead of a stale 200.
+- The storage check moved from every `/api` request into the routes that need it, so an unknown route returns the JSON 404 during an outage.
+- `/api/health` answers other methods with 405 and an `Allow` header.
+- Body-parser errors keep their own codes: unsupported charset is 415, an undecodable gzip body is 400; any other unrecognized error stays a sanitized 500.
+- `.env.example` restored with only the variables `readEnv()` reads; the README setup steps match it.
+- Review point 1 (contract after dropping versions and reconfirmation) is handled in the documentation PR #26, not in this one.
+
+### Human review and validation
+
+Andrés reviewed `a92b037` and requested these changes; each reproduction was re-run as a repeatable HTTP check in `tests/api.test.ts` (Express on an ephemeral port, MongoDB connection simulated, no credentials or real data). Local results: `npm test` 9 of 9 passing, `npm run lint`, `npm run typecheck` and `npm run build` clean. Not verified: the Vercel deployment of the new commit, its `/api/health` and deep links; the coordinator must check them after merge.
+
+### Learning
+
+A guard applied to a whole prefix (`/api`) hides routing decisions behind infrastructure state; attaching it to the handlers that need it keeps 404 and 405 independent of the database.

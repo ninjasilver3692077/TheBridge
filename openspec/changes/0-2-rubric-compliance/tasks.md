@@ -2,7 +2,7 @@
 
 ## 1. Data out of components
 
-- [ ] 1.1 Add `library-01.webp`, `library-02.webp`, `library-03.webp` (provided by the team, reusable license) to `public/assets/hero/` and move the hero file list into `heroImages` in `src/data/homeContent.js`; verify every `home-hero` scenario, emulating reduced motion in DevTools and temporarily renaming one image for the fallback cases
+- [x] 1.1 Add `library-01.webp`, `library-02.webp`, `library-03.webp` (provided by the team, reusable license) to `public/assets/hero/` and move the hero file list into `heroImages` in `src/data/homeContent.js`; verify every `home-hero` scenario, emulating reduced motion in DevTools and temporarily renaming one image for the fallback cases
 - [x] 1.2 Move quick searches to `src/data/marketplaceContent.js`, the My Books statuses to `myBookFilters` in `src/data/myBooks.js` (used by both `MyBooksFilters` and the `MyBooksPage` counters), the mobile-bar selection to `mobile: true` flags in `src/data/navigation.js`, and the MARC table plus formatter to `formatLanguage` in `src/services/languages.js`; verify no component defines those constants and that Marketplace quick searches, My Books filters, the mobile bar, and book language labels render as before
 - [x] 1.3 Reduce the active-route check in `SidebarNavigation` and `BottomNavigation` to `location.pathname === item.path`; verify the `app-navigation` scenarios still pass
 
@@ -15,7 +15,7 @@
 ## 3. Verify
 
 - [x] 3.1 Run `npm run lint` and `npm run build`; verify both exit with code 0 and `find src -name '*.jsx' -exec wc -l {} + | awk '$2 != "total" && $1 > 80'` prints nothing
-- [ ] 3.2 Run `npm run dev` and visit every route at 375px and 1280px in light and dark mode; verify each screen looks as before (apart from the hero photographs) and the console shows no errors
+- [x] 3.2 Run `npm run dev` and visit every route at 375px and 1280px in light and dark mode; verify each screen looks as before (apart from the hero photographs) and the console shows no errors
 
 ## Workflow follow-up
 

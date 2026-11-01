@@ -144,3 +144,7 @@ Required reviewers: Juan and Jorge. Keep issue #9 open until both approve; subse
 
 Closes #9 after the required reviews and merge.
 ```
+
+## Update for issue #15 (2026-10-30)
+
+PR #13 is merged. Architecture §4 and §8, the spine (AD-7) and API contract version 4 now carry the PRD's reconfirmation, Reserved-removal and Loan/Rental completion rules, and A-1, A-3 and Q-1 are closed. The statements above about an unmerged PRD, partial FR-24 coverage and a temporary Reserved 409 describe the earlier revision and no longer apply. REQUEST-08 is the only new operation; no existing operation ID changed.

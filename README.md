@@ -1,6 +1,6 @@
-# Pages - Link
+# Live site
 
-https://ninjasilver3692077.github.io/TheBridge/
+https://thebridge-sepia.vercel.app
 
 # Integrants
 
@@ -76,9 +76,9 @@ Implemented screens and flows:
 - Login and protected routes
 - 404 fallback
 
-The application is deployed with GitHub Pages at:
+The application is deployed on Vercel at:
 
-https://ninjasilver3692077.github.io/TheBridge/
+https://thebridge-sepia.vercel.app
 
 ## Deployment
 

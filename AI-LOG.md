@@ -610,3 +610,9 @@ Andrés found three contract contradictions in `3f55f67`; all three were confirm
 - **Reserved status versus a Pending hold.** A Pending offer keeps its copy Available and blocks it through derived activity; keeping, moving or releasing it changes only the internal revision. The PRD's "keeps its Offered Book Reserved" is mapped to that hold, and status Reserved still starts at acceptance.
 
 Two acceptance cases were added to architecture §9: reconfirm an offer and then cancel or reject it, and end a flagged request whose offer was released through each rejection path. These remain downstream tests; no backend exists yet.
+
+### Gate 2 correction (PR #17, requested by Andrés)
+
+Andrés found that the hero carousel kept rotating when reduced motion was turned on while Home stayed open: the effect read the media query once and only re-ran when the image count changed. The rotation now lives in `src/hooks/useRotatingIndex.js`, which listens to the media query `change` event, clears the interval when the preference turns on, restarts it when it turns off, and removes the listener on unmount. `HeroCarousel.jsx` dropped from 75 to 59 lines.
+
+Verification: lint and build exit 0. On the dev server with Home open and no reload, the active photograph moved from 01 to 02 after 7 seconds, stayed on 02 for 15 seconds after reduced motion was emulated, and resumed to 03 after 7 seconds once the preference returned to no preference.

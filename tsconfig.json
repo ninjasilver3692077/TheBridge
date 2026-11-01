@@ -17,5 +17,5 @@
       "@/types": ["./src/types.ts"]
     }
   },
-  "include": ["src/**/*.ts", "src/**/*.tsx", "server", "routes", "models", "api"]
+  "include": ["src/**/*.ts", "src/**/*.tsx", "server", "routes", "models", "api", "tests"]
 }

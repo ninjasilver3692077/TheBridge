@@ -567,3 +567,26 @@ Andrés found three contract contradictions in `3f55f67`; all three were confirm
 - **Reserved status versus a Pending hold.** A Pending offer keeps its copy Available and blocks it through derived activity; keeping, moving or releasing it changes only the internal revision. The PRD's "keeps its Offered Book Reserved" is mapped to that hold, and status Reserved still starts at acceptance.
 
 Two acceptance cases were added to architecture §9: reconfirm an offer and then cancel or reject it, and end a flagged request whose offer was released through each rejection path. These remain downstream tests; no backend exists yet.
+
+## Story M3 foundation / PR #21 — Express API base on Vercel (2026-11-01)
+
+### Task and workflow
+
+Claude Code (Opus 5.5) built the Express 5 + TypeScript foundation (shared types, CORS, helmet, rate limits, JSON error envelope, pagination, OPS-01 health, `vercel.json`) and moved deployment from GitHub Pages to Vercel. A later Claude Code session (Sonnet 5.5) addressed the human review by Andrés on `a92b037`.
+
+### Changes adopted after review
+
+- Health now checks the current `mongoose.connection.readyState` and reconnects when it is not connected, so a dropped connection returns 503 instead of a stale 200.
+- The storage check moved from every `/api` request into the routes that need it, so an unknown route returns the JSON 404 during an outage.
+- `/api/health` answers other methods with 405 and an `Allow` header.
+- Body-parser errors keep their own codes: unsupported charset is 415, an undecodable gzip body is 400; any other unrecognized error stays a sanitized 500.
+- `.env.example` restored with only the variables `readEnv()` reads; the README setup steps match it.
+- Review point 1 (contract after dropping versions and reconfirmation) is handled in the documentation PR #26, not in this one.
+
+### Human review and validation
+
+Andrés reviewed `a92b037` and requested these changes; each reproduction was re-run as a repeatable HTTP check in `tests/api.test.ts` (Express on an ephemeral port, MongoDB connection simulated, no credentials or real data). Local results: `npm test` 9 of 9 passing, `npm run lint`, `npm run typecheck` and `npm run build` clean. Not verified: the Vercel deployment of the new commit, its `/api/health` and deep links; the coordinator must check them after merge.
+
+### Learning
+
+A guard applied to a whole prefix (`/api`) hides routing decisions behind infrastructure state; attaching it to the handlers that need it keeps 404 and 405 independent of the database.

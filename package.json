@@ -9,6 +9,7 @@
     "build": "vite build",
     "lint": "eslint . --ext .js,.jsx,.ts,.tsx --max-warnings 0",
     "typecheck": "tsc --noEmit",
+    "test": "node --import tsx --test tests/*.test.ts",
     "preview": "vite preview"
   },
   "dependencies": {

@@ -86,9 +86,9 @@ Vercel serves the client at `/` and the Express API at `/api` from one project (
 
 ## Local development
 
-1. Copy `.env.example` to `.env` and fill in `MONGODB_URI` and `JWT_SECRET`.
+1. Copy `.env.example` to `.env` and set `MONGODB_URI` (required), `CLIENT_ORIGINS` (comma-separated browser origins allowed by CORS) and `PORT`.
 2. Run `npm run dev:server` (API on port 3000) and `npm run dev` (client on port 5173, `/api` proxied to the API).
-3. Before a pull request: `npm run lint`, `npm run typecheck` and `npm run build`.
+3. Before a pull request: `npm run lint`, `npm run typecheck`, `npm test` and `npm run build`. The HTTP tests use a simulated MongoDB connection and need no credentials.
 
 ## Figma Wireframes
 

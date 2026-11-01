@@ -4,7 +4,6 @@ import type { RequestHandler } from "express";
 import { rateLimit } from "express-rate-limit";
 import helmet from "helmet";
 import { healthRouter } from "../routes/health.js";
-import { connectDatabase } from "./db.js";
 import { readEnv } from "./env.js";
 import { HttpError, handleErrors, handleNotFound, requireJsonBody } from "./errors.js";
 
@@ -26,15 +25,6 @@ export function createApp(): express.Express {
   const env = readEnv();
   const app = express();
 
-  const requireDatabase: RequestHandler = async (_req, _res, next) => {
-    try {
-      await connectDatabase(env.mongodbUri);
-    } catch {
-      throw new HttpError(503, "Storage is unavailable. Try again later.");
-    }
-    next();
-  };
-
   app.set("trust proxy", 1);
   app.use(
     cors({
@@ -49,7 +39,6 @@ export function createApp(): express.Express {
   app.use(express.json({ limit: "32kb" }));
   app.use("/api/auth/login", authLimiter(10));
   app.use("/api/auth/register", authLimiter(5));
-  app.use("/api", requireDatabase);
   app.use("/api", healthRouter);
   app.use("/api", handleNotFound);
   app.use(handleErrors);

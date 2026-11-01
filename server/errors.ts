@@ -11,14 +11,27 @@ export class HttpError extends Error {
   }
 }
 
-const bodyParserMessages: Record<string, string> = {
-  "entity.parse.failed": "Request body is not valid JSON.",
-  "entity.too.large": "Request body exceeds 32 KiB.",
-  "encoding.unsupported": "Unsupported request body encoding.",
+const bodyParserErrors: Record<string, HttpError> = {
+  "entity.parse.failed": new HttpError(400, "Request body is not valid JSON."),
+  "entity.too.large": new HttpError(413, "Request body exceeds 32 KiB."),
+  "encoding.unsupported": new HttpError(415, "Unsupported request body encoding."),
+  "charset.unsupported": new HttpError(415, "Unsupported request body charset."),
+  "request.aborted": new HttpError(400, "Request was aborted."),
+  "request.size.invalid": new HttpError(400, "Request body size does not match its length."),
 };
 
 function isDuplicateKeyError(error: unknown): boolean {
   return typeof error === "object" && error !== null && "code" in error && error.code === 11000;
+}
+
+function isInvalidEncodedBody(error: unknown): boolean {
+  return (
+    typeof error === "object" &&
+    error !== null &&
+    "code" in error &&
+    typeof error.code === "string" &&
+    error.code.startsWith("Z_")
+  );
 }
 
 function toHttpError(error: unknown): HttpError {
@@ -30,10 +43,10 @@ function toHttpError(error: unknown): HttpError {
   if (error instanceof mongoose.Error.CastError) return new HttpError(400, `${error.path}: invalid value.`);
   if (isDuplicateKeyError(error)) return new HttpError(409, "This resource already exists.");
   if (typeof error === "object" && error !== null && "type" in error && typeof error.type === "string") {
-    const message = bodyParserMessages[error.type];
-    const status = "status" in error && typeof error.status === "number" ? error.status : 400;
-    if (message) return new HttpError(status, message);
+    const known = bodyParserErrors[error.type];
+    if (known) return known;
   }
+  if (isInvalidEncodedBody(error)) return new HttpError(400, "Request body could not be decoded.");
   return new HttpError(500, "Unexpected server error.");
 }
 
@@ -44,6 +57,13 @@ export const requireJsonBody: RequestHandler = (req, _res, next) => {
   }
   next();
 };
+
+export function methodNotAllowed(allowed: string[]): RequestHandler {
+  return (_req, res, next) => {
+    res.set("Allow", allowed.join(", "));
+    next(new HttpError(405, "Method not allowed."));
+  };
+}
 
 export const handleNotFound: RequestHandler = (_req, _res, next) => {
   next(new HttpError(404, "Route not found."));

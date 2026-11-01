@@ -9,7 +9,7 @@ Agreed collaboration rules. They live outside the managed block so context refre
 - API contract changes go through a pull request to `_bmad-output/planning-artifacts/architecture.md` before any code.
 - Never add comments to code files (course requirement); express intent through naming instead.
 - Never modify or replace `public/assets/brand/thebridge-logo.svg` or `public/assets/hero/find-your-bridge.webp` without team agreement.
-- Only the coordinator runs `npm run deploy`, from an up-to-date `main`; it publishes straight to GitHub Pages.
+- Vercel deploys `main` automatically; only the coordinator merges to `main` and manages the Vercel project and its environment variables.
 - Write visible UI text and documents in English; communicate with the team in Spanish.
 - Read and write domain data (listings, requests, my-books, favorites, auth) only through `src/services/*`; components and hooks never call `localStorage` or `fetch` directly. The theme preference in `src/components/AppShell.jsx` is the allowed exception.
 
@@ -28,12 +28,13 @@ People state the goal in plain language (an issue number, "apply 0-1", "review D
 
 ## TheBridge
 
-Community book marketplace (Exchange, Loan, Rental, Sale) for small academic communities. React 19 + Vite + React Router v6 client deployed to GitHub Pages; an Express server is planned. BMAD planning artifacts live in `_bmad-output/planning-artifacts/`, living behavior specs in `openspec/specs/`, team roles and the review ring in `CONTRIBUTING.md`.
+Community book marketplace (Exchange, Loan, Rental, Sale) for small academic communities. React 19 + Vite + React Router v6 client and an Express 5 + MongoDB API, deployed together on Vercel (client at `/`, API at `/api`). BMAD planning artifacts live in `_bmad-output/planning-artifacts/`, living behavior specs in `openspec/specs/`, team roles and the review ring in `CONTRIBUTING.md`.
 
 ## Conventions that differ from defaults
 
 - Tailwind runs from the CDN with its config inline in `index.html`; add design tokens there, never install Tailwind/PostCSS or create `tailwind.config.js`.
-- Prefix `public/` asset URLs with `import.meta.env.BASE_URL`, and build links with React Router; the app is served under `/TheBridge/`, so absolute paths break in production.
+- Prefix `public/` asset URLs with `import.meta.env.BASE_URL`, and build links with React Router.
+- Server code is TypeScript: `server/` (app, db, errors, pagination), `routes/` and `models/` at the root, shared wire types in `src/types.ts` imported as `@/types` (type-only). Use `.js` extensions in relative server imports. Mount new routers in `server/app.ts` before `handleNotFound`; throw `HttpError` for API errors.
 
 ## Known pitfalls
 

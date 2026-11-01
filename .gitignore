@@ -10,3 +10,4 @@ build/
 .env.*
 !.env.example
 _bmad/config.user.toml
+.vercel

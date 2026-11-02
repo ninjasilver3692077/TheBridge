@@ -1,6 +1,5 @@
+import { myBookFilters } from "../../data/myBooks.js";
 import { chip } from "../../styles/ui.js";
-
-const FILTERS = ["All", "Available", "Published", "Loaned"];
 
 function MyBooksFilters({ activeFilter, counts, onChange }) {
   return (
@@ -9,7 +8,7 @@ function MyBooksFilters({ activeFilter, counts, onChange }) {
       role="group"
       aria-label="Filter personal books"
     >
-      {FILTERS.map((filter) => {
+      {myBookFilters.map((filter) => {
         const isActive = activeFilter === filter;
 
         return (

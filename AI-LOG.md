@@ -1,4 +1,4 @@
-﻿# AI-LOG
+# AI-LOG
 
 ## Repository Foundation
 
@@ -529,6 +529,50 @@ The spec was approved by the reviewer at Gate 1 (`bfc6e29`) before any code was 
 
 Deleting by consumer count is safe only when each removal has a grep or Knip check that proves nothing references it, and the spec's verification line per task made that check repeatable. A commit co-author line records that AI helped, but the team log is what documents what was adopted and how it was verified.
 
+## Story 0.2 - Rubric Compliance
+
+### Prompt or task
+
+Apply the approved `0-2-rubric-compliance` change: move content out of components, bring every `.jsx` file to 80 lines or fewer, and fix the Home hero carousel that requests three images that were never added.
+
+### AI suggestions
+
+- Implement with `/opsx:apply` on the same branch and pull request, after the spec was approved at Gate 1 (`bb7da73`).
+- Move the hero file list, quick searches, My Books filter statuses, and mobile bar selection to `src/data/`, and the MARC language table to `formatLanguage` in `src/services/languages.js`.
+- Nest the four protected routes under one `ProtectedRoute` layout route that renders `<Outlet />`.
+- Replace the three repeated "reload on storage events" effects with `useStoredState(load, eventNames)`.
+- Split `ListingFieldControls.jsx` into `FieldError`, `DurationSelect`, and `PriceInput`, extract `ExchangeBookOption`, and name `isExchange` once in `ListingRequestModal`.
+- Reduce the active-route check in both navigations to `location.pathname === item.path`.
+
+### Changes adopted
+
+- All of the above, in commit `34b11cb`; task ticks in `1d4cd20`.
+- `MyBooksPage` builds its counter seed from `myBookFilters`, so the chips and counters share one source.
+- Storage keys, event names, and service APIs were not changed (that belongs to `0-3`).
+- The change was archived with `/opsx:archive` after all 8 tasks passed, which synced the new `home-hero` capability into `openspec/specs/home-hero/spec.md`; `openspec validate --all --strict` passes.
+
+### Human changes and review
+
+The spec was approved by the reviewer at Gate 1 before any code was written. During implementation the AI marked task 2.2 as done after verifying only part of it; the owner asked why, the task was unticked, and it was ticked again only after the full check below.
+
+### Tests and verification
+
+- `npm run lint` and `npm run build`: both exit with code 0; no `.jsx` file exceeds 80 lines.
+- Protected routes: logged out, `/my-books`, `/add-book`, `/create-listing`, and `/requests` redirect to `/login`; logged in, each opens its page.
+- Two-tab check on the dev server: adding a book through Add Book updated an already open My Books (11 to 12 books), publishing a Sale listing updated an already open Marketplace (25 to 26 listings), and accepting a request updated Requests, all without reload.
+- Create Listing shows the price and duration errors for an empty Rental; an Exchange request shows the book error, clears it on selection, and is sent.
+- All ten routes render without horizontal overflow at 375 and 1280 px in light and dark mode.
+- Hero (task 1.1): the three photographs are `library-01.webp`, `library-02.webp`, and `library-03.webp` (1600x1063, 1600x900, 1600x1200; 137 KB, 190 KB, 203 KB), converted from the Unsplash originals listed below; the second was cropped from a vertical original to a horizontal band. On the dev server they rotate every 7 seconds in order with a three-position indicator hidden from assistive technology; with reduced motion emulated one photograph stays fixed for 15 seconds; with one request aborted the hero rotates between two with two positions; with all three aborted it shows the cover wall and no indicator.
+- Visual check (task 3.2): 10 routes at 375 and 1280 px in light and dark mode were captured on `main` and on this branch with a seeded `Math.random`, empty storage, and animations disabled, then compared pixel by pixel. Every screen is identical or differs only by noise that also appears between two runs of the same build; Home differs only inside the hero. Open Library requests were blocked in both builds, so catalog data was not compared.
+- Console: Home shows no errors with the new images. The remaining console messages are an Open Library CORS error from localhost and a missing `favicon.ico`, both outside this change.
+- Photograph sources, each page opened and checked: `library-01` by vmokry, https://unsplash.com/photos/books-on-shelf-G-4wX5tZNuE; `library-02` by sevtovp, https://unsplash.com/photos/an-ornate-librarys-ceiling-and-bookshelves-are-featured-8IMmLCEayfQ; `library-03` by space_launch_system, https://unsplash.com/photos/a-library-with-books-on-shelves-fvWUPOG99cY. All three are under the Unsplash License (https://unsplash.com/license), which allows free use without attribution.
+- The first set of photographs, 365x273 and 627x350 files whose reported sources (iStock, Vecteezy) had no links and whose reported terms could not be matched to a free license, was replaced. A later set of credits with Unsplash and Pexels links was not used: both Unsplash links returned 404 and the Pexels link was a search page.
+- Text over the hero stays legible with each photograph in light and dark mode at 375 and 1280 px, checked on screenshots with the photograph forced as the active one.
+
+### Learning
+
+A verification line that lists several observable results needs each one checked, and a check that navigates to a page proves less than one against a page that is already mounted. The log should say which of the two was run.
+
 ## Issue #10 - Baseline specs for Marketplace, My Books, and auth (2026-10-30)
 
 ### Prompt or task
@@ -619,3 +663,31 @@ The coordinator supplied the scope cuts in the issue. Daniel is the assigned tas
 ### Course reflection
 
 AI helped reconcile the API design before backend implementation. The important REST distinction is separating server state conflicts (409) from transport/version preconditions intentionally omitted from this delivery. Schema/validation results and curl evidence will be recorded only after implementation against the actual authentication dependency.
+### Gate 2 correction (PR #17, requested by Andrés)
+
+Andrés found that the hero carousel kept rotating when reduced motion was turned on while Home stayed open: the effect read the media query once and only re-ran when the image count changed. The rotation now lives in `src/hooks/useRotatingIndex.js`, which listens to the media query `change` event, clears the interval when the preference turns on, restarts it when it turns off, and removes the listener on unmount. `HeroCarousel.jsx` dropped from 75 to 59 lines.
+
+Verification: lint and build exit 0. On the dev server with Home open and no reload, the active photograph moved from 01 to 02 after 7 seconds, stayed on 02 for 15 seconds after reduced motion was emulated, and resumed to 03 after 7 seconds once the preference returned to no preference.
+
+## Story M3 foundation / PR #21 — Express API base on Vercel (2026-11-01)
+
+### Task and workflow
+
+Claude Code (Opus 5.5) built the Express 5 + TypeScript foundation (shared types, CORS, helmet, rate limits, JSON error envelope, pagination, OPS-01 health, `vercel.json`) and moved deployment from GitHub Pages to Vercel. A later Claude Code session (Sonnet 5.5) addressed the human review by Andrés on `a92b037`.
+
+### Changes adopted after review
+
+- Health now checks the current `mongoose.connection.readyState` and reconnects when it is not connected, so a dropped connection returns 503 instead of a stale 200.
+- The storage check moved from every `/api` request into the routes that need it, so an unknown route returns the JSON 404 during an outage.
+- `/api/health` answers other methods with 405 and an `Allow` header.
+- Body-parser errors keep their own codes: unsupported charset is 415, an undecodable gzip body is 400; any other unrecognized error stays a sanitized 500.
+- `.env.example` restored with only the variables `readEnv()` reads; the README setup steps match it.
+- Review point 1 (contract after dropping versions and reconfirmation) is handled in the documentation PR #26, not in this one.
+
+### Human review and validation
+
+Andrés reviewed `a92b037` and requested these changes; each reproduction was re-run as a repeatable HTTP check in `tests/api.test.ts` (Express on an ephemeral port, MongoDB connection simulated, no credentials or real data). Local results: `npm test` 9 of 9 passing, `npm run lint`, `npm run typecheck` and `npm run build` clean. Not verified: the Vercel deployment of the new commit, its `/api/health` and deep links; the coordinator must check them after merge.
+
+### Learning
+
+A guard applied to a whole prefix (`/api`) hides routing decisions behind infrastructure state; attaching it to the handlers that need it keeps 404 and 405 independent of the database.

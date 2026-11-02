@@ -12,6 +12,18 @@ input_prd_commit: 50edc11165184a186a5afb660a6ffb145feb1cb8
 
 # TheBridge full-stack architecture
 
+## Milestone 3 execution profile — issue #23 (2026-11-01)
+
+The coordinator has narrowed the Nov 8 delivery in issues #22–#25. API contract version 5 is the executable Milestone 3 design: no If-Match or public entity versions, no quotedListingVersion/needsReconfirmation or REQUEST-08, and no custom Core API retry runner. An Available listing with Pending requests rejects edits with 409. Multi-document commands use mongoose.connection.transaction with guarded sequential writes in the same session and the active-state unique indexes. Internal write barriers may serialize state changes; they are not HTTP preconditions.
+
+This profile supersedes the version-token, reconfirmation and retry-runner requirements in the full-target planning record below for Milestone 3 only. The remainder is retained as the post-M3 target and historical rationale, not an instruction to implement those deferred features now. The PRD is unchanged; full FR-11/FR-18/FR-19 reconfirmation behavior is deferred rather than declared delivered. Atomic publication, request settlement, ownership, retained snapshots, pagination and safe HTTP errors still apply.
+
+Issue #23 depends on the reviewed foundation (#21) and the authentication interface from #22: requireAuth, requireRole and currentAccount. Do not introduce a temporary authentication bypass or duplicate Account implementation. This documentation-only first commit prepares the contract; models, routes, seed, endpoint evidence and preview acceptance remain unfinished until those dependencies are available.
+
+For #23, require tests of own-copy 404, unavailable/active-offer mutation 409, Pending-edit 409 with no side effects, atomic publish/withdraw with copy/request settlement, snapshot preservation, filter/stat totals before pagination, owner-only projections and sanitized errors. Reject terminal/repeated operations without releasing a copy reused by another listing. Test real transaction races without asserting removed version-token behavior.
+
+## Full-target planning record (post-M3 features remain deferred)
+
 ## 1. Review contract and inputs
 
 This proposal gives frontend and backend contributors one implementation boundary for issue [#9](https://github.com/ninjasilver3692077/TheBridge/issues/9). **Juan and Jorge must approve it before the architecture/API contract is treated as agreed.** This branch contains documentation, not an Express implementation, a deployment, or a completed security audit.

@@ -15,6 +15,12 @@ companions: [../../architecture.md, ../../../../api-design.md]
 
 # Architecture Spine — TheBridge
 
+## Milestone 3 precedence
+
+For the Nov 8 delivery, follow API contract version 5 and the Milestone 3 execution profile at the start of architecture.md (issues #22–#25). Public entity versions, If-Match, reconfirmation and the custom retry runner in the full-target invariants below are deferred. Pending requests block listing edits; multi-document mutations use mongoose.connection.transaction with current state checks and active-state uniqueness. The full-target record remains future design, not a claim those features are implemented.
+
+## Full-target invariants retained for later delivery
+
 ## Design Paradigm
 
 Layered modular monolith. React owns presentation; client services own HTTP/catalog/auth-storage adapters; Express routes own transport; server services own authorization and state transitions; repositories/models own persistence. This is a review proposal, not a claim of human approval or an implemented server.

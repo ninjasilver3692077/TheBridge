@@ -1,4 +1,4 @@
-import BookCover from "../catalog/BookCover.jsx";
+import BookCover from "../catalog/BookCover.tsx";
 
 const MAX_RESULTS = 8;
 

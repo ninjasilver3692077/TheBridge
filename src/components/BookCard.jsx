@@ -1,7 +1,7 @@
 import { cardInteractive } from "../styles/ui.js";
-import BookCover from "./catalog/BookCover.jsx";
+import BookCover from "./catalog/BookCover.tsx";
 import BookDetailsDisclosure from "./catalog/BookDetailsDisclosure.jsx";
-import FavoriteButton from "./catalog/FavoriteButton.jsx";
+import FavoriteButton from "./catalog/FavoriteButton.tsx";
 
 function BookCard({ book, isFavorite, onToggleFavorite }) {
   const summary = [book.publicationYear || book.year, book.publisher]

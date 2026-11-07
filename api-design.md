@@ -1,18 +1,18 @@
 ---
 title: "TheBridge REST API contract"
 status: proposed
-version: 4
+version: 5
 created: 2026-10-27
-updated: 2026-10-30
-issue: 9
+updated: 2026-11-01
+issue: 23
 input_prd_commit: 50edc11165184a186a5afb660a6ffb145feb1cb8
 ---
 
 # TheBridge REST API contract
 
-This is the canonical HTTP design required before HW11 implementation. It is a proposal for Juan/Jorge review, reconciled with the PRD merged into `main` through PR #13 (input commit above). Architecture, staged rollout, decisions A-1–A-5 and product gate Q-2–Q-3 are defined in [architecture.md](_bmad-output/planning-artifacts/architecture.md). No endpoint is claimed to exist yet.
+This is the canonical HTTP design for the Milestone 3 implementation. Version 5 applies the coordinator's scope cuts in issues #22–#25, including #23 (Library books and listings), before domain code. The full product requirements remain in the merged PRD; the narrower delivery profile below explicitly defers part of FR-11/FR-18/FR-19. Architecture and deployment boundaries are in [architecture.md](_bmad-output/planning-artifacts/architecture.md). This draft changes design only and does not claim implemented or deployed endpoints.
 
-Version 4 reconciles the contract with the merged PRD ([issue #15](https://github.com/ninjasilver3692077/TheBridge/issues/15)): Request reconfirmation after a Listing edit (FR-11, FR-18, FR-19) through the `needsReconfirmation` field and REQUEST-08, release and choice of Offered Books, Reserved-listing removal by ADMIN-05 (FR-24), and Completion of an accepted Loan or Rental on a Removed Listing (FR-21). It closes A-1, A-3 and Q-1. Existing operation IDs are unchanged; REQUEST-08 is the only new operation. Version 3 addressed PR #14 review feedback on transaction bounds, copy-version ownership, rejection reasons and auth boundaries.
+Version 5 keeps the existing operation paths and envelopes except REQUEST-08, which is deferred beyond Milestone 3. If-Match headers, entity version fields, quotedListingVersion, needsReconfirmation and a custom transaction retry runner are outside this delivery. An Available listing with any Pending request cannot be edited (409). Multi-document commands use mongoose.connection.transaction(async (session) => ...). These are the explicit delivery cuts in [#23](https://github.com/ninjasilver3692077/TheBridge/issues/23), shared by #22, #24 and #25; they do not claim that the complete PRD reconfirmation workflow has shipped.
 
 ## 1. Global rules
 
@@ -28,23 +28,23 @@ Every API error, including parser, auth, validation, origin-policy, rate-limit, 
 
 | Status | Meaning |
 | --- | --- |
-| 400 | Missing/invalid field, malformed ID/JSON, invalid enum/query/version header; message identifies the problem. |
+| 400 | Missing/invalid field, malformed ID/JSON or invalid enum/query; message identifies the problem. |
 | 401 | Missing, invalid or expired bearer token on a protected operation, or invalid login credentials; no token/password/database details. Public operations ignore bearer headers. |
 | 403 | Valid token with forbidden role; wrong owner on a public listing mutation; disallowed browser Origin. |
 | 404 | Unknown resource, Removed public listing, or another Member's private copy/request. |
 | 405 | Unsupported method on a known API resource; send `Allow`. |
-| 409 | Duplicate identity/active request, unavailable state/copy, stale version/quote or confirmed write contention after bounded retries. |
+| 409 | Duplicate identity/active request, unavailable state/copy, blocked listing edit or confirmed write contention. |
 | 413 / 415 | Body too large / unsupported request content type. |
 | 429 | Auth rate limit exceeded; send `Retry-After`. |
 | 500 / 503 | Sanitized unexpected fault / unavailable backing service or unconfirmed transaction commit. An unconfirmed commit is not a rollback guarantee. |
 
 **Pagination:** every database collection endpoint accepts `page` (integer 1–10000, default 1) and `limit` (integer 1–100, default 10, following FR-13/NFR-6). Reject arrays, objects, operators and numeric fractions with 400. Pages beyond the end return an empty array with the actual total. Default sort is descending `createdAt`, then descending `id`, for deterministic ties. `q` is a trimmed string of at most 100 characters; server search ignores case/accents and escapes regex syntax. No arbitrary sort expressions are accepted.
 
-**Concurrency:** mutable resources expose `version`, initially 1. PATCH/DELETE on an existing copy/listing/request and POST Request creation require a strong `If-Match` header such as `"3"`; it refers to the target copy/listing/request version, or to the listing version for POST Request. Missing/malformed headers return 400; a valid but stale version returns 409. The server increments public versions on versioned domain changes; body-supplied versions/status/owner fields are rejected. GET collections return versions so controls can send this header. All Pending creation and lifecycle commands also write one internal Listing revision in the same transaction; it is not returned and does not invalidate quotes when only a Pending request is inserted.
+**Concurrency:** mutations use server-side state/ownership checks and database transactions rather than client version preconditions. If-Match is not required and has no precondition semantics in this profile; entity DTOs have no version field. Unknown body fields, including submitted status/owner/version, remain validation errors. Reject an edit to an Available listing with Pending requests with 409 without changing its terms, requests or copies.
 
-LibraryBook has two separate counters: internal `revision` for conditional contention writes, and public `version` for stored metadata/condition/notes/lifecycle-status changes. Derived activity/currentListing/lastModeration and bookkeeping timestamps are not part of this domain-version token. A Pending offer that leaves the copy Available increments only internal revision; it must not stale COPY-04/05 If-Match. Those writes separately revalidate eligibility and return 409 while the offer is active; after its release an unchanged domain version remains current. Actual lifecycle/status or editable-field changes increment public version. No internal revision is serialized or accepted as a client precondition.
+Multi-document changes use mongoose.connection.transaction(async (session) => ...) with all queries/writes in the same session and run sequentially. Conditional state updates and active-state unique indexes prevent double publication, duplicate active requests and double acceptance. A conditional internal revision write may serialize competing commands on a Listing or LibraryBook; it is server-only, never a DTO field or client precondition. Pending request creation must contend with editing/accepting/withdrawing/removing the same listing, and outgoing offers must contend with publishing/editing/deleting their physical copy. Transaction callbacks have no external side effects because the Mongoose helper may retry them.
 
-The central transaction runner permits at most three body attempts (initial plus two transient-error retries with 25–100 ms jitter) and at most three commit calls per transaction, as specified in architecture §4. Unknown commit results retry the same commit only; exhausted uncertainty returns sanitized 503 with an unconfirmed-outcome message, not 409 or an asserted rollback. Clients refetch and reconcile before any further action and do not automatically replay mutations. Confirmed state/write contention returns 409; unavailable storage returns 503.
+No custom transaction-body or commit retry runner is implemented for Milestone 3. Use the Mongoose helper, finite database timeouts and sanitized conflict/unavailability errors. An uncertain commit outcome returns 503 without claiming rollback; clients refetch before further action and never automatically replay mutations.
 
 **Roles:** Public operations ignore Authorization headers, including expired/malformed tokens, and expose the same public projection/status as anonymous requests under the usual validation/origin/rate-limit rules. This includes registration/login and health; their payload/readiness errors still apply. Member/Admin operations require `Authorization: Bearer <JWT>` and return 401 for invalid/expired tokens. All declared Member operations reject Admin with 403. `ownerId`, `requesterId`, removal actor and role are server-derived. Private reads are account scoped; public owner summaries contain name/id only. Admin member rows may contain email, never password/hash. Tokens and private data use `Cache-Control: no-store`. The client independently expires its active session on any page under FR-4.
 
@@ -57,10 +57,10 @@ Root `src/types.ts` will define these contracts once and both runtimes will impo
 | Account | `id`, `name`, `email`, `role: Member/Admin`, `createdAt`, `updatedAt`. Only own-account/Admin projections include email. |
 | PublicMember | `id`, `name`. |
 | BookMetadata | `catalogId`, `title`, `author`, `genre`, `coverUrl`, `year`, `publisher`, `isbn`, `language`. `genre` defaults to `Uncategorized`; cover/year/publisher/isbn/language may be null; all response keys are present. |
-| LibraryBook | `id`, `book: BookMetadata`, `condition`, `notes`, `status`, `currentListing`, `activity`, `lastModeration`, `version`, timestamps. currentListing is null or `{id, modality, status, version}` for its Available/Reserved listing; it is null for a Lent copy whose Listing was Removed, and activity then still shows the Accepted request. Activity is null or `{requestId, status, kind, counterpart: PublicMember}`; kind is ReceivedRequest or OfferedExchange, and status is Pending or Accepted. lastModeration is null or `{listingId, reason, removedAt}`. |
-| Listing | `id`, `libraryBookId`, `owner: PublicMember`, `book`, `condition`, `description`, `modality`, `terms`, `status`, `closureReason`, `version`, timestamps. book/condition/description are publication-time snapshots; closureReason is null, Withdrawn or Completed. |
-| Request | `id`, `listingId`, `owner: PublicMember`, `requester: PublicMember`, `listing: RequestListingSummary`, `offeredBookId`, `offeredBook`, `status`, `rejectionReason`, `needsReconfirmation`, `quotedListingVersion`, `quotedModality`, `quotedTerms`, `version`, timestamps. `needsReconfirmation` is true only on a Pending request whose Listing changed Modality or Terms after the quote; it is server-set, never supplied by the client, and becomes false when the request leaves Pending. For an unflagged Pending request and for an Accepted request, offeredBookId/offeredBook are null exactly when quotedModality is not Exchange. A flagged request may also have them null: the offer was released because the Listing is no longer Exchange, or the request was quoted under another Modality and has not chosen an Offered Book yet. A Rejected, Cancelled or Completed request keeps the last offer it held, or null if that offer was released earlier; it holds no copy, and no rule restores a released offer. offeredBook is a `{id, book: BookMetadata, condition}` snapshot visible only to the participants/Admin; it changes only as described in Quote snapshots (§2). rejectionReason is defined below and never supplied by the client. |
-| RequestListingSummary | `id`, `title`, `author`, `coverUrl`, `modality`, `status`. Metadata is an immutable request-time snapshot; modality always equals quotedModality and changes only with it (REQUEST-08); status is the current retained Listing status. |
+| LibraryBook | id, book: BookMetadata, condition, notes, status, currentListing, activity, lastModeration, timestamps. currentListing is null or {id, modality, status} for an Available/Reserved listing. A Lent copy on a Removed listing has null currentListing but retains Accepted activity. Activity is null or {requestId, status, kind, counterpart: PublicMember}; kind is ReceivedRequest or OfferedExchange, status Pending or Accepted. lastModeration is null or {listingId, reason, removedAt}. |
+| Listing | id, libraryBookId, owner: PublicMember, book, condition, description, modality, terms, status, closureReason, timestamps. Publication-time book/condition/description snapshots are immutable; closureReason is null, Withdrawn or Completed. No entity version field. |
+| Request | id, listingId, owner: PublicMember, requester: PublicMember, listing: RequestListingSummary, offeredBookId, offeredBook, status, rejectionReason, quotedModality, quotedTerms, timestamps. offeredBookId/offeredBook are non-null for Exchange and null otherwise. offeredBook is an immutable {id, book: BookMetadata, condition} snapshot restricted to participants/Admin. Terminal requests retain snapshots but hold no copy. No version, quotedListingVersion or needsReconfirmation field. |
+| RequestListingSummary | id, title, author, coverUrl, modality, status. Metadata and modality are request-time snapshots; modality equals quotedModality. Status is the current retained Listing status. |
 | Favorite | `id`, `book: BookMetadata`, `createdAt`. Favorite ID is independent of catalogId. |
 | AuthSession | `token`, `expiresAt`, `account: Account`. |
 
@@ -77,13 +77,13 @@ Condition is exactly `Like new`, `Good condition` or `Used copy`. Notes and mode
 | Rental | null | Positive integer, max 1000000000 | 7, 10, 14 or 21 |
 | Sale | null | Positive integer, max 1000000000 | null |
 
-These limits are proposed validation boundaries; Juan/Jorge confirm them with the PRD. Reject inconsistent non-null terms with 400. A Listing's book/condition/description snapshot is captured from its LibraryBook at publication and survives later copy edits or deletion; description captures notes at that time. Terms updates never accept arbitrary book/owner/condition replacements. Request creation captures the visible listing metadata, modality/terms, public version and offered-copy summary; later listing/copy edits never rewrite that quote.
+These validation boundaries use the existing BookMetadata and terms vocabulary. Reject inconsistent non-null terms with 400. Listing book/condition/description are snapshots of the physical copy at publication. Request creation captures the current listing summary, modality/terms and offered-copy summary; later metadata edits do not rewrite that quote. A listing with Pending requests cannot change terms; Reserved listings cannot be edited.
 
-**Quote snapshots.** A request's quote (`quotedListingVersion`, `quotedModality`, `quotedTerms`, `listing.modality`) and its offer (`offeredBookId`, `offeredBook`) change in exactly two cases, always inside that command's transaction. (1) A Listing edit to a Modality other than Exchange releases the offer of each Pending request: `offeredBookId` and `offeredBook` become null and the quote stays unchanged. (2) REQUEST-08 replaces the quote with the Listing's current values and the offer with it: a new snapshot of the chosen copy for Exchange, or null otherwise. A request keeps only its current quote; earlier quotes and released offers are not retained as history.
+**Quote snapshots.** Request quotedModality, quotedTerms, listing metadata/modality and offered-copy snapshots are immutable after creation. Reconfirmation and REQUEST-08 are outside this delivery. Cancelling/rejecting/completing releases activity without erasing historical snapshots. A requester may send a new request only when no Pending/Accepted request on that listing exists and the listing is Available.
 
-**Offer holds.** An offer held by a Pending request leaves its copy Available and blocks it through derived activity and the active-offer index (A-4). The PRD's "keeps its Offered Book Reserved" for a Pending request means this hold, not LibraryBook status Reserved, which starts only at acceptance. Keeping, moving or releasing a Pending hold increments only the copies' internal revision, never their status or public version.
+**Offer holds.** An offer held by a Pending request leaves its copy Available but blocks it through derived activity and the active-offer index (A-4). Reserved starts at acceptance. Release applies only to the reservation held by the transitioning request, never to a copy now committed elsewhere.
 
-`Request.rejectionReason` is null unless status is Rejected. Rejected always has exactly one enum value: `OwnerRejected` (REQUEST-05), `CompetingRequestAccepted` (another request wins REQUEST-04), `ListingWithdrawn` (LISTING-07), or `ListingRemoved` (ADMIN-05, for Pending requests and for an Accepted Sale or Exchange request). Server commands set reason and status in the same transaction and increment Request version. This field is included in participant/Admin projections and does not contain the Admin's free-text moderation reason. It distinguishes status-message causes without exposing private moderation text. Non-Rejected states, including Cancelled, use null. Reconfirmation (REQUEST-08) rejects nothing and sets no reason.
+`Request.rejectionReason` is null unless status is Rejected. Rejected always has exactly one enum value: `OwnerRejected` (REQUEST-05), `CompetingRequestAccepted` (another request wins REQUEST-04), `ListingWithdrawn` (LISTING-07), or `ListingRemoved` (ADMIN-05, for Pending requests and for an Accepted Sale or Exchange request). Server commands set reason and status in the same transaction. This field is included in participant/Admin projections and does not contain the Admin's free-text moderation reason. It distinguishes status-message causes without exposing private moderation text. Non-Rejected states, including Cancelled, use null. There is no reconfirmation mutation in Milestone 3.
 
 ## 3. Operations
 
@@ -113,8 +113,8 @@ Logout is a client service operation clearing the token/private cache; there is 
 | COPY-01 | GET `/api/my-books` | Member | page, limit, optional status/q | 200 collection of LibraryBook | FR-7 |
 | COPY-02 | GET `/api/my-books/:id` | Member, own copy | ID | 200 `data: LibraryBook` | FR-7, FR-10 |
 | COPY-03 | POST `/api/my-books` | Member | [AddBookInput](#library-payloads-and-views) | 201 `data: LibraryBook` | FR-8 |
-| COPY-04 | PATCH `/api/my-books/:id` | Member, own copy | [EditBookInput](#library-payloads-and-views), If-Match | 200 `data: LibraryBook` | FR-9 |
-| COPY-05 | DELETE `/api/my-books/:id` | Member, own copy | If-Match | 200 `data: {id, deleted: true}` | FR-9 |
+| COPY-04 | PATCH `/api/my-books/:id` | Member, own copy | [EditBookInput](#library-payloads-and-views) | 200 `data: LibraryBook` | FR-9 |
+| COPY-05 | DELETE `/api/my-books/:id` | Member, own copy | None | 200 `data: {id, deleted: true}` | FR-9 |
 
 #### Library payloads and views
 
@@ -131,14 +131,14 @@ COPY-01 defaults to active statuses, excluding Transferred; an explicit valid st
 | LISTING-03 | GET `/api/listings/mine` | Member | page, limit, optional status/q | 200 collection of owned Listing | FR-11, FR-12, FR-24 |
 | LISTING-04 | GET `/api/listings/:id` | Public | ID | 200 `data: Listing` | FR-15 |
 | LISTING-05 | POST `/api/listings` | Member | [CreateListingInput](#listing-payloads-and-lifecycle) | 201 `data: Listing` | FR-10 |
-| LISTING-06 | PATCH `/api/listings/:id` | Member, owner | [EditListingInput](#listing-payloads-and-lifecycle), If-Match | 200 `data: Listing` | FR-11 |
-| LISTING-07 | DELETE `/api/listings/:id` | Member, owner | If-Match | 200 `data: Listing` with status Closed | FR-12 |
+| LISTING-06 | PATCH `/api/listings/:id` | Member, owner | [EditListingInput](#listing-payloads-and-lifecycle) | 200 `data: Listing` | FR-11 |
+| LISTING-07 | DELETE `/api/listings/:id` | Member, owner | None | 200 `data: Listing` with status Closed | FR-12 |
 
 Register literal routes `stats` and `mine` before `:id`. All public list results are Available. Detail can show Available, Reserved or Closed to explain availability; Removed and unknown return 404. `mine` may include Removed and returns an owner-only `moderation` projection `{reason, removedAt}` or null in addition to Listing. No public response includes that projection or owner email.
 
 #### Listing payloads and lifecycle
 
-CreateListingInput is `{libraryBookId, modality, terms}`. Server loads the authenticated Member's Available copy, atomically checks active/open relationships, creates the listing and marks the copy Published. Missing/foreign copy returns 404; occupied copy/open listing returns 409. EditListingInput is the full replacement `{modality, terms}` even though the method is PATCH; book identity/owner are immutable. Only Available listings can be edited/withdrawn. When the replacement changes Modality or Terms, every Pending request on the Listing keeps its quoted Modality and Terms, stays Pending and is marked `needsReconfirmation` (FR-11); a replacement identical to the stored values changes nothing, including the version. If the new Modality is not Exchange, the Offered Book of each such request is released in the same transaction (`offeredBookId` and `offeredBook` become null and the hold ends; the copy stays Available). If it is Exchange, each request keeps holding its Offered Book until the requester reconfirms with REQUEST-08. The owner cannot accept a flagged request.
+CreateListingInput is {libraryBookId, modality, terms}. The server loads the Member's Available copy, verifies it has no active outgoing offer/open listing, creates the Available listing and marks the copy Published in one transaction. Missing/foreign copy returns 404; occupied copy/open listing returns 409. EditListingInput is the full replacement {modality, terms}; identity/owner/snapshots are immutable. Only Available listings can be edited or withdrawn. Editing while any Pending request exists returns 409 even if a replacement is identical; an unsuccessful edit has no effects. With no Pending requests, update modality/terms atomically. Requests are never flagged or re-quoted.
 
 LISTING-07 is semantic withdrawal: it sets Closed/Withdrawn, releases the copy and rejects Pending requests atomically. A repeated or otherwise invalid state transition returns 409. Request participants still see retained summaries.
 
@@ -150,24 +150,23 @@ Allowed modality/condition query values are the corresponding enums; genre is a 
 
 | ID | Method and path | Access | Input | Success | Requirement |
 | --- | --- | --- | --- | --- | --- |
-| REQUEST-01 | POST `/api/listings/:id/requests` | Member, not owner | [SendRequestInput](#request-payloads-and-transitions), listing If-Match | 201 `data: Request` | FR-17 |
+| REQUEST-01 | POST `/api/listings/:id/requests` | Member, not owner | [SendRequestInput](#request-payloads-and-transitions) | 201 `data: Request` | FR-17 |
 | REQUEST-02 | GET `/api/requests` | Member | direction, page, limit, optional status/q | 200 collection of Request | FR-18 |
 | REQUEST-03 | GET `/api/requests/:id` | Member, participant | ID | 200 `data: Request` | FR-18 |
-| REQUEST-04 | PATCH `/api/requests/:id/accept` | Member, listing owner | Empty object, request If-Match | 200 `data: Request` Accepted | FR-19 |
-| REQUEST-05 | PATCH `/api/requests/:id/reject` | Member, listing owner | Empty object, request If-Match | 200 `data: Request` Rejected | FR-19 |
-| REQUEST-06 | PATCH `/api/requests/:id/cancel` | Member, requester | Empty object, request If-Match | 200 `data: Request` Cancelled | FR-20 |
-| REQUEST-07 | PATCH `/api/requests/:id/complete` | Member, listing owner | Empty object, request If-Match | 200 `data: Request` Completed | FR-21 |
-| REQUEST-08 | PATCH `/api/requests/:id/reconfirm` | Member, requester | [ReconfirmInput](#request-payloads-and-transitions), request If-Match | 200 `data: Request` still Pending | FR-11, FR-18, FR-19 |
+| REQUEST-04 | PATCH `/api/requests/:id/accept` | Member, listing owner | Empty object | 200 `data: Request` Accepted | FR-19 |
+| REQUEST-05 | PATCH `/api/requests/:id/reject` | Member, listing owner | Empty object | 200 `data: Request` Rejected | FR-19 |
+| REQUEST-06 | PATCH `/api/requests/:id/cancel` | Member, requester | Empty object | 200 `data: Request` Cancelled | FR-20 |
+| REQUEST-07 | PATCH `/api/requests/:id/complete` | Member, listing owner | Empty object | 200 `data: Request` Completed | FR-21 |
 
 #### Request payloads and transitions
 
-SendRequestInput is `{offeredBookId}` for Exchange and `{}` otherwise; missing Exchange offer returns 400. Non-null offer outside Exchange returns 400. Requester/owner derive from the token/listing. Own listing returns 403; unavailable listing, duplicate active request, unavailable/occupied offer or stale listing version returns 409. An unknown/foreign offered copy returns 404. Pending/Accepted requests block another request by that member on the same listing; Rejected/Cancelled/Completed do not, although the listing must still be Available.
+SendRequestInput is {offeredBookId} for Exchange and {} otherwise; missing Exchange offer or a non-null offer outside Exchange returns 400. Owner/requester come from the token/listing. Own listing returns 403; unavailable listing, duplicate active request or unavailable/occupied offer returns 409. Unknown/foreign offered copy returns 404. Pending/Accepted requests block a second request by that member on the listing; terminal requests do not, but the listing must still be Available.
 
 `direction` is received or sent, default received. Requests are restricted to the token account, never an arbitrary account query parameter. q searches the authorized listing title/author and counterpart name only. Status filters use the Request status enum. Request summaries remain accessible after public listing removal/closure; a Member who is neither owner nor requester receives 404. No full public account/email projection is populated.
 
-Only Pending requests can be accepted, rejected, cancelled or reconfirmed. A Pending request with `needsReconfirmation` true cannot be accepted (409); it can still be rejected or cancelled, and the requester clears it with REQUEST-08. Only Accepted requests can be completed: on a Reserved Listing, or, for a Loan or Rental, on a Removed Listing, because ADMIN-05 leaves that request Accepted. Repeated, stale or terminal transitions return 409; no generic arbitrary-status update route exists. Accept is one transaction for the winner, listing, copy, offered copy and competitors. Read the state effects and A-4 in architecture §4/§8; client tabs refresh after successful mutations rather than guessing those effects.
+Only Pending requests can be accepted, rejected or cancelled. Only Accepted requests on Reserved listings can be completed, with the existing exception that a Loan/Rental on a Removed listing can still complete after physical return. Repeated/terminal/invalid-state transitions return 409. Accept updates the winner, listing, both affected copies and competing requests atomically. An edit cannot invalidate a Pending quote because the edit is blocked. Participants refetch after mutations.
 
-ReconfirmInput is `{offeredBookId}` while the Listing's current Modality is Exchange and `{}` otherwise. It follows the 400, 404 and 409 rules of SendRequestInput, and the request's own current Offered Book does not count as occupied. REQUEST-08 requires a Pending request with `needsReconfirmation` true on an Available Listing, otherwise 409, and follows the participant rules of REQUEST-06. One transaction re-quotes the request to the Listing's current version, Modality and Terms, clears `needsReconfirmation`, increments the request version and replaces the offer as described in Quote snapshots: for Exchange it moves the hold to the chosen copy and ends the hold on the previous one when it differs, without changing either copy's status or public version. Every Listing edit that changes Modality or Terms increments the version of each Pending request on it, including requests already flagged, so a requester holding an older If-Match receives 409 and must refetch before agreeing to terms not yet seen. A quick view sends requests through REQUEST-01 with the same rules as the detail page (FR-15); the API has no quick-view operation.
+A quick view uses REQUEST-01 with the same rules as the detail page (FR-15). There is no quick-view operation and no REQUEST-08 endpoint in Milestone 3.
 
 ### Favorites
 
@@ -187,7 +186,7 @@ Saving the same catalogId twice returns 409; deleting a foreign/unknown favorite
 | ADMIN-02 | GET `/api/admin/listings` | Admin | page, limit, q, optional status | 200 collection of AdminListing | FR-23 |
 | ADMIN-03 | GET `/api/admin/requests` | Admin | page, limit, q, optional status | 200 collection of AdminRequest | FR-23 |
 | ADMIN-04 | GET `/api/admin/members` | Admin | page, limit, optional q | 200 collection of MemberSummary | FR-23 |
-| ADMIN-05 | DELETE `/api/admin/listings/:id` | Admin | `{reason}`, If-Match | 200 `data: AdminListing` Removed | FR-24 |
+| ADMIN-05 | DELETE `/api/admin/listings/:id` | Admin | `{reason}` | 200 `data: AdminListing` Removed | FR-24 |
 
 AdminOverview is `{memberCount, listingsByStatus, requestsByStatus}` with every enum key present and nonnegative counts. MemberSummary is `{id, name, email, createdAt}` for role Member only. AdminListing extends Listing with owner email and moderation `{reason, removedAt, removedBy: {id, name}}` or null. AdminRequest extends Request with owner/requester emails. Password hashes and bearer tokens are never selected or serialized. q searches relevant title/name/email fields on these Admin-only collections, using safe bounded text search.
 
@@ -211,14 +210,13 @@ Content-Type: application/json
 }
 ```
 
-Success is 201 with a complete Listing under `data`, including `id`, `version: 1`, `status: "Available"`, book metadata and safe owner projection. Missing duration is 400; a Published copy is 409. POST listing creation uses a transaction/unique index, not an If-Match precondition on a nonexistent listing.
+Success is 201 with a complete Listing under data, including id, status Available, book metadata and the safe owner projection. Missing duration is 400; a Published copy is 409. Transactional state checks and a unique index protect creation; there is no If-Match requirement.
 
-Send a non-Exchange request on listing version 1:
+Send a non-Exchange request on an Available listing:
 
 ```http
 POST /api/listings/507f1f77bcf86cd799439012/requests
 Authorization: Bearer <member-token>
-If-Match: "1"
 Content-Type: application/json
 ```
 
@@ -226,12 +224,11 @@ Content-Type: application/json
 {}
 ```
 
-Accept request version 1:
+Accept a Pending request:
 
 ```http
 PATCH /api/requests/507f1f77bcf86cd799439013/accept
 Authorization: Bearer <owner-token>
-If-Match: "1"
 Content-Type: application/json
 ```
 
@@ -245,7 +242,7 @@ If another action wins first, the losing action returns:
 {"error":"The request or listing changed. Refresh before trying again.","code":409}
 ```
 
-Both request version and the stored quoted listing version/state are checked. Body-supplied owner or status is a validation error. A lost response followed by a retry may return 409; the client re-fetches and reconciles state instead of creating a duplicate or declaring success without evidence.
+The server rechecks ownership and lifecycle state in the transaction. Body-supplied owner/status fields are invalid. A lost response followed by a retry may return 409; the client refetches rather than assuming success or automatically repeating a mutation.
 
 ## 5. Rollout and verification ownership
 
@@ -253,4 +250,4 @@ HW11 implements LISTING-01/04/05/06/07 plus OPS-01 with in-memory storage, error
 
 HW12 replaces in-memory repositories with related Atlas models, validation and safe populate. An explicitly invoked seed creates the persisted demo Member/copies in the isolated grading database, using one-off operator credentials and the account hashing rules; the temporary server-owned demo-identity adapter targets that Member until HW13. It is not an in-memory fallback or an anonymous identity accepted from a body/header. HW13 removes that adapter, adds real account-scoped operations and removes production domain mocks. HW14 adds shared strict types; HW15 verifies security/deployment. Every weekly submission needs lint, verified endpoint/manual evidence, the week's AI-LOG answers and a real public Vercel URL returning 200. Authenticated production never falls back to demo identity or browser-local domain arrays.
 
-This documentation is authored before API code. Contract tests in later approved stories must exercise the status matrix, auth/ownership, term validation, unfiltered/filtered totals, version conflicts and transaction races. Required tests are enumerated in architecture §9. Juan and Jorge review contract changes before implementation; the coordinator records real URLs only after deployment. No weekly grader pass or production check is asserted by this proposal.
+This documentation is authored before API code. Contract tests in later approved stories must exercise the status matrix, auth/ownership, term validation, unfiltered/filtered totals, state conflicts and transaction races. Required tests are enumerated in architecture §9. Juan and Jorge review contract changes before implementation; the coordinator records real URLs only after deployment. No weekly grader pass or production check is asserted by this proposal.

@@ -54,6 +54,21 @@ function NavIcon({ name }) {
         </svg>
       );
 
+    case "admin":
+      return (
+        <svg {...commonProps}>
+          <path d="M12 3 4 6v6c0 4.5 3.4 8.3 8 9 4.6-.7 8-4.5 8-9V6Z" />
+          <path d="m9 12 2 2 4-4" />
+        </svg>
+      );
+
+    case "sign-in":
+      return (
+        <svg {...commonProps}>
+          <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4M10 17l5-5-5-5M15 12H3" />
+        </svg>
+      );
+
     default:
       return (
         <svg {...commonProps}>

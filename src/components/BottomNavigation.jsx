@@ -1,19 +1,26 @@
 import { Link, useLocation } from "react-router-dom";
-import { navigationItems } from "../data/navigation.js";
+import { navigationItemsFor } from "../data/navigation.js";
+import { useSession } from "../hooks/useSession.js";
 import { focusRing } from "../styles/ui.js";
 import NavIcon from "./navigation/NavIcon.jsx";
 
-const mobileItems = navigationItems.filter((item) => item.mobile);
-
 function BottomNavigation() {
   const location = useLocation();
+  const session = useSession();
+  const mobileItems = navigationItemsFor(session?.account.role).filter(
+    (item) => item.mobile,
+  );
 
   return (
     <nav
       className="fixed inset-x-0 bottom-0 z-40 border-t border-line bg-chrome/95 px-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] pt-2 backdrop-blur-xl lg:hidden"
       aria-label="Mobile navigation"
     >
-      <ul className="mx-auto grid max-w-xl grid-cols-5 gap-1">
+      <ul
+        className={`mx-auto grid max-w-xl gap-1 ${
+          mobileItems.length > 4 ? "grid-cols-5" : "grid-cols-4"
+        }`}
+      >
         {mobileItems.map((item) => {
           const isActive = location.pathname === item.path;
 

@@ -1,15 +1,18 @@
 import { Link, useLocation } from "react-router-dom";
-import { navigationItems } from "../../data/navigation.js";
+import { navigationItemsFor } from "../../data/navigation.js";
+import { useSession } from "../../hooks/useSession.js";
 import { focusRing } from "../../styles/ui.js";
 import NavIcon from "./NavIcon.jsx";
 
 function SidebarNavigation({ collapsed }) {
   const location = useLocation();
+  const session = useSession();
+  const items = navigationItemsFor(session?.account.role);
 
   return (
     <nav className="mt-8 flex-1 overflow-y-auto" aria-label="TheBridge sections">
       <ul className="space-y-1">
-        {navigationItems.map((item) => {
+        {items.map((item) => {
           const isActive = location.pathname === item.path;
 
           return (

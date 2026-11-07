@@ -1,4 +1,4 @@
-﻿# AI-LOG
+# AI-LOG
 
 ## Repository Foundation
 
@@ -673,3 +673,38 @@ Andrés reviewed `a92b037` and requested these changes; each reproduction was re
 ### Learning
 
 A guard applied to a whole prefix (`/api`) hides routing decisions behind infrastructure state; attaching it to the handlers that need it keeps 404 and 405 independent of the database.
+
+## Issue #24 — M3: Requests and favorites (2026-11-06)
+
+### Prompt or task
+
+Implement the Milestone 3 backend models and routes for requests and favorites (`models/Request.ts`, `models/Favorite.ts`, `routes/requests.ts`, `routes/favorites.ts`), mount them in `server/app.ts`, align `api-design.md` with the Milestone 3 scope cuts, and add automated verification in `tests/requests-favorites.test.ts` on branch `feat/m3-requests`.
+
+### AI suggestions
+
+- Implement `FavoriteModel` with embedded `BookMetadata` validation, an owner-plus-catalogId unique index (`{ owner: 1, "book.catalogId": 1 }`), and the `FAVORITE-01..03` routes (`GET /api/favorites`, `POST /api/favorites`, `DELETE /api/favorites/:id`).
+- Implement `RequestModel` with embedded `offeredBookSnapshot`, `listingSummary`, `quotedModality`, `quotedTerms`, modality-specific term validation, and the three partial unique indexes from `api-design.md` §3.4 (one active request per requester and listing, one accepted request per listing, and one active offer per copy).
+- Execute `REQUEST-01`, `REQUEST-04`, `REQUEST-05`, `REQUEST-06`, and `REQUEST-07` inside `mongoose.connection.transaction(async (session) => ...)` so request, listing, library copy, and competing request state updates commit atomically without custom retry wrappers or `If-Match` headers.
+- Include the upstream contract modules (`models/Account.ts`, `server/auth.ts`, `models/LibraryBook.ts`, `models/Listing.ts`) in a separate commit so the branch builds, typechecks, and passes tests independently before #22 and #23 merge.
+
+### Changes adopted
+
+- Added `models/Favorite.ts`, `models/Request.ts`, `routes/favorites.ts`, `routes/requests.ts`, and mounted both routers in `server/app.ts` before `handleNotFound`.
+- Updated `api-design.md` to version 5 to reflect the Milestone 3 scope cuts (no `If-Match` / `version` fields, no custom transaction retry runner, no `REQUEST-08` reconfirmation).
+- Added `tests/requests-favorites.test.ts` covering Mongoose schema validation, partial unique indexes, `FAVORITE-01..03`, and the full `REQUEST-01..07` lifecycle for Loan, Exchange, competing request auto-rejection, reject, cancel, and completion.
+
+### Human changes and review
+
+Pending peer review on GitHub before merge to `main`.
+
+### Tests and verification
+
+- `npm run lint`: 0 errors and 0 warnings.
+- `npm run typecheck`: 0 TypeScript errors.
+- `npm run build`: production client bundle built cleanly.
+- `npm test`: 15 of 15 tests passing (`tests/api.test.ts` and `tests/requests-favorites.test.ts`).
+
+### Learning
+
+Resolving reference IDs through a helper that handles both raw `ObjectId` values and populated subdocuments prevents subtle authorization mismatches when Mongoose documents are reused across lifecycle steps.
+

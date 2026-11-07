@@ -293,3 +293,6 @@ export const RequestModel =
   (mongoose.models.Request as mongoose.Model<RequestDocument> | undefined) ??
   mongoose.model<RequestDocument>("Request", requestSchema);
 
+export const Request = RequestModel;
+
+

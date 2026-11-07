@@ -1,6 +1,6 @@
 import mongoose, { Schema } from "mongoose";
 import type { HydratedDocument, Types } from "mongoose";
-import type { BookMetadata, Favorite } from "@/types";
+import type { BookMetadata, Favorite as FavoriteDto } from "@/types";
 import { HttpError } from "../server/errors.js";
 
 const bookMetadataKeys = new Set([
@@ -204,7 +204,7 @@ const favoriteSchema = new Schema<FavoriteDocument>(
 favoriteSchema.index({ owner: 1, "book.catalogId": 1 }, { unique: true });
 favoriteSchema.index({ owner: 1, createdAt: -1, _id: -1 });
 
-export function toFavoriteDto(doc: HydratedDocument<FavoriteDocument>): Favorite {
+export function toFavoriteDto(doc: HydratedDocument<FavoriteDocument>): FavoriteDto {
   return {
     id: String(doc._id),
     book: serializeBookMetadata(doc.book),
@@ -215,4 +215,7 @@ export function toFavoriteDto(doc: HydratedDocument<FavoriteDocument>): Favorite
 export const FavoriteModel =
   (mongoose.models.Favorite as mongoose.Model<FavoriteDocument> | undefined) ??
   mongoose.model<FavoriteDocument>("Favorite", favoriteSchema);
+
+export const Favorite = FavoriteModel;
+
 

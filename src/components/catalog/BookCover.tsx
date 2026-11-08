@@ -1,6 +1,14 @@
 import { useState } from "react";
+import type { BookMetadata } from "@/types";
 
-function BookCover({ src, title, className = "", loading = "lazy" }) {
+interface BookCoverProps {
+  src?: BookMetadata["coverUrl"];
+  title?: BookMetadata["title"];
+  className?: string;
+  loading?: "lazy" | "eager";
+}
+
+function BookCover({ src, title, className = "", loading = "lazy" }: BookCoverProps) {
   const [failed, setFailed] = useState(false);
 
   if (!src || failed) {

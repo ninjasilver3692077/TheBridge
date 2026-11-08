@@ -725,4 +725,9 @@ Andrés requested changes on concurrency, dependency integration and evidence. C
 - **Executed `curl` and index verification on the local replica set:** Added an integration test in `tests/integration/requests-concurrency.spec.ts` that runs `curl` against all ten operations (`FAVORITE-01..03`, `REQUEST-01..07`) and checks `FavoriteModel.collection.indexes()` and `RequestModel.collection.indexes()` against the local single-node MongoDB replica set (`8/8` passing in `npm run test:integration`, `24/24` passing in `npm test`).
 - **Vercel preview and Atlas status:** The Vercel preview deployment (`https://thebridge-git-feat-m3-requests-the-bridge13.vercel.app`) builds Ready (`SUCCESS`), and `curl -I /api/health` returns HTTP `302` due to Vercel SSO protection. Verification against an isolated Atlas dataset and an authorized preview session remains pending coordinator access before #24 is closed.
 
+### Review follow-up on e200aaa (2026-11-08)
+
+- **Sequential transaction queries in `hydrateRequestDto` (P2):** Replaced `Promise.all` inside `hydrateRequestDto` (`routes/requests.ts`) with sequential `await` calls for `owner`, `requester`, and `listing` when hydrating inside `mongoose.connection.transaction(async (session) => ...)`, complying with the MongoDB driver restriction against parallel operations on the same `ClientSession` and `api-design.md` §1.
+- **Verification:** Re-ran `npm run lint`, `npm run typecheck`, `npm run build`, `npm test` (`24/24` passing), and `npm run test:integration` (`8/8` passing on the local replica set).
+
 

@@ -83,13 +83,14 @@ async function hydrateRequestDto(
   const requesterId = extractId(doc.requester);
   const listingId = extractId(doc.listing);
 
-  const [ownerDoc, requesterDoc, listingDoc] = await Promise.all([
-    AccountModel.findById(ownerId).select("name").session(session).exec(),
-    AccountModel.findById(requesterId).select("name").session(session).exec(),
-    listingStatus
-      ? Promise.resolve(null)
-      : ListingModel.findById(listingId).select("status").session(session).exec(),
-  ]);
+  const ownerDoc = await AccountModel.findById(ownerId).select("name").session(session).exec();
+  const requesterDoc = await AccountModel.findById(requesterId)
+    .select("name")
+    .session(session)
+    .exec();
+  const listingDoc = listingStatus
+    ? null
+    : await ListingModel.findById(listingId).select("status").session(session).exec();
 
   return toBookRequestDto(doc, {
     owner: { id: ownerId, name: ownerDoc?.name ?? "Member" },

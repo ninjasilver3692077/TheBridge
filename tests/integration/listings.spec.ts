@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { execFile } from "node:child_process";
 import { writeFileSync } from "node:fs";
 import type { AddressInfo } from "node:net";
-import { after, before, beforeEach, test } from "node:test";
+import { after, before, beforeEach, mock, test } from "node:test";
 import { promisify } from "node:util";
 import jwt from "jsonwebtoken";
 import mongoose, { Types } from "mongoose";
@@ -275,8 +275,12 @@ test("Removed privacy, Transferred history, and model field validation", async (
 test("seed is idempotent, creates demo Members and all modalities without resets", async () => {
   const first = await seedDemo("isolated-demo-test-password");
   assert.deepEqual(first, { members: 3, listingsCreated: 4 });
+  const accountBefore = await AccountModel.findOne({ email: "demo1@thebridge.example.invalid" }).select("+passwordHash").exec();
+  assert.match(accountBefore?.passwordHash ?? "", /^\$2[aby]\$12\$/);
   const second = await seedDemo("different-password-does-not-reset-existing");
   assert.equal(second.listingsCreated, 0);
+  const accountAfter = await AccountModel.findOne({ email: "demo1@thebridge.example.invalid" }).select("+passwordHash").exec();
+  assert.equal(accountAfter?.passwordHash, accountBefore?.passwordHash);
   assert.equal(await ListingModel.countDocuments({ status: "Available" }), 4);
   assert.equal(await LibraryBookModel.countDocuments({ status: "Published" }), 4);
   assert.deepEqual((await ListingModel.distinct("modality")).sort(), ["Exchange", "Loan", "Rental", "Sale"]);
@@ -309,4 +313,71 @@ test("curl evidence executes every COPY and LISTING endpoint against the real lo
   await curl("LISTING-06", "PATCH", `/api/listings/${listing.id}`, 200, { modality: "Sale", terms: { ...sale, priceCop: 45000 } });
   await curl("LISTING-07", "DELETE", `/api/listings/${listing.id}`, 200);
   await curl("COPY-05", "DELETE", `/api/my-books/${copy.id}`, 200);
+});
+
+test("missing or invalid terms identify the nested field rather than a valid request body", async () => {
+  const copy = await add();
+  for (const terms of [undefined, null, [], "invalid"]) {
+    const result = await api("POST", "/api/listings", owner, { libraryBookId: copy.id, modality: "Sale", ...(terms === undefined ? {} : { terms }) });
+    assert.equal(result.status, 400);
+    assert.match(result.body.error, /^terms:/);
+  }
+  const unknown = await api("POST", "/api/listings", owner, { libraryBookId: copy.id, modality: "Sale", terms: { ...sale, owner } });
+  assert.equal(unknown.status, 400);
+  assert.match(unknown.body.error, /^terms.owner:/);
+});
+
+test("all modality terms validate through HTTP and Reserved listings cannot be edited or withdrawn", async () => {
+  const cases = [
+    { modality: "Exchange", terms: { desiredBook: book, priceCop: null, durationDays: null } },
+    { modality: "Loan", terms: { desiredBook: null, priceCop: null, durationDays: 21 } },
+    { modality: "Rental", terms: { desiredBook: null, priceCop: 1_000_000_000, durationDays: 7 } },
+    { modality: "Sale", terms: { desiredBook: null, priceCop: 1, durationDays: null } },
+  ] as const;
+  for (const input of cases) {
+    const copy = await add();
+    const created = await api<Listing>("POST", "/api/listings", owner, { libraryBookId: copy.id, ...input });
+    assert.equal(created.status, 201);
+    assert.deepEqual(created.body.data.terms, input.terms);
+    await ListingModel.updateOne({ _id: created.body.data.id }, { $set: { status: "Reserved" } });
+    const copyStatus = input.modality === "Loan" || input.modality === "Rental" ? "Lent" : "Reserved";
+    await LibraryBookModel.updateOne({ _id: copy.id }, { $set: { status: copyStatus } });
+    const privateRead = await api("PATCH", `/api/listings/${created.body.data.id}`, owner, input);
+    assert.equal(privateRead.status, 409);
+    assert.equal((await api("DELETE", `/api/listings/${created.body.data.id}`, owner)).status, 409);
+    assert.equal((await ListingModel.findById(created.body.data.id))?.status, "Reserved");
+    assert.equal((await LibraryBookModel.findById(copy.id))?.status, copyStatus);
+  }
+  const copy = await add();
+  for (const terms of [{ ...sale, priceCop: 1_000_000_001 }, { ...sale, priceCop: 1.5 }, { ...sale, priceCop: "40000" }, { ...sale, durationDays: 14 }]) {
+    assert.equal((await api("POST", "/api/listings", owner, { libraryBookId: copy.id, modality: "Sale", terms })).status, 400);
+  }
+});
+
+test("a database rejection midway through withdrawal rolls back listing, copy and Pending requests", async () => {
+  const copy = await add();
+  const listing = await publish(copy.id);
+  const pending = await requestLinks().insertOne({ listing: new Types.ObjectId(listing.id), offeredBook: null, owner: new Types.ObjectId(owner), requester: new Types.ObjectId(stranger), status: "Pending", updatedAt: new Date() });
+  const db = mongoose.connection.db;
+  assert.ok(db);
+  const original = await ListingModel.findById(listing.id).select("+revision").exec();
+  await db.command({ collMod: "requests", validator: { status: "Pending" }, validationLevel: "strict", validationAction: "error" });
+  const errorLog = mock.method(console, "error", () => undefined);
+  try {
+    const failed = await api("DELETE", `/api/listings/${listing.id}`, owner);
+    assert.equal(failed.status, 500);
+    assert.deepEqual(failed.body, { error: "Unexpected server error.", code: 500 });
+    assert.equal(errorLog.mock.callCount(), 1);
+    const unchanged = await ListingModel.findById(listing.id).select("+revision").exec();
+    assert.equal(unchanged?.status, "Available");
+    assert.equal(unchanged?.closureReason, null);
+    assert.equal(unchanged?.revision, original?.revision);
+    assert.equal((await LibraryBookModel.findById(copy.id))?.status, "Published");
+    assert.equal((await requestLinks().findOne({ _id: pending.insertedId }))?.status, "Pending");
+  } finally {
+    errorLog.mock.restore();
+    await db.command({ collMod: "requests", validator: {} });
+  }
+  assert.equal((await api("DELETE", `/api/listings/${listing.id}`, owner)).status, 200);
+  assert.equal((await requestLinks().findOne({ _id: pending.insertedId }))?.status, "Rejected");
 });

@@ -3,10 +3,10 @@ import { isPlainObject, parseBookMetadataInput } from "./bookMetadata.js";
 import { HttpError } from "./errors.js";
 import { areValidTermsForModality, CONDITIONS, LISTING_STATUSES, MODALITIES } from "./listingTerms.js";
 
-export function objectInput(raw: unknown, keys: readonly string[]): Record<string, unknown> {
-  if (!isPlainObject(raw)) throw new HttpError(400, "body: must be a JSON object.");
+export function objectInput(raw: unknown, keys: readonly string[], field = "body"): Record<string, unknown> {
+  if (!isPlainObject(raw)) throw new HttpError(400, `${field}: must be a JSON object.`);
   for (const key of Object.keys(raw)) {
-    if (!keys.includes(key)) throw new HttpError(400, `${key}: unknown field.`);
+    if (!keys.includes(key)) throw new HttpError(400, `${field === "body" ? key : `${field}.${key}`}: unknown field.`);
   }
   return raw;
 }
@@ -39,7 +39,7 @@ export function readNotes(raw: unknown): string {
 export function listingInput(raw: unknown, creating = false) {
   const body = objectInput(raw, creating ? ["libraryBookId", "modality", "terms"] : ["modality", "terms"]);
   const modality = readEnum(body.modality, MODALITIES, "modality");
-  const input = objectInput(body.terms, ["desiredBook", "priceCop", "durationDays"]);
+  const input = objectInput(body.terms, ["desiredBook", "priceCop", "durationDays"], "terms");
   for (const key of ["desiredBook", "priceCop", "durationDays"]) {
     if (!(key in input)) throw new HttpError(400, `terms.${key}: required field.`);
   }

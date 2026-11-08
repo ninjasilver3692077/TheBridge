@@ -715,3 +715,7 @@ A transaction does not lock every document it reads. The implementation writes a
 ### Integration follow-up
 
 A separate temporary worktree combined code head 1d6329a and requests head cce497b, preserving the upstream models and mounting all routers. Typecheck and 43 tests passed (25 unit/HTTP plus 18 real replica-set integration tests). This is compatibility evidence, not an actual merge or peer approval. The #26 preview returned 302 to Vercel SSO for root/health/listings/stats; the bot's Ready state is not an endpoint verification. Coordinator Atlas/preview checks and Daniel's review remain outstanding.
+
+### Additional review requested by the account holder
+
+A second audit reproduced an incorrect field name in validation errors: missing/null/non-object listing terms returned a body error even though the outer JSON object was valid. The parser now carries the nested field path, returning `terms:` or `terms.owner:` as appropriate; a regression test failed before this fix. Added coverage for every modality's terms and Reserved lifecycle gates, preservation of bcrypt cost/passwords on reseeding, and a real database validation failure midway through withdrawal. The latter proves that listing state, copy state, internal revision and Pending requests all roll back, while the HTTP error remains sanitized. The current task suite is 21 unit/HTTP tests plus 15 replica-set tests (36 total), with lint/typecheck/build passing. Preview/Atlas and independent review limitations still apply.

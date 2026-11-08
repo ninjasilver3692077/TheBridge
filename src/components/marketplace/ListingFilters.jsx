@@ -4,7 +4,7 @@ import { buttonGhost } from "../../styles/ui.js";
 import FilterSelect from "./FilterSelect.jsx";
 import ListingSearchField from "./ListingSearchField.jsx";
 import MarketplaceIntro from "./MarketplaceIntro.jsx";
-import ModalityFilter from "./ModalityFilter.jsx";
+import ModalityFilter from "./ModalityFilter.tsx";
 
 function ListingFilters({ listings, filters, resultCount, hasActiveFilters, onChange, onReset }) {
   const genres = useMemo(() => getUniqueValues(listings, "genre"), [listings]);

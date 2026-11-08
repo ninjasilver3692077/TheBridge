@@ -1,10 +1,21 @@
+import type { Modality } from "@/types";
 import { listingModalities } from "../../data/createListingData.js";
 import { ALL_OPTION } from "../../services/listingFilters.js";
 import { chip } from "../../styles/ui.js";
 
-const MODALITIES = [ALL_OPTION, ...listingModalities.map(({ id }) => id)];
+type ModalityOption = Modality | typeof ALL_OPTION;
 
-function ModalityFilter({ value, onChange }) {
+interface ModalityFilterProps {
+  value: ModalityOption;
+  onChange: (modality: ModalityOption) => void;
+}
+
+const MODALITIES: ModalityOption[] = [
+  ALL_OPTION,
+  ...listingModalities.map(({ id }) => id as Modality),
+];
+
+function ModalityFilter({ value, onChange }: ModalityFilterProps) {
   return (
     <fieldset>
       <legend className="sr-only">Sharing modality</legend>

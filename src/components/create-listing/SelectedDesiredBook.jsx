@@ -1,5 +1,5 @@
 import { buttonGhost, buttonSecondarySm, fieldLabel } from "../../styles/ui.js";
-import BookCover from "../catalog/BookCover.jsx";
+import BookCover from "../catalog/BookCover.tsx";
 
 function SelectedDesiredBook({
   selected,

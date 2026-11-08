@@ -1,6 +1,13 @@
+import type { BookMetadata } from "@/types";
 import { focusRing } from "../../styles/ui.js";
 
-function FavoriteButton({ title, isFavorite, onToggle }) {
+interface FavoriteButtonProps {
+  title: BookMetadata["title"];
+  isFavorite: boolean;
+  onToggle: () => void;
+}
+
+function FavoriteButton({ title, isFavorite, onToggle }: FavoriteButtonProps) {
   return (
     <button
       type="button"

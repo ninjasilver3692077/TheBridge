@@ -1,4 +1,4 @@
-﻿# AI-LOG
+# AI-LOG
 
 ## Repository Foundation
 
@@ -673,3 +673,56 @@ Andrés reviewed `a92b037` and requested these changes; each reproduction was re
 ### Learning
 
 A guard applied to a whole prefix (`/api`) hides routing decisions behind infrastructure state; attaching it to the handlers that need it keeps 404 and 405 independent of the database.
+
+## Issue #24 — M3: Requests and favorites (2026-11-06)
+
+### Prompt or task
+
+Implement the Milestone 3 backend models and routes for requests and favorites (`models/Request.ts`, `models/Favorite.ts`, `routes/requests.ts`, `routes/favorites.ts`), mount them in `server/app.ts`, align `api-design.md` with the Milestone 3 scope cuts, and add automated verification in `tests/requests-favorites.test.ts` on branch `feat/m3-requests`.
+
+### AI suggestions
+
+- Implement `FavoriteModel` with embedded `BookMetadata` validation, an owner-plus-catalogId unique index (`{ owner: 1, "book.catalogId": 1 }`), and the `FAVORITE-01..03` routes (`GET /api/favorites`, `POST /api/favorites`, `DELETE /api/favorites/:id`).
+- Implement `RequestModel` with embedded `offeredBookSnapshot`, `listingSummary`, `quotedModality`, `quotedTerms`, modality-specific term validation, and the three partial unique indexes from `api-design.md` §3.4 (one active request per requester and listing, one accepted request per listing, and one active offer per copy).
+- Execute `REQUEST-01`, `REQUEST-04`, `REQUEST-05`, `REQUEST-06`, and `REQUEST-07` inside `mongoose.connection.transaction(async (session) => ...)` so request, listing, library copy, and competing request state updates commit atomically without custom retry wrappers or `If-Match` headers.
+- Include the upstream contract modules (`models/Account.ts`, `server/auth.ts`, `models/LibraryBook.ts`, `models/Listing.ts`) in a separate commit so the branch builds, typechecks, and passes tests independently before #22 and #23 merge.
+
+### Changes adopted
+
+- Added `models/Favorite.ts`, `models/Request.ts`, `routes/favorites.ts`, `routes/requests.ts`, and mounted both routers in `server/app.ts` before `handleNotFound`.
+- Updated `api-design.md` to version 5 to reflect the Milestone 3 scope cuts (no `If-Match` / `version` fields, no custom transaction retry runner, no `REQUEST-08` reconfirmation).
+- Added `tests/requests-favorites.test.ts` covering Mongoose schema validation, partial unique indexes, `FAVORITE-01..03`, and the full `REQUEST-01..07` lifecycle for Loan, Exchange, competing request auto-rejection, reject, cancel, and completion.
+
+### Human changes and review
+
+Pending peer review on GitHub before merge to `main`.
+
+### Tests and verification
+
+- `npm run lint`: 0 errors and 0 warnings.
+- `npm run typecheck`: 0 TypeScript errors.
+- `npm run build`: production client bundle built cleanly.
+- `npm test`: 15 of 15 tests passing (`tests/api.test.ts` and `tests/requests-favorites.test.ts`).
+
+### Learning
+
+Resolving reference IDs through a helper that handles both raw `ObjectId` values and populated subdocuments prevents subtle authorization mismatches when Mongoose documents are reused across lifecycle steps.
+
+### Review follow-up on ef6b619 (2026-11-08)
+
+Andrés requested changes on concurrency, dependency integration and evidence. Changes and status:
+
+- **Concurrency (P1):** `REQUEST-01` now performs a conditional write inside the same transaction session: `Listing.updateOne({ _id, status: "Available" }, { $inc: { revision: 1 } })` and, for Exchange, `LibraryBook.updateOne({ _id, owner, status: "Available" }, { $inc: { revision: 1 } })`. `revision` is an internal field with `select: false`; it is not a DTO field and there is no `If-Match`. A concurrent committed write on the same document makes MongoDB abort the transaction with a write conflict, `mongoose.connection.transaction` re-runs the callback, and the retry reads the current state. The `revision` field on `models/Listing.ts` and `models/LibraryBook.ts` is a proposal that #23 and #25 must adopt in their own commands; names are still to be coordinated with Daniel and Andrés.
+- **Real verification:** `tests/integration/requests-concurrency.spec.ts` (`npm run test:integration`) runs against an in-memory single-node replica set (`mongodb-memory-server`), with real transactions and real indexes. It covers: three partial unique indexes present and a real E11000 on a duplicate active request; request vs concurrent withdrawal (409, no request left); request vs concurrent term edit (retry quotes the new terms); Exchange offer vs concurrent publication of the offered copy (409, no request left); one offered copy for two concurrent Exchange requests (one 201, one 409); two requesters on one listing (both 201). Results on this machine: 6 of 6 passing. With the conditional writes removed, the three interleaving tests fail (201 instead of 409; 40000 instead of 55000), so they detect the reported bug.
+- **What remains simulated:** `tests/requests-favorites.test.ts` still replaces `mongoose.connection.transaction` and the model methods with in-memory stubs. It checks response shapes and the sequential flow only, not transactions, rollback or indexes.
+- **Not yet done:** real per-endpoint results against an isolated Atlas database and the Vercel preview, with date and head commit and no tokens. The `curl` blocks in the PR description are examples, not recorded runs, until that evidence is added. Issue #24 must stay open until then.
+- **Dependencies (P2):** After PR #29 (`feat/m3-auth`, issue #22) merged into `main` (`015f7e9`), this branch was rebased onto `main` and dropped its provisional copies of `models/Account.ts` and `server/auth.ts`, using the merged modules from #22 directly. `models/Listing.ts` and `models/LibraryBook.ts` remain provisional copies (with the internal `revision` field) until #23 merges; the PR stays in draft until the reviewed #23 modules replace them.
+
+### Review follow-up on cce497b (2026-11-08)
+
+- **Integrated #23 models from PR #26 (`origin/feat/m3-listings`):** Replaced the provisional `models/LibraryBook.ts` and `models/Listing.ts` with the exact modules from PR #26 (`bb0809d`), along with `server/bookMetadata.ts` and `server/listingTerms.ts`. `models/Favorite.ts` and `models/Request.ts` now import shared metadata and term schemas from `server/bookMetadata.ts` and `server/listingTerms.ts`.
+- **Tombstone filtering (`deletedAt: null`):** Added `deletedAt: null` to the conditional `LibraryBookModel.updateOne` guard in `REQUEST-01` (`routes/requests.ts`) and added an integration test in `tests/integration/requests-concurrency.spec.ts` verifying that soft-deleted copies (`deletedAt !== null`) are rejected (`404`) and concurrent soft-deletes abort `REQUEST-01` without leaving an orphan request.
+- **Executed `curl` and index verification on the local replica set:** Added an integration test in `tests/integration/requests-concurrency.spec.ts` that runs `curl` against all ten operations (`FAVORITE-01..03`, `REQUEST-01..07`) and checks `FavoriteModel.collection.indexes()` and `RequestModel.collection.indexes()` against the local single-node MongoDB replica set (`8/8` passing in `npm run test:integration`, `24/24` passing in `npm test`).
+- **Vercel preview and Atlas status:** The Vercel preview deployment (`https://thebridge-git-feat-m3-requests-the-bridge13.vercel.app`) builds Ready (`SUCCESS`), and `curl -I /api/health` returns HTTP `302` due to Vercel SSO protection. Verification against an isolated Atlas dataset and an authorized preview session remains pending coordinator access before #24 is closed.
+
+

@@ -30,16 +30,20 @@ Scope: the TheBridge Express API (`server/`, `routes/`) and the React client, de
 
 ## 5. MongoDB Atlas access
 
-- Atlas network access is open to `0.0.0.0/0`. Vercel serverless functions have no fixed outbound IP, so an IP allowlist cannot be used.
-- This is compensated with a dedicated database user that has least privilege: the `readWrite` role on the application database only, with no `atlasAdmin` and no access to other databases. The connection string lives only in the `MONGODB_URI` Vercel environment variable and in the local `.env`, which is git-ignored.
-- Residual risk: the database is reachable from any IP, so the strength of that user's password is the only barrier. Use a long random password and rotate it if it is ever exposed.
+- Required configuration: Atlas network access opened to `0.0.0.0/0`, because Vercel serverless functions have no fixed outbound IP and an IP allowlist cannot be used.
+- Required compensation: a dedicated database user with least privilege, the `readWrite` role on the application database only, with no `atlasAdmin` and no access to other databases. The connection string must live only in the `MONGODB_URI` Vercel environment variable and in the local `.env`, which is git-ignored.
+- Verification pending: the coordinator has not yet confirmed either setting in Atlas. Non-sensitive evidence (a screenshot of the Network Access list and of the user's role, with no credentials) is to be attached here once checked.
+- Residual risk: while the database is reachable from any IP, the strength of that user's password is the only barrier. Use a long random password and rotate it if it is ever exposed.
 
 ## 6. Token in localStorage
 
-- The session token (JWT) is stored in `localStorage` through the auth storage service and sent as `Authorization: Bearer`.
+- Planned design: the session token (JWT) is stored in `localStorage` through an auth storage service and sent as `Authorization: Bearer`. `src/services/authStorage` does not exist yet; `LoginPage.jsx` and `App.jsx` still use the prototype's local flag. Pending #22 and #25.
 - Benefit: no cookies, so no CSRF.
-- Risk: any script running on the page can read `localStorage`, so a cross-site scripting (XSS) flaw would expose the token. Mitigations in place: React escapes rendered text, there is no `dangerouslySetInnerHTML`, tokens expire, and the client clears the session on any `401`.
-- Not mitigated: there is no refresh-token rotation and no server-side revocation. This residual risk is recorded in `DECISIONS.md` and is accepted for the scope of the course.
+- Risk: any script running on the page can read `localStorage`, so a cross-site scripting (XSS) flaw would expose the token.
+- Mitigations in place today: React escapes rendered text and there is no `dangerouslySetInnerHTML`.
+- Mitigations pending (#22/#25): token expiry and clearing the session on any `401`. This section is updated with evidence once they exist.
+- Not mitigated: there is no refresh-token rotation and no server-side revocation.
+- Risk acceptance: `DECISIONS.md` records this as a residual XSS risk for reviewer acknowledgement, not as recorded team acceptance. No team decision accepting it exists yet; it remains open until the team records one.
 
 ## 7. Authentication and authorization (pending the auth merge)
 
@@ -56,4 +60,5 @@ To run against https://thebridge-sepia.vercel.app once the M3 branches are merge
 - [ ] The 11th login attempt within 15 minutes returns 429.
 - [ ] Response headers include `Strict-Transport-Security` and `X-Content-Type-Options`.
 - [ ] A Member token receives 403 on `/api/admin/overview`; an Admin token receives 200.
+- [ ] Atlas Network Access lists `0.0.0.0/0` and the application user has only `readWrite` on one database (section 5).
 - [ ] `npm run lint`, `npm run typecheck` and `npm run build` pass on the merged `main`.

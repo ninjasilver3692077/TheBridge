@@ -711,3 +711,7 @@ Local verification: twelve integration tests on a real disposable MongoDB replic
 ### Course reflection
 
 A transaction does not lock every document it reads. The implementation writes an internal guard on the same listing/copy before checking related requests so snapshot isolation cannot allow an incompatible concurrent request or publication. Real replica-set tests verify this behavior; simulated Maps alone cannot establish atomicity or index enforcement. The seed uses explicit invocation, hashes passwords and preserves existing accounts instead of resetting a database.
+
+### Integration follow-up
+
+A separate temporary worktree combined code head 1d6329a and requests head cce497b, preserving the upstream models and mounting all routers. Typecheck and 43 tests passed (25 unit/HTTP plus 18 real replica-set integration tests). This is compatibility evidence, not an actual merge or peer approval. The #26 preview returned 302 to Vercel SSO for root/health/listings/stats; the bot's Ready state is not an endpoint verification. Coordinator Atlas/preview checks and Daniel's review remain outstanding.

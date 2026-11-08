@@ -43,3 +43,9 @@ The following actual `curl` sequence passed on November 8, 2026 against the loca
 | COPY-05 | DELETE `/api/my-books/:id` | 200 |
 
 The local replica set is genuine MongoDB with real transactions; it is not evidence of Atlas permissions, production configuration, the Vercel preview or complete integration with #24/#25. No `.env`, Atlas URI or Vercel project credentials were available during implementation. Coordinator verification on the candidate preview remains required before #23 is marked done.
+
+## Cross-branch verification and preview access
+
+An isolated validation worktree combined code head `1d6329a` with #28 head `cce497b`. Keeping the #23 LibraryBook/Listing models and all domain routers, typecheck passed, as did 25 unit/HTTP tests and 18 real replica-set integration tests (43 total). This includes #28's six concurrency/index cases running with the actual upstream models. This was a temporary validation combination, not a merge into main or this task's branch. The expected conflicts were models, app composition, package scripts and AI-LOG; the final integration must preserve both task logs and all scripts/routers.
+
+The candidate preview at `https://thebridge-git-feat-m3-listings-the-bridge13.vercel.app` returned HTTP 302 to Vercel SSO for `/`, `/api/health`, `/api/listings` and `/api/listings/stats` on November 8. The deployment bot reported Ready, but access protection prevented application/API verification. The coordinator must use an authorized preview session and an isolated Atlas dataset to complete endpoint/seed checks; this document does not treat Ready or the SSO response as an application pass.

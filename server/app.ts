@@ -3,6 +3,7 @@ import express from "express";
 import type { RequestHandler } from "express";
 import { rateLimit } from "express-rate-limit";
 import helmet from "helmet";
+import { authRouter } from "../routes/auth.js";
 import { healthRouter } from "../routes/health.js";
 import { readEnv } from "./env.js";
 import { HttpError, handleErrors, handleNotFound, requireJsonBody } from "./errors.js";
@@ -40,6 +41,7 @@ export function createApp(): express.Express {
   app.use("/api/auth/login", authLimiter(10));
   app.use("/api/auth/register", authLimiter(5));
   app.use("/api", healthRouter);
+  app.use("/api", authRouter);
   app.use("/api", handleNotFound);
   app.use(handleErrors);
 

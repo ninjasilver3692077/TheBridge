@@ -691,3 +691,23 @@ Andrés reviewed `a92b037` and requested these changes; each reproduction was re
 ### Learning
 
 A guard applied to a whole prefix (`/api`) hides routing decisions behind infrastructure state; attaching it to the handlers that need it keeps 404 and 405 independent of the database.
+
+## Issue #23 - M3 library and listings implementation (2026-11-08)
+
+### Task and assistance
+
+After #29 merged, Codex implemented COPY-01..05 and LISTING-01..07 against API design v5 and the original HW11/HW12 course requirements. The account holder delegated implementation, commits, publication and assigned reviews. The existing branch and PR #26 are retained; Daniel remains the independent reviewer.
+
+### Adopted changes
+
+Added validated LibraryBook/Listing models, shared metadata/term validation, root routers, explicit DTOs, filtered search/statistics and an idempotent password-hashed demo seed. Snapshots remain immutable. Private library reads are owner-scoped; public populated owners contain only id/name. Mongoose transactions and conditional internal revision writes coordinate with #28, without public versions, reconfirmation or a custom retry runner. Tombstones retain historical references. Request state is read/updated through the existing collection without a duplicate Request model; activity remains null under the task allowance.
+
+The provisional model vocabulary from #28 was reused and adapted so these upstream models depend on shared validation modules rather than downstream Favorite/Request models. Integration must keep the reviewed #23 models and their tombstone filters. See docs/m3-listings.md for exports, concurrency and deletion rules.
+
+### Validation and human review
+
+Local verification: twelve integration tests on a real disposable MongoDB replica set, including an actual curl sequence for all twelve task operations, publication/request/offer races, ownership, privacy, rollback, seed and history. Twenty-one unit/HTTP tests cover the foundation, auth and sanitized transaction errors. Typecheck, lint and production build pass. Tests do not use Atlas or claim complete integration with #24/#25. No Atlas URI, local .env or Vercel project credentials were available. Candidate preview and Atlas validation remain pending coordinator access; #23 is not declared done and no self-approval, merge or deployment is performed.
+
+### Course reflection
+
+A transaction does not lock every document it reads. The implementation writes an internal guard on the same listing/copy before checking related requests so snapshot isolation cannot allow an incompatible concurrent request or publication. Real replica-set tests verify this behavior; simulated Maps alone cannot establish atomicity or index enforcement. The seed uses explicit invocation, hashes passwords and preserves existing accounts instead of resetting a database.

@@ -1,4 +1,4 @@
-import { focusRing } from "../styles/ui.js";
+import AccountMenu from "./header/AccountMenu.jsx";
 import MobileBrand from "./header/MobileBrand.jsx";
 import NetworkStatus from "./header/NetworkStatus.jsx";
 import ThemeToggle from "./header/ThemeToggle.jsx";
@@ -30,19 +30,7 @@ function TopHeader({
 
           <ThemeToggle isDark={isDark} onToggle={onToggleTheme} />
 
-          <button
-            type="button"
-            className={`flex h-10 items-center gap-2 rounded-xl px-1.5 transition-colors hover:bg-surface-muted sm:pr-3 ${focusRing}`}
-            aria-label="Open user profile"
-          >
-            <span className="grid h-8 w-8 place-items-center rounded-full bg-wine-soft text-xs font-bold text-wine-ink">
-              A
-            </span>
-
-            <span className="hidden text-sm font-semibold text-ink md:inline">
-              Member
-            </span>
-          </button>
+          <AccountMenu />
         </div>
       </div>
     </header>

@@ -1,51 +1,76 @@
-import { useNavigate } from "react-router-dom";
+import { useState } from "react";
+import { Link, useLocation } from "react-router-dom";
 import AppShell from "../components/AppShell.jsx";
-import { buttonPrimaryLg, eyebrow } from "../styles/ui.js";
+import AuthCard from "../components/auth/AuthCard.jsx";
+import AuthField from "../components/auth/AuthField.jsx";
+import { useAuthForm } from "../hooks/useAuthForm.js";
+import { login, validateLoginFields } from "../services/auth.js";
+import { isExpiryNoticeVisible, sessionExpiredMessage } from "../services/authStorage.js";
+import { buttonPrimaryLg, textLink } from "../styles/ui.js";
 
 function LoginPage() {
-  const navigate = useNavigate();
-
-  const handleLogin = () => {
-    localStorage.setItem("thebridge:authenticated", "true");
-    navigate("/my-books", { replace: true });
-  };
+  const location = useLocation();
+  const [showExpiryNotice] = useState(isExpiryNoticeVisible);
+  const { values, errors, formError, isSubmitting, updateField, handleSubmit } =
+    useAuthForm({
+      initialValues: { email: "", password: "" },
+      validate: validateLoginFields,
+      submit: login,
+    });
 
   return (
-    <AppShell
-      title="Sign in"
-      subtitle="Access your personal TheBridge space"
-    >
-      <section className="mx-auto mt-4 max-w-md rounded-3xl border border-line bg-surface p-8 text-center shadow-card sm:mt-12 sm:p-10">
-        <img
-          src={`${import.meta.env.BASE_URL}assets/brand/thebridge-logo.svg`}
-          alt=""
-          className="mx-auto h-12 w-14 object-contain dark:hidden"
-        />
-        <img
-          src={`${import.meta.env.BASE_URL}assets/brand/thebridge-logo-dark.svg`}
-          alt=""
-          className="mx-auto hidden h-12 w-14 object-contain dark:block"
-        />
+    <AppShell title="Sign in" subtitle="Access your personal TheBridge space">
+      <AuthCard
+        eyebrowText="Member access"
+        heading="Welcome back"
+        lead="Sign in to manage your books, listings and requests."
+      >
+        {showExpiryNotice && !formError && (
+          <p
+            role="status"
+            className="mt-6 rounded-xl border border-line bg-surface-muted px-4 py-3 text-sm font-medium text-ink"
+          >
+            {sessionExpiredMessage}
+          </p>
+        )}
 
-        <p className={`mt-6 ${eyebrow}`}>Member access</p>
+        <form className="mt-6 space-y-5" noValidate onSubmit={handleSubmit}>
+          <AuthField
+            id="email"
+            label="Email"
+            type="email"
+            autoComplete="email"
+            value={values.email}
+            error={errors.email}
+            onChange={updateField("email")}
+          />
 
-        <h1 className="mt-3 text-3xl font-bold tracking-tight text-ink">
-          Welcome to TheBridge
-        </h1>
+          <AuthField
+            id="password"
+            label="Password"
+            type="password"
+            autoComplete="current-password"
+            value={values.password}
+            error={errors.password}
+            onChange={updateField("password")}
+          />
 
-        <p className="mt-3 text-[15px] leading-7 text-ink-muted">
-          This academic prototype uses a local authentication flag to
-          demonstrate protected routes.
+          <p aria-live="assertive" className="min-h-0 text-sm font-medium text-rose-700 dark:text-rose-300">
+            {formError}
+          </p>
+
+          <button type="submit" disabled={isSubmitting} className={`w-full ${buttonPrimaryLg}`}>
+            {isSubmitting ? "Signing in..." : "Sign in"}
+          </button>
+        </form>
+
+        <p className="mt-6 text-center text-sm text-ink-muted">
+          New to TheBridge?{" "}
+          <Link to="/register" state={location.state} className={textLink}>
+            Create an account
+          </Link>
         </p>
-
-        <button
-          type="button"
-          onClick={handleLogin}
-          className={`mt-8 w-full ${buttonPrimaryLg}`}
-        >
-          Continue as member
-        </button>
-      </section>
+      </AuthCard>
     </AppShell>
   );
 }

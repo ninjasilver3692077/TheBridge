@@ -89,7 +89,7 @@ export function publicListingFilter(query: Record<string, unknown>): Record<stri
   if (query.condition !== undefined) filter.condition = readCondition(query.condition);
   if (query.genre !== undefined) {
     if (typeof query.genre !== "string" || !query.genre.trim() || query.genre.trim().length > 80) throw new HttpError(400, "genre: must be text of 1 to 80 characters.");
-    filter["book.genre"] = query.genre.trim();
+    filter["book.genre"] = query.genre.trim().normalize("NFC");
   }
   return filter;
 }

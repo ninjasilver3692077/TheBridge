@@ -6,7 +6,7 @@ import { after, before, beforeEach, mock, test } from "node:test";
 import { promisify } from "node:util";
 import jwt from "jsonwebtoken";
 import mongoose, { Types } from "mongoose";
-import { MongoMemoryReplSet } from "mongodb-memory-server";
+import { MongoMemoryReplSet } from "mongodb-memory-server-core";
 import type { BookMetadata, LibraryBook, Listing, ListingStats, ListingTerms, PageMeta } from "@/types";
 import { AccountModel } from "../../models/Account.js";
 import { LibraryBookModel } from "../../models/LibraryBook.js";
@@ -54,7 +54,7 @@ before(async () => {
   process.env.JWT_SECRET = secret;
   process.env.JWT_TTL_SECONDS = "86400";
   process.env.CLIENT_ORIGINS = "http://localhost:5173";
-  await mongoose.connect(repl.getUri());
+  await mongoose.connect(repl.getUri(), { monitorCommands: true });
   await AccountModel.init();
   await LibraryBookModel.init();
   await ListingModel.init();
@@ -380,4 +380,50 @@ test("a database rejection midway through withdrawal rolls back listing, copy an
   }
   assert.equal((await api("DELETE", `/api/listings/${listing.id}`, owner)).status, 200);
   assert.equal((await requestLinks().findOne({ _id: pending.insertedId }))?.status, "Rejected");
+});
+
+test("NFD metadata is stored as NFC and searchable with and without accents", async () => {
+  const decomposed = { ...book, title: "Jose\u0301 Mari\u0301a", author: "Garc\u00eda", genre: "Poesi\u0301a", publisher: "Edicio\u0301n" };
+  const copy = await add(owner, decomposed);
+  assert.equal(copy.book.title, "Jos\u00e9 Mar\u00eda");
+  assert.equal(copy.book.genre, "Poes\u00eda");
+  assert.equal(copy.book.publisher, "Edici\u00f3n");
+  await publish(copy.id);
+  for (const q of ["jose maria", "Jos\u00e9 Mar\u00eda", "Jose\u0301 Mari\u0301a"]) {
+    assert.equal((await api<LibraryBook[]>("GET", `/api/my-books?q=${encodeURIComponent(q)}`, owner)).body.meta.total, 1);
+    assert.equal((await api<Listing[]>("GET", `/api/listings?q=${encodeURIComponent(q)}`)).body.meta.total, 1);
+  }
+});
+
+test("library pages load current listings with one bounded query and keep page ownership", async () => {
+  const first = await add();
+  const second = await add();
+  const third = await add();
+  const unlisted = await add();
+  const withdrawn = await publish(first.id);
+  await api("DELETE", `/api/listings/${withdrawn.id}`, owner);
+  const current = await publish(first.id);
+  const secondListing = await publish(second.id);
+  const thirdListing = await publish(third.id);
+  const foreign = await add(stranger);
+  let listingQueries = 0;
+  const client = mongoose.connection.getClient();
+  const onCommand = (event: mongoose.mongo.CommandStartedEvent) => {
+    if (event.commandName === "find" && event.command.find === "listings") listingQueries++;
+  };
+  client.on("commandStarted", onCommand);
+  try {
+    const page = await api<LibraryBook[]>("GET", "/api/my-books?limit=100", owner);
+    assert.equal(page.body.meta.total, 4);
+    assert.equal(listingQueries, 1);
+    const byId = new Map(page.body.data.map((row) => [row.id, row.currentListing]));
+    assert.equal(byId.get(first.id)?.id, current.id);
+    assert.equal(byId.get(second.id)?.id, secondListing.id);
+    assert.equal(byId.get(third.id)?.id, thirdListing.id);
+    assert.equal(byId.get(unlisted.id), null);
+    assert.equal(byId.has(foreign.id), false);
+    const nextPage = await api<LibraryBook[]>("GET", "/api/my-books?page=2&limit=100", owner);
+    assert.deepEqual(nextPage.body.data, []);
+    assert.equal(listingQueries, 1);
+  } finally { client.off("commandStarted", onCommand); }
 });

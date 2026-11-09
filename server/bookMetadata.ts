@@ -30,7 +30,7 @@ function readRequiredString(
   if (typeof value !== "string") {
     throw new HttpError(400, `${field}: must be a string.`);
   }
-  const trimmed = value.trim();
+  const trimmed = value.trim().normalize("NFC");
   if (trimmed.length < 1 || trimmed.length > maxLength) {
     throw new HttpError(400, `${field}: must be between 1 and ${maxLength} characters.`);
   }
@@ -48,7 +48,7 @@ function readNullableString(
   if (typeof value !== "string") {
     throw new HttpError(400, `${field}: must be a string or null.`);
   }
-  const trimmed = value.trim();
+  const trimmed = value.trim().normalize("NFC");
   if (trimmed.length < 1 || trimmed.length > maxLength) {
     throw new HttpError(400, `${field}: must be between 1 and ${maxLength} characters.`);
   }

@@ -1,5 +1,5 @@
 import type { HydratedDocument } from "mongoose";
-import type { LibraryBook, Listing, OwnListing, PublicMember } from "@/types";
+import type { CurrentListingSummary, LibraryBook, Listing, OwnListing, PublicMember } from "@/types";
 import type { LibraryBookDocument } from "../models/LibraryBook.js";
 import { ListingModel } from "../models/Listing.js";
 import type { ListingDocument } from "../models/Listing.js";
@@ -29,14 +29,30 @@ export function ownListingView(doc: HydratedDocument<ListingDocument>): OwnListi
   return { ...listingView(doc), moderation: doc.moderation ? { reason: doc.moderation.reason, removedAt: doc.moderation.removedAt.toISOString() } : null };
 }
 
-export async function libraryView(doc: HydratedDocument<LibraryBookDocument>): Promise<LibraryBook> {
-  const current = await ListingModel.findOne({ libraryBook: doc._id, status: { $in: ["Available", "Reserved"] } }).sort({ createdAt: -1, _id: -1 }).exec();
+function libraryProjection(doc: HydratedDocument<LibraryBookDocument>, current: CurrentListingSummary | null): LibraryBook {
   return {
     id: String(doc._id), book: serializeBookMetadata(doc.book), condition: doc.condition,
     notes: doc.notes, status: doc.status,
-    currentListing: current ? { id: String(current._id), modality: current.modality, status: current.status } : null,
+    currentListing: current,
     activity: null,
     lastModeration: doc.lastModeration ? { listingId: String(doc.lastModeration.listingId), reason: doc.lastModeration.reason, removedAt: doc.lastModeration.removedAt.toISOString() } : null,
     createdAt: doc.createdAt.toISOString(), updatedAt: doc.updatedAt.toISOString(),
   };
+}
+
+export async function libraryViews(docs: HydratedDocument<LibraryBookDocument>[]): Promise<LibraryBook[]> {
+  if (docs.length === 0) return [];
+  const listings = await ListingModel.find({ libraryBook: { $in: docs.map((doc) => doc._id) }, status: { $in: ["Available", "Reserved"] } })
+    .select("libraryBook modality status").sort({ createdAt: -1, _id: -1 }).exec();
+  const currentByCopy = new Map<string, CurrentListingSummary>();
+  for (const listing of listings) {
+    const copyId = String(listing.libraryBook);
+    if (!currentByCopy.has(copyId)) currentByCopy.set(copyId, { id: String(listing._id), modality: listing.modality, status: listing.status });
+  }
+  return docs.map((doc) => libraryProjection(doc, currentByCopy.get(String(doc._id)) ?? null));
+}
+
+export async function libraryView(doc: HydratedDocument<LibraryBookDocument>): Promise<LibraryBook> {
+  const current = await ListingModel.findOne({ libraryBook: doc._id, status: { $in: ["Available", "Reserved"] } }).select("modality status").sort({ createdAt: -1, _id: -1 }).exec();
+  return libraryProjection(doc, current ? { id: String(current._id), modality: current.modality, status: current.status } : null);
 }

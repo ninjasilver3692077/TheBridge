@@ -8,7 +8,7 @@ import { requireDatabase } from "../server/db.js";
 import { HttpError, methodNotAllowed } from "../server/errors.js";
 import { changeCopy } from "../server/marketplaceCommands.js";
 import { bookSearch, objectId, objectInput, queryInput, readCondition, readEnum, readNotes } from "../server/marketplaceInput.js";
-import { libraryView } from "../server/marketplaceViews.js";
+import { libraryView, libraryViews } from "../server/marketplaceViews.js";
 import { readPagination, toPage } from "../server/pagination.js";
 
 export const myBooksRouter = Router();
@@ -24,7 +24,7 @@ myBooksRouter.route("/my-books")
     const filter = { owner: currentAccount(res).id, status, ...bookSearch(req.query.q, "book") };
     const total = await LibraryBookModel.countDocuments(filter).exec();
     const docs = await LibraryBookModel.find(filter).sort({ createdAt: -1, _id: -1 }).skip(pagination.skip).limit(pagination.limit).exec();
-    res.json(toPage(await Promise.all(docs.map(libraryView)), total, pagination));
+    res.json(toPage(await libraryViews(docs), total, pagination));
   })
   .post(...member, async (req: Request, res: Response) => {
     const body = objectInput(req.body, ["book", "condition", "notes"]);

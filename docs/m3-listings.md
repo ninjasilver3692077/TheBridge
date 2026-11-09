@@ -21,7 +21,7 @@ For an explicit demo seed, set `SEED_PASSWORD` in the ignored `.env`, then run `
 
 ## Verification
 
-`npm run test:integration` runs against a disposable real single-node MongoDB replica set using `mongodb-memory-server`. It exercises all twelve operations over HTTP, including an explicit `curl` sequence; ownership/role boundaries; validation; full filtered totals and global facets; snapshots; soft deletion/history; Pending/offer conflicts; atomic withdrawal; concurrent publication; concurrent requests/offers using the shared write protocol; and idempotent seed behavior.
+`npm run test:integration` runs against a disposable real single-node MongoDB replica set using `mongodb-memory-server-core`. MongoDB binaries are fetched when tests need them, not in an installation postinstall hook. It exercises all twelve operations over HTTP, including an explicit `curl` sequence; ownership/role boundaries; validation; full filtered totals and global facets; snapshots; soft deletion/history; Pending/offer conflicts; atomic withdrawal; concurrent publication; concurrent requests/offers using the shared write protocol; and idempotent seed behavior.
 
 `npm test` retains foundation/auth tests and checks sanitized 409/503 transaction failures, including an uncertain commit that instructs refetching rather than claiming rollback. `npm run lint`, `npm run typecheck` and `npm run build` are the remaining local checks.
 
@@ -51,3 +51,9 @@ An isolated validation worktree combined code head `1d6329a` with #28 head `cce4
 The candidate preview at `https://thebridge-git-feat-m3-listings-the-bridge13.vercel.app` returned HTTP 302 to Vercel SSO for `/`, `/api/health`, `/api/listings` and `/api/listings/stats` on November 8. The deployment bot reported Ready, but access protection prevented application/API verification. The coordinator must use an authorized preview session and an isolated Atlas dataset to complete endpoint/seed checks; this document does not treat Ready or the SSO response as an application pass.
 
 A follow-up review corrected nested term validation paths and expanded the task suite to 36 passing tests (21 unit/HTTP, 15 real replica-set). Additional cases check all four modalities, Reserved mutation gates, unchanged cost-12 password hashes on reseeding and rollback after MongoDB rejects a write midway through withdrawal. The deliberate database rejection returns a sanitized 500 and leaves every transaction write unapplied; removing the injected constraint then allows withdrawal to succeed.
+
+## Daniel's review follow-up (November 9)
+
+Daniel reviewed code head `cb6558c` and recorded that the code was ready to approve, with formal approval pending Ready for review. All three nonblocking suggestions were addressed: incoming metadata strings are normalized to NFC before storage/validation, library pages resolve current listings with one query bounded to the authorized page's copy IDs, and tests import `mongodb-memory-server-core` to avoid a binary download at installation. NFC normalization applies to new API inputs; existing records are not rewritten.
+
+The task suite now has 38 passing tests (21 unit/HTTP and 17 real replica-set). The two new regression cases failed before the fixes, then passed: decomposed accented title/publisher/genre metadata round-trips in NFC and searches match with or without accents; a page with four copies uses exactly one current-listing database query, preserves each mapping and ownership, and an empty page adds no query. Daniel must assess the updated head before formal approval. Coordinator Atlas/preview verification remains pending.

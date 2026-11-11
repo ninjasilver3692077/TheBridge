@@ -119,6 +119,8 @@ AI may help structure requirements, propose implementation details, and review f
 
 ## Local Preview
 
+The M3 library/listings API, explicit demo seed, model integration contract and validation scope are documented in [docs/m3-listings.md](docs/m3-listings.md).
+
 Install dependencies with `npm install`, then start the Vite development server with `npm run dev`. Run `npm run lint` and `npm run build` before opening a pull request.
 
 ## Milestone 2 Scope

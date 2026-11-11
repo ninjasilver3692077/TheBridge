@@ -4,7 +4,7 @@ import type { AddressInfo } from "node:net";
 import { after, before, test } from "node:test";
 import { promisify } from "node:util";
 import jwt from "jsonwebtoken";
-import { MongoMemoryReplSet } from "mongodb-memory-server";
+import { MongoMemoryReplSet } from "mongodb-memory-server-core";
 import mongoose, { Types } from "mongoose";
 import type { BookMetadata, BookRequest, Favorite, ListingTerms } from "@/types";
 import { AccountModel } from "../../models/Account.js";

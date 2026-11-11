@@ -1,6 +1,6 @@
 import { buttonPrimary, notice } from "../styles/ui.js";
 
-function ErrorState({ message, onRetry }) {
+function ErrorState({ title = "We could not load the books", message, onRetry }) {
   return (
     <div
       className={`flex min-h-64 flex-col items-center justify-center px-6 py-12 text-center ${notice.danger}`}
@@ -18,9 +18,7 @@ function ErrorState({ message, onRetry }) {
         <path d="M12 7v6M12 17h.01" />
       </svg>
 
-      <h2 className="mt-4 text-lg font-semibold text-ink">
-        We could not load the books
-      </h2>
+      <h2 className="mt-4 text-lg font-semibold text-ink">{title}</h2>
 
       <p className="mt-2 max-w-md text-sm leading-6 text-ink-muted">
         {message || "Please check your connection and try again."}

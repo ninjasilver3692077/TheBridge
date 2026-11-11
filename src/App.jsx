@@ -1,3 +1,4 @@
+import { useCallback } from "react";
 import {
   BrowserRouter,
   Navigate,
@@ -7,6 +8,10 @@ import {
   useLocation,
   useParams,
 } from "react-router-dom";
+import AppShell from "./components/AppShell.jsx";
+import ErrorState from "./components/ErrorState.jsx";
+import LoadingState from "./components/LoadingState.jsx";
+import { useApiResource } from "./hooks/useApiResource.js";
 import { useSession, useSessionExpiryObserver } from "./hooks/useSession.js";
 import AboutPage from "./pages/AboutPage.jsx";
 import AddBookPage from "./pages/AddBookPage.jsx";
@@ -22,7 +27,7 @@ import RegisterPage from "./pages/RegisterPage.jsx";
 import RequestsPage from "./pages/RequestsPage.jsx";
 import { homePathByRole, safeReturnPath } from "./services/auth.js";
 import { isSessionExpired } from "./services/authStorage.js";
-import { findListingById } from "./services/listingsStorage.js";
+import { fetchListing } from "./services/listings.js";
 
 function SessionBoundary() {
   useSessionExpiryObserver();
@@ -69,9 +74,29 @@ function GuestOnlyRoute() {
 
 function ListingRoute() {
   const { id } = useParams();
-  const listing = findListingById(id);
+  const load = useCallback((signal) => fetchListing(id, { signal }), [id]);
+  const { status, data: listing, error, reload } = useApiResource(load);
 
-  return <ListingDetailsPage key={id} listing={listing} />;
+  if (status === "success") {
+    return <ListingDetailsPage key={id} listing={listing} />;
+  }
+
+  return (
+    <AppShell title="Listing details" subtitle="Loading this listing">
+      {status === "error" ? (
+        <ErrorState
+          title="We could not load this listing"
+          message={error}
+          onRetry={reload}
+        />
+      ) : (
+        <LoadingState
+          title="Loading listing..."
+          message="Fetching the details of this book."
+        />
+      )}
+    </AppShell>
+  );
 }
 
 function App() {

@@ -1,9 +1,7 @@
 import { listingModalities } from "../../data/createListingData.js";
-import { getAveragePrice } from "../../services/listingFilters.js";
 import { formatListingPrice } from "../../services/listingValidation.js";
 
-function formatAverage(modalityStats) {
-  const average = getAveragePrice(modalityStats);
+function formatAverage(average) {
   return average === null ? "No priced listings" : formatListingPrice(average);
 }
 
@@ -47,7 +45,7 @@ function ListingStats({ stats }) {
 
         {listingModalities.map(({ id, label }) => (
           <StatItem key={id} label={label}>
-            {stats.byModality[id]?.count ?? 0}
+            {stats.byModality[id] ?? 0}
           </StatItem>
         ))}
       </dl>
@@ -56,13 +54,13 @@ function ListingStats({ stats }) {
         <div className="flex items-baseline justify-between gap-3">
           <dt className="text-sm text-ink-muted">Average sale price</dt>
           <dd className="text-right text-sm font-semibold text-ink">
-            {formatAverage(stats.byModality.Sale)}
+            {formatAverage(stats.averageSalePriceCop)}
           </dd>
         </div>
         <div className="flex items-baseline justify-between gap-3">
           <dt className="text-sm text-ink-muted">Average rental price</dt>
           <dd className="text-right text-sm font-semibold text-ink">
-            {formatAverage(stats.byModality.Rental)}
+            {formatAverage(stats.averageRentalPriceCop)}
           </dd>
         </div>
       </dl>

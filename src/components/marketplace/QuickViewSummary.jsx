@@ -6,11 +6,17 @@ function QuickViewSummary({ listing }) {
       <div
         className={`aspect-[3/4] w-28 shrink-0 shadow-card sm:w-32 ${coverFrame}`}
       >
-        <img
-          src={listing.cover}
-          alt={`Cover of ${listing.title}`}
-          className="h-full w-full object-cover"
-        />
+        {listing.cover ? (
+          <img
+            src={listing.cover}
+            alt={`Cover of ${listing.title}`}
+            className="h-full w-full object-cover"
+          />
+        ) : (
+          <div className="flex h-full items-center justify-center bg-surface-muted p-3 text-center text-xs font-semibold text-ink-muted">
+            {listing.title}
+          </div>
+        )}
       </div>
 
       <div className="min-w-0 pt-1">

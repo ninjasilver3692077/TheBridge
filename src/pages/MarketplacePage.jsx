@@ -20,9 +20,9 @@ function MarketplacePage() {
     >
       <section>
         <ListingFilters
-          listings={listingFilters.allListings}
+          facets={listingFilters.facets}
           filters={listingFilters.filters}
-          resultCount={listingFilters.filteredListings.length}
+          resultCount={listingFilters.resultCount}
           hasActiveFilters={listingFilters.hasActiveFilters}
           onChange={listingFilters.updateFilter}
           onReset={listingFilters.resetFilters}
@@ -30,15 +30,24 @@ function MarketplacePage() {
 
         <div className="mt-4">
           <ListingGrid
-            listings={listingFilters.filteredListings}
+            listings={listingFilters.listings}
+            status={listingFilters.status}
+            error={listingFilters.error}
+            hasMore={listingFilters.hasMore}
+            loadingMore={listingFilters.loadingMore}
+            loadMoreError={listingFilters.loadMoreError}
             onReset={listingFilters.resetFilters}
+            onRetry={listingFilters.reload}
             onSelect={setSelectedListing}
+            onLoadMore={listingFilters.loadMore}
           />
         </div>
 
-        <div className="mt-10">
-          <ListingStats stats={listingFilters.stats} />
-        </div>
+        {listingFilters.stats && (
+          <div className="mt-10">
+            <ListingStats stats={listingFilters.stats} />
+          </div>
+        )}
       </section>
 
       <CatalogSection marketplace={marketplace} />

@@ -5,9 +5,11 @@ import { rateLimit } from "express-rate-limit";
 import helmet from "helmet";
 import { adminRouter } from "../routes/admin.js";
 import { authRouter } from "../routes/auth.js";
+import { favoritesRouter } from "../routes/favorites.js";
 import { healthRouter } from "../routes/health.js";
 import { listingsRouter } from "../routes/listings.js";
 import { myBooksRouter } from "../routes/myBooks.js";
+import { requestsRouter } from "../routes/requests.js";
 import { readEnv } from "./env.js";
 import { HttpError, handleErrors, handleNotFound, requireJsonBody } from "./errors.js";
 
@@ -48,6 +50,8 @@ export function createApp(): express.Express {
   app.use("/api", listingsRouter);
   app.use("/api", myBooksRouter);
   app.use("/api", adminRouter);
+  app.use("/api", favoritesRouter);
+  app.use("/api", requestsRouter);
   app.use("/api", handleNotFound);
   app.use(handleErrors);
 

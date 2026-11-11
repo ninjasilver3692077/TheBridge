@@ -1,11 +1,14 @@
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import AppShell from "../components/AppShell.jsx";
 import CreateListingForm from "../components/create-listing/CreateListingForm.jsx";
 import ListingBookCard from "../components/create-listing/ListingBookCard.jsx";
 import ListingSuccess from "../components/create-listing/ListingSuccess.jsx";
-import { resolveListingBook } from "../services/createListingBooks.js";
-import { publishListing } from "../services/listingsStorage.js";
+import ErrorState from "../components/ErrorState.jsx";
+import LoadingState from "../components/LoadingState.jsx";
+import { useApiResource } from "../hooks/useApiResource.js";
+import { publishListing } from "../services/listings.js";
+import { resolveListingBook } from "../services/myBooks.js";
 import {
   buttonGhost,
   eyebrow,
@@ -19,12 +22,16 @@ function CreateListingPage() {
   const [searchParams] = useSearchParams();
   const [published, setPublished] = useState(null);
   const requestedId = searchParams.get("book");
-  const resolved = resolveListingBook(requestedId);
-  const book = published ? published.book : resolved.book;
-  const notice = published ? null : resolved.notice;
+  const load = useCallback(
+    (signal) => resolveListingBook(requestedId, { signal }),
+    [requestedId],
+  );
+  const { status, data: resolved, error, reload } = useApiResource(load);
+  const book = published ? published.book : resolved?.book ?? null;
+  const notice = published ? null : resolved?.notice ?? null;
 
-  const handlePublish = ({ modality, values }) => {
-    const listing = publishListing(book, modality, values);
+  const handlePublish = async ({ modality, values }) => {
+    const listing = await publishListing(book.id, modality, values);
     setPublished({ listing, book });
   };
 
@@ -45,6 +52,25 @@ function CreateListingPage() {
         </p>
       </header>
 
+      {status === "loading" && !published && (
+        <div className="mt-8">
+          <LoadingState
+            title="Loading your books..."
+            message="Finding the books you can list."
+          />
+        </div>
+      )}
+
+      {status === "error" && !published && (
+        <div className="mt-8">
+          <ErrorState
+            title="We could not load your books"
+            message={error}
+            onRetry={reload}
+          />
+        </div>
+      )}
+
       {notice && (
         <aside className={`mt-6 ${noticeStyles.warning}`}>
           <p className="text-sm font-semibold">{notice.title}</p>
@@ -52,7 +78,7 @@ function CreateListingPage() {
         </aside>
       )}
 
-      {!book ? (
+      {status === "success" && !book && (
         <div className="mt-8 rounded-2xl bg-surface-muted px-6 py-12 text-center">
           <p className="font-semibold text-ink">
             You do not have any available books to list.
@@ -61,7 +87,9 @@ function CreateListingPage() {
             Add a book
           </Link>
         </div>
-      ) : (
+      )}
+
+      {book && (
         <div className="mt-10 grid grid-cols-1 gap-10 lg:grid-cols-[240px_minmax(0,1fr)] lg:items-start lg:gap-14">
           <ListingBookCard book={book} />
 

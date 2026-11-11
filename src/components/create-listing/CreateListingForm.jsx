@@ -3,7 +3,7 @@ import {
   modalityMessages,
 } from "../../data/createListingData.js";
 import { useListingForm } from "../../hooks/useListingForm.js";
-import { buttonPrimaryLg } from "../../styles/ui.js";
+import { buttonPrimaryLg, notice } from "../../styles/ui.js";
 import ListingDynamicFields from "./ListingDynamicFields.jsx";
 import ListingModalityOptions from "./ListingModalityOptions.jsx";
 
@@ -12,6 +12,8 @@ function CreateListingForm({ onPublish }) {
     modality,
     values,
     errors,
+    submitting,
+    submitError,
     handleModalityChange,
     handleFieldChange,
     handleSubmit,
@@ -45,12 +47,19 @@ function CreateListingForm({ onPublish }) {
         </div>
       )}
 
+      {submitError && (
+        <p role="alert" className={`mt-6 text-sm ${notice.danger}`}>
+          {submitError}
+        </p>
+      )}
+
       <div className="mt-10 flex flex-col-reverse gap-3 border-t border-line pt-6 sm:flex-row sm:justify-end">
         <button
           type="submit"
+          disabled={submitting}
           className={buttonPrimaryLg}
         >
-          Publish Listing
+          {submitting ? "Publishing..." : "Publish Listing"}
         </button>
       </div>
     </form>

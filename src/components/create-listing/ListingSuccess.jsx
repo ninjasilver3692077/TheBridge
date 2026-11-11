@@ -31,8 +31,7 @@ function ListingSuccess({ listing }) {
       <ListingSuccessSummary listing={listing} />
 
       <p className={`mt-6 text-xs ${notice.info}`}>
-        Your listing is now available in the marketplace. It is saved in this
-        browser.
+        Your listing is now available in the marketplace.
       </p>
 
       <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:justify-end">

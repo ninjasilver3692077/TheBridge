@@ -1,4 +1,5 @@
 import { apiRequest, ApiError } from "./apiClient.js";
+import { toBookMetadata } from "./bookMetadata.js";
 
 const ALL_OPTION = "All";
 
@@ -68,6 +69,44 @@ export async function fetchListings(filters, { page = 1, limit = 12, signal } = 
 export async function fetchListingStats(filters, { signal } = {}) {
   const { data } = await apiRequest(`/listings/stats?${filterQuery(filters)}`, { signal });
   return data;
+}
+
+function durationDays(label) {
+  return Number.parseInt(label, 10);
+}
+
+function listingTerms(modality, values) {
+  if (modality === "Exchange") {
+    return {
+      desiredBook: values.desiredBookMeta ? toBookMetadata(values.desiredBookMeta) : null,
+      priceCop: null,
+      durationDays: null,
+    };
+  }
+
+  if (modality === "Loan") {
+    return { desiredBook: null, priceCop: null, durationDays: durationDays(values.loanDuration) };
+  }
+
+  if (modality === "Rental") {
+    return {
+      desiredBook: null,
+      priceCop: Number(values.rentalPrice),
+      durationDays: durationDays(values.rentalDuration),
+    };
+  }
+
+  return { desiredBook: null, priceCop: Number(values.salePrice), durationDays: null };
+}
+
+export async function publishListing(libraryBookId, modality, values) {
+  const { data } = await apiRequest("/listings", {
+    method: "POST",
+    authenticated: true,
+    body: { libraryBookId, modality, terms: listingTerms(modality, values) },
+  });
+
+  return toClientListing(data);
 }
 
 export async function fetchListing(id, { signal } = {}) {

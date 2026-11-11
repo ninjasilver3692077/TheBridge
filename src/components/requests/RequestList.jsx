@@ -1,15 +1,14 @@
 import RequestCard from "./RequestCard.jsx";
 
-function RequestList({ requests, myBooksById, onStatusChange }) {
+function RequestList({ requests, busyId, onAction }) {
   return (
     <div className="mt-6 space-y-3">
       {requests.map((request) => (
         <RequestCard
           key={request.id}
           request={request}
-          myBook={myBooksById.get(request.myBookId)}
-          offeredBook={myBooksById.get(request.offeredBookId)}
-          onStatusChange={onStatusChange}
+          busy={busyId === request.id}
+          onAction={onAction}
         />
       ))}
     </div>

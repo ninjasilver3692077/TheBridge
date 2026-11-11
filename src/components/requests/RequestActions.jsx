@@ -1,23 +1,19 @@
 import { buttonPrimarySm, buttonSecondarySm } from "../../styles/ui.js";
 
-function RequestActions({ onAccept, onReject }) {
+function RequestActions({ actions, busy, onAction }) {
   return (
     <div className="mt-4 flex flex-wrap gap-2">
-      <button
-        type="button"
-        onClick={onAccept}
-        className={buttonPrimarySm}
-      >
-        Accept
-      </button>
-
-      <button
-        type="button"
-        onClick={onReject}
-        className={buttonSecondarySm}
-      >
-        Reject
-      </button>
+      {actions.map(({ action, label, primary }) => (
+        <button
+          key={action}
+          type="button"
+          disabled={busy}
+          onClick={() => onAction(action)}
+          className={primary ? buttonPrimarySm : buttonSecondarySm}
+        >
+          {label}
+        </button>
+      ))}
     </div>
   );
 }

@@ -1,11 +1,3 @@
-import { isBookFree, loadMyBooksWithActivity } from "./myBooksStorage.js";
-
-export function loadAvailableExchangeBooks() {
-  return loadMyBooksWithActivity().filter(
-    (book) => isBookFree(book) && typeof book.title === "string",
-  );
-}
-
 export function getListingOfferRows(listing) {
   if (listing.modality === "Exchange") {
     return [
@@ -55,6 +47,29 @@ export function getRequestCtaLabel(modality) {
   };
 
   return labels[modality] || "Send Request";
+}
+
+export function getRequestCtaState(
+  { signedIn, isMember, isOwner, requestSent },
+  modality,
+) {
+  if (!signedIn) {
+    return { label: "Sign in to request", signIn: true };
+  }
+
+  if (!isMember) {
+    return { label: "Members only", disabled: true };
+  }
+
+  if (isOwner) {
+    return { label: "This is your listing", disabled: true };
+  }
+
+  if (requestSent) {
+    return { label: "✓ Request sent", disabled: true, sent: true };
+  }
+
+  return { label: getRequestCtaLabel(modality) };
 }
 
 function formatPrice(value) {

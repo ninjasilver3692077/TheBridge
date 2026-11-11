@@ -5,6 +5,8 @@ import { rateLimit } from "express-rate-limit";
 import helmet from "helmet";
 import { authRouter } from "../routes/auth.js";
 import { healthRouter } from "../routes/health.js";
+import { listingsRouter } from "../routes/listings.js";
+import { myBooksRouter } from "../routes/myBooks.js";
 import { readEnv } from "./env.js";
 import { HttpError, handleErrors, handleNotFound, requireJsonBody } from "./errors.js";
 
@@ -42,6 +44,8 @@ export function createApp(): express.Express {
   app.use("/api/auth/register", authLimiter(5));
   app.use("/api", healthRouter);
   app.use("/api", authRouter);
+  app.use("/api", listingsRouter);
+  app.use("/api", myBooksRouter);
   app.use("/api", handleNotFound);
   app.use(handleErrors);
 

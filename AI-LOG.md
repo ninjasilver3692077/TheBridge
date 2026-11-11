@@ -1,4 +1,4 @@
-﻿# AI-LOG
+# AI-LOG
 
 ## Repository Foundation
 
@@ -645,6 +645,24 @@ Andrés found three contract contradictions in `3f55f67`; all three were confirm
 
 Two acceptance cases were added to architecture §9: reconfirm an offer and then cancel or reject it, and end a flagged request whose offer was released through each rejection path. These remain downstream tests; no backend exists yet.
 
+
+## Issue #23 — Milestone 3 contract preparation (2026-11-01)
+
+### Task and assistance
+
+The account holder delegated assigned TheBridge tasks. Codex read issue #23, its explicit scope cuts shared by #22–#25, the canonical API design, team policy at main b0d5c33 and the original HW11/HW12 README files from the supplied ZIP. AI proposed contract edits before Express domain code, as HW11 requires.
+
+### Adopted and pending work
+
+API design version 5 removes client version preconditions and reconfirmation, blocks edits while Pending requests exist and selects the Mongoose transaction helper instead of the custom retry runner. Architecture/spine explicitly separate this delivery profile from the retained future design. No peer-owned PRD or Account/auth implementation was edited. No models/routes/seed or completed endpoint/deployment evidence is claimed in this first commit.
+
+### Human review and validation
+
+The coordinator supplied the scope cuts in the issue. Daniel is the assigned task reviewer; review is pending. Foundation #21 is under review and #22 authentication must merge first. Checks cover Markdown diff, unchanged operation paths except deferred REQUEST-08, DTO/header/example consistency and JSON syntax. These are documentation checks, not passing database, endpoint or preview tests.
+
+### Course reflection
+
+AI helped reconcile the API design before backend implementation. The important REST distinction is separating server state conflicts (409) from transport/version preconditions intentionally omitted from this delivery. Schema/validation results and curl evidence will be recorded only after implementation against the actual authentication dependency.
 ### Gate 2 correction (PR #17, requested by Andrés)
 
 Andrés found that the hero carousel kept rotating when reduced motion was turned on while Home stayed open: the effect read the media query once and only re-ran when the image count changed. The rotation now lives in `src/hooks/useRotatingIndex.js`, which listens to the media query `change` event, clears the interval when the preference turns on, restarts it when it turns off, and removes the listener on unmount. `HeroCarousel.jsx` dropped from 75 to 59 lines.
@@ -673,3 +691,35 @@ Andrés reviewed `a92b037` and requested these changes; each reproduction was re
 ### Learning
 
 A guard applied to a whole prefix (`/api`) hides routing decisions behind infrastructure state; attaching it to the handlers that need it keeps 404 and 405 independent of the database.
+
+## Issue #23 - M3 library and listings implementation (2026-11-08)
+
+### Task and assistance
+
+After #29 merged, Codex implemented COPY-01..05 and LISTING-01..07 against API design v5 and the original HW11/HW12 course requirements. The account holder delegated implementation, commits, publication and assigned reviews. The existing branch and PR #26 are retained; Daniel remains the independent reviewer.
+
+### Adopted changes
+
+Added validated LibraryBook/Listing models, shared metadata/term validation, root routers, explicit DTOs, filtered search/statistics and an idempotent password-hashed demo seed. Snapshots remain immutable. Private library reads are owner-scoped; public populated owners contain only id/name. Mongoose transactions and conditional internal revision writes coordinate with #28, without public versions, reconfirmation or a custom retry runner. Tombstones retain historical references. Request state is read/updated through the existing collection without a duplicate Request model; activity remains null under the task allowance.
+
+The provisional model vocabulary from #28 was reused and adapted so these upstream models depend on shared validation modules rather than downstream Favorite/Request models. Integration must keep the reviewed #23 models and their tombstone filters. See docs/m3-listings.md for exports, concurrency and deletion rules.
+
+### Validation and human review
+
+Local verification: twelve integration tests on a real disposable MongoDB replica set, including an actual curl sequence for all twelve task operations, publication/request/offer races, ownership, privacy, rollback, seed and history. Twenty-one unit/HTTP tests cover the foundation, auth and sanitized transaction errors. Typecheck, lint and production build pass. Tests do not use Atlas or claim complete integration with #24/#25. No Atlas URI, local .env or Vercel project credentials were available. Candidate preview and Atlas validation remain pending coordinator access; #23 is not declared done and no self-approval, merge or deployment is performed.
+
+### Course reflection
+
+A transaction does not lock every document it reads. The implementation writes an internal guard on the same listing/copy before checking related requests so snapshot isolation cannot allow an incompatible concurrent request or publication. Real replica-set tests verify this behavior; simulated Maps alone cannot establish atomicity or index enforcement. The seed uses explicit invocation, hashes passwords and preserves existing accounts instead of resetting a database.
+
+### Integration follow-up
+
+A separate temporary worktree combined code head 1d6329a and requests head cce497b, preserving the upstream models and mounting all routers. Typecheck and 43 tests passed (25 unit/HTTP plus 18 real replica-set integration tests). This is compatibility evidence, not an actual merge or peer approval. The #26 preview returned 302 to Vercel SSO for root/health/listings/stats; the bot's Ready state is not an endpoint verification. Coordinator Atlas/preview checks and Daniel's review remain outstanding.
+
+### Additional review requested by the account holder
+
+A second audit reproduced an incorrect field name in validation errors: missing/null/non-object listing terms returned a body error even though the outer JSON object was valid. The parser now carries the nested field path, returning `terms:` or `terms.owner:` as appropriate; a regression test failed before this fix. Added coverage for every modality's terms and Reserved lifecycle gates, preservation of bcrypt cost/passwords on reseeding, and a real database validation failure midway through withdrawal. The latter proves that listing state, copy state, internal revision and Pending requests all roll back, while the HTTP error remains sanitized. The current task suite is 21 unit/HTTP tests plus 15 replica-set tests (36 total), with lint/typecheck/build passing. Preview/Atlas and independent review limitations still apply.
+
+### Daniel's review follow-up (2026-11-09)
+
+Daniel's GitHub Comment on cb6558c judged the code ready for approval and left three nonblocking suggestions; he requested Ready for review to register formal approval. Codex addressed all three in the same task branch: NFC-normalized input metadata, one bounded current-listing lookup per authorized library page, and mongodb-memory-server-core without the binary-download postinstall hook. Two regression tests first reproduced the decomposed-accent search issue and the per-copy query count, then passed after the fixes. The updated suite passes 38 tests (21 unit/HTTP and 17 replica-set), lint/typecheck/build. The updated head is sent back to Daniel for independent formal review; his earlier Comment is not presented as an approval of the new commit. Atlas/preview validation remains coordinator work, and no task closure, merge or production deployment is performed.

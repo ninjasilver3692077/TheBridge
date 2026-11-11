@@ -38,6 +38,11 @@ function isInvalidEncodedBody(error: unknown): boolean {
 
 function toHttpError(error: unknown): HttpError {
   if (error instanceof HttpError) return error;
+  if (error instanceof mongoose.mongo.MongoServerError) {
+    if (error.hasErrorLabel("UnknownTransactionCommitResult")) return new HttpError(503, "Transaction result is uncertain. Refresh before trying another action.");
+    if (error.code === 112) return new HttpError(409, "Resource changed. Refresh before trying again.");
+  }
+  if (error instanceof mongoose.mongo.MongoNetworkError || error instanceof mongoose.mongo.MongoServerSelectionError) return new HttpError(503, "Storage is unavailable. Try again later.");
   if (error instanceof mongoose.Error.ValidationError) {
     const [first] = Object.values(error.errors);
     return new HttpError(400, first ? `${first.path}: ${first.message}` : "Invalid input.");

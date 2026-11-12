@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { initialListingFilters } from "../services/listingFilters.js";
 import { fetchListings, fetchListingStats } from "../services/listings.js";
 
@@ -12,6 +12,7 @@ export function useListingFilters() {
   const [reloadKey, setReloadKey] = useState(0);
   const [result, setResult] = useState(null);
   const [loadingMore, setLoadingMore] = useState(false);
+  const loadMoreControllerRef = useRef(null);
   const request = useMemo(() => ({ appliedFilters, reloadKey }), [appliedFilters, reloadKey]);
 
   useEffect(() => {
@@ -51,7 +52,12 @@ export function useListingFilters() {
       },
     );
 
-    return () => controller.abort();
+    return () => {
+      controller.abort();
+      loadMoreControllerRef.current?.abort();
+      loadMoreControllerRef.current = null;
+      setLoadingMore(false);
+    };
   }, [request]);
 
   const settled = result?.request === request;
@@ -76,12 +82,16 @@ export function useListingFilters() {
   const loadMore = async () => {
     if (!hasMore || loadingMore) return;
     setLoadingMore(true);
+    const controller = new AbortController();
+    loadMoreControllerRef.current = controller;
 
     try {
       const next = await fetchListings(request.appliedFilters, {
         page: meta.page + 1,
         limit: PAGE_SIZE,
+        signal: controller.signal,
       });
+      if (controller.signal.aborted) return;
       setResult((current) => ({
         ...current,
         listings: [...current.listings, ...next.listings],
@@ -89,12 +99,16 @@ export function useListingFilters() {
         loadMoreError: "",
       }));
     } catch (error) {
+      if (controller.signal.aborted) return;
       setResult((current) => ({
         ...current,
         loadMoreError: error?.message || "Something went wrong.",
       }));
     } finally {
-      setLoadingMore(false);
+      if (loadMoreControllerRef.current === controller) {
+        loadMoreControllerRef.current = null;
+        setLoadingMore(false);
+      }
     }
   };
 

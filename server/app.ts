@@ -3,6 +3,7 @@ import express from "express";
 import type { RequestHandler } from "express";
 import { rateLimit } from "express-rate-limit";
 import helmet from "helmet";
+import { adminRouter } from "../routes/admin.js";
 import { authRouter } from "../routes/auth.js";
 import { favoritesRouter } from "../routes/favorites.js";
 import { healthRouter } from "../routes/health.js";
@@ -48,6 +49,7 @@ export function createApp(): express.Express {
   app.use("/api", authRouter);
   app.use("/api", listingsRouter);
   app.use("/api", myBooksRouter);
+  app.use("/api", adminRouter);
   app.use("/api", favoritesRouter);
   app.use("/api", requestsRouter);
   app.use("/api", handleNotFound);

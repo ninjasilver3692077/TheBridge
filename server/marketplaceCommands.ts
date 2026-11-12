@@ -4,6 +4,7 @@ import type { EditBookInput } from "@/types";
 import { LibraryBookModel } from "../models/LibraryBook.js";
 import type { LibraryBookDocument } from "../models/LibraryBook.js";
 import { ListingModel } from "../models/Listing.js";
+import { RequestModel } from "../models/Request.js";
 import { HttpError } from "./errors.js";
 import { assertNoOffer, requestLinks } from "./requestLinks.js";
 import type { listingInput } from "./marketplaceInput.js";
@@ -77,6 +78,44 @@ export async function changeListing(id: string, owner: string, input: ListingInp
         status: "Rejected", rejectionReason: "ListingWithdrawn", "listingSummary.status": "Closed", updatedAt: new Date(),
       } }, { session });
     }
+    await listing.save({ session });
+    return listing;
+  });
+}
+
+export async function removeListing(id: string, adminId: string, reason: string) {
+  return mongoose.connection.transaction(async (session) => {
+    const listing = await ListingModel.findById(id).session(session).exec();
+    if (!listing) throw new HttpError(404, "Listing not found.");
+    if (listing.status !== "Available" && listing.status !== "Reserved") {
+      throw new HttpError(409, "Only Available or Reserved listings can be removed.");
+    }
+    const guard = await ListingModel.updateOne({ _id: listing._id, status: listing.status }, { $inc: { revision: 1 } }, { session }).exec();
+    if (guard.matchedCount !== 1) throw new HttpError(409, "Listing changed. Try again.");
+
+    const removedAt = new Date();
+    const accepted = await RequestModel.findOne({ listing: listing._id, status: "Accepted" }).session(session).exec();
+    const lendsCopy = accepted !== null && (accepted.quotedModality === "Loan" || accepted.quotedModality === "Rental");
+
+    const rejection = { status: "Rejected", rejectionReason: "ListingRemoved", "listingSummary.status": "Removed" };
+    await RequestModel.updateMany({ listing: listing._id, status: "Pending" }, { $set: rejection }, { session }).exec();
+    if (accepted && !lendsCopy) {
+      await RequestModel.updateOne({ _id: accepted._id }, { $set: rejection }, { session }).exec();
+      if (accepted.offeredBook) {
+        await LibraryBookModel.updateOne({ _id: accepted.offeredBook, status: "Reserved" }, { $set: { status: "Available" }, $inc: { revision: 1 } }, { session }).exec();
+      }
+    } else if (accepted) {
+      await RequestModel.updateOne({ _id: accepted._id }, { $set: { "listingSummary.status": "Removed" } }, { session }).exec();
+    }
+
+    await LibraryBookModel.updateOne(
+      { _id: listing.libraryBook },
+      { $set: { ...(lendsCopy ? {} : { status: "Available" }), lastModeration: { listingId: listing._id, reason, removedAt } }, $inc: { revision: 1 } },
+      { session },
+    ).exec();
+
+    listing.status = "Removed";
+    listing.moderation = { reason, removedAt, removedBy: new mongoose.Types.ObjectId(adminId) };
     await listing.save({ session });
     return listing;
   });

@@ -1,13 +1,20 @@
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import {
   DISCOVERY_QUERIES,
   pickRandom,
   shuffleArray,
 } from "../services/discovery.js";
-import { readStoredFavorites } from "../services/favorites.js";
+import { isSessionExpired } from "../services/authStorage.js";
+import {
+  addFavorite,
+  fetchFavorites,
+  removeFavorite,
+} from "../services/favorites.js";
 import { searchOpenLibraryWithCache } from "../services/openLibrary.js";
+import { useApiResource } from "./useApiResource.js";
+import { useSession } from "./useSession.js";
 
-const FAVORITES_KEY = "thebridge:favorites";
+const noFavorites = [];
 
 function validateSearch(value) {
   const query = value.trim();
@@ -24,9 +31,17 @@ export function useMarketplace() {
   const [searchError, setSearchError] = useState("");
   const [activeQuery, setActiveQuery] = useState("");
   const [books, setBooks] = useState([]);
-  const [favorites, setFavorites] = useState(() =>
-    readStoredFavorites(FAVORITES_KEY),
+  const session = useSession();
+  const signedIn = Boolean(session) && !isSessionExpired(session);
+  const isMember = signedIn && session.account.role === "Member";
+  const [favoritesNotice, setFavoritesNotice] = useState("");
+  const loadFavorites = useCallback(
+    (signal) =>
+      isMember ? fetchFavorites({ signal }) : Promise.resolve(noFavorites),
+    [isMember],
   );
+  const { data: favorites, reload: reloadFavorites } =
+    useApiResource(loadFavorites);
   const [status, setStatus] = useState("loading");
   const [error, setError] = useState("");
   const [savedAt, setSavedAt] = useState(null);
@@ -60,10 +75,6 @@ export function useMarketplace() {
 
     return () => controller.abort();
   }, []);
-
-  useEffect(() => {
-    localStorage.setItem(FAVORITES_KEY, JSON.stringify(favorites));
-  }, [favorites]);
 
   const runSearch = async (query) => {
     requestControllerRef.current?.abort();
@@ -113,19 +124,36 @@ export function useMarketplace() {
     }
   };
 
-  const toggleFavorite = (book) => {
-    setFavorites((current) =>
-      current.some((favorite) => favorite.id === book.id)
-        ? current.filter((favorite) => favorite.id !== book.id)
-        : [...current, book],
-    );
+  const toggleFavorite = async (book) => {
+    if (!isMember) {
+      setFavoritesNotice(
+        signedIn
+          ? "Only members can save favorites."
+          : "Sign in as a member to save favorites.",
+      );
+      return;
+    }
+
+    const saved = favorites?.find((favorite) => favorite.id === book.id);
+    setFavoritesNotice("");
+
+    try {
+      await (saved ? removeFavorite(saved.favoriteId) : addFavorite(book));
+    } catch (requestError) {
+      if (requestError.status !== 409 && requestError.status !== 404) {
+        setFavoritesNotice(requestError.message || "Favorites are unavailable.");
+      }
+    }
+
+    reloadFavorites();
   };
 
   return {
     activeQuery,
     books,
     error,
-    favorites,
+    favorites: favorites ?? noFavorites,
+    favoritesNotice,
     handleSearchChange,
     handleSearchSubmit,
     runSearch,

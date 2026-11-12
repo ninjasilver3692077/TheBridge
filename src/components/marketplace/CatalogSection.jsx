@@ -40,6 +40,7 @@ function CatalogSection({ marketplace }) {
       <aside className="xl:sticky xl:top-24 xl:self-start">
         <FavoritesSection
           favorites={marketplace.favorites}
+          notice={marketplace.favoritesNotice}
           onToggleFavorite={marketplace.toggleFavorite}
         />
       </aside>

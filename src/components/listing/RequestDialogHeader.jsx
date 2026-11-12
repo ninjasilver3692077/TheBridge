@@ -5,7 +5,7 @@ function RequestDialogHeader({ listing, onClose }) {
     <div className="flex items-start justify-between gap-4">
       <div>
         <p className={eyebrow}>
-          Simulated request
+          New request
         </p>
 
         <h2

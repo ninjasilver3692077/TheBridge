@@ -1,6 +1,13 @@
 import { focusRing } from "../styles/ui.js";
 
-function FavoritesSection({ favorites, onToggleFavorite }) {
+function FavoritesSection({
+  favorites,
+  notice,
+  status,
+  error,
+  onRetry,
+  onToggleFavorite,
+}) {
   return (
     <section
       className="rounded-2xl border border-line bg-surface p-5"
@@ -12,11 +19,32 @@ function FavoritesSection({ favorites, onToggleFavorite }) {
         </h2>
 
         <span className="rounded-full bg-wine-soft px-2.5 py-0.5 text-xs font-semibold text-wine-ink">
-          {favorites.length}
+          {status === "success" ? favorites.length : "–"}
         </span>
       </div>
 
-      {favorites.length === 0 ? (
+      {notice && (
+        <p role="alert" className="mt-3 text-sm leading-6 text-wine-ink">
+          {notice}
+        </p>
+      )}
+
+      {status === "error" ? (
+        <div role="alert" className="mt-3 text-sm leading-6 text-wine-ink">
+          <p>{error || "We could not load your favorites."}</p>
+          <button
+            type="button"
+            onClick={onRetry}
+            className={`mt-2 rounded-lg px-2 py-1.5 text-xs font-semibold underline ${focusRing}`}
+          >
+            Try again
+          </button>
+        </div>
+      ) : status === "loading" ? (
+        <p className="mt-3 text-sm leading-6 text-ink-muted">
+          Loading favorites...
+        </p>
+      ) : favorites.length === 0 ? (
         <p className="mt-3 text-sm leading-6 text-ink-muted">
           Books you save will appear here.
         </p>

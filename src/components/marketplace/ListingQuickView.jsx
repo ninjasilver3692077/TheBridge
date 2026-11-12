@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useBodyScrollLock } from "../../hooks/useBodyScrollLock.js";
 import { useDialogFocus } from "../../hooks/useDialogFocus.js";
-import { hasActiveSentRequest } from "../../services/requestsStorage.js";
+import { useListingRequestState } from "../../hooks/useListingRequestState.js";
 import ListingRequestModal from "../listing/ListingRequestModal.jsx";
 import QuickViewActions from "./QuickViewActions.jsx";
 import QuickViewBackdrop from "./QuickViewBackdrop.jsx";
@@ -13,7 +13,7 @@ function ListingQuickView({ listing, onClose }) {
   const open = Boolean(listing);
   const [displayed, setDisplayed] = useState(listing);
   const [requestOpen, setRequestOpen] = useState(false);
-  const [sentListingId, setSentListingId] = useState(null);
+  const requestState = useListingRequestState(displayed);
   const { dialogRef, handleKeyDown } = useDialogFocus(open, onClose);
 
   if (listing && listing !== displayed) {
@@ -21,10 +21,6 @@ function ListingQuickView({ listing, onClose }) {
   }
 
   useBodyScrollLock(open);
-
-  const requestSent =
-    Boolean(displayed) &&
-    (sentListingId === displayed.id || hasActiveSentRequest(displayed.id));
 
   return (
     <>
@@ -56,7 +52,7 @@ function ListingQuickView({ listing, onClose }) {
 
               <QuickViewActions
                 listing={displayed}
-                requestSent={requestSent}
+                requestState={requestState}
                 onRequest={() => setRequestOpen(true)}
               />
             </>
@@ -70,7 +66,7 @@ function ListingQuickView({ listing, onClose }) {
           listing={displayed}
           open={requestOpen}
           onClose={() => setRequestOpen(false)}
-          onSent={() => setSentListingId(displayed.id)}
+          onSent={() => requestState.markSent(displayed.id)}
         />
       )}
     </>

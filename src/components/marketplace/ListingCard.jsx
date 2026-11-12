@@ -4,7 +4,7 @@ import { getListingOfferLabel } from "../../services/listingFilters.js";
 import { badge, cardInteractive, modalityTone } from "../../styles/ui.js";
 
 function ListingCard({ listing, headingLevel: Heading = "h3", onSelect }) {
-  const [coverFailed, setCoverFailed] = useState(false);
+  const [coverFailed, setCoverFailed] = useState(!listing.cover);
 
   return (
     <article className={`group relative overflow-hidden ${cardInteractive}`}>

@@ -3,23 +3,22 @@ import AddBookConfirmHeading from "./AddBookConfirmHeading.jsx";
 import AddBookCover from "./AddBookCover.jsx";
 import BookConditionOptions from "./BookConditionOptions.jsx";
 import BookCopyNotes from "./BookCopyNotes.jsx";
-import {
-  createLibraryBook,
-  saveMyBook,
-} from "../../services/myBooksStorage.js";
-import { buttonGhost, buttonPrimary } from "../../styles/ui.js";
+import { addMyBook } from "../../services/myBooks.js";
+import { buttonGhost, buttonPrimary, notice } from "../../styles/ui.js";
 
 function AddBookConfirm({ book, onBack, onSaved }) {
   const [condition, setCondition] = useState("");
   const [notes, setNotes] = useState("");
   const [hasError, setHasError] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState("");
 
   const handleConditionChange = (value) => {
     setCondition(value);
     setHasError(false);
   };
 
-  const handleSubmit = (event) => {
+  const handleSubmit = async (event) => {
     event.preventDefault();
 
     if (!condition) {
@@ -27,9 +26,15 @@ function AddBookConfirm({ book, onBack, onSaved }) {
       return;
     }
 
-    const newBook = createLibraryBook(book, condition, notes);
-    saveMyBook(newBook);
-    onSaved(newBook);
+    setSubmitting(true);
+    setSubmitError("");
+
+    try {
+      onSaved(await addMyBook(book, condition, notes));
+    } catch (error) {
+      setSubmitError(error?.message || "We could not add this book.");
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -54,8 +59,18 @@ function AddBookConfirm({ book, onBack, onSaved }) {
 
           <BookCopyNotes value={notes} onChange={setNotes} />
 
-          <button type="submit" className={`mt-6 w-full sm:w-auto sm:px-8 ${buttonPrimary}`}>
-            Add to My Library
+          {submitError && (
+            <p role="alert" className={`mt-6 text-sm ${notice.danger}`}>
+              {submitError}
+            </p>
+          )}
+
+          <button
+            type="submit"
+            disabled={submitting}
+            className={`mt-6 w-full sm:w-auto sm:px-8 ${buttonPrimary}`}
+          >
+            {submitting ? "Adding..." : "Add to My Library"}
           </button>
         </form>
       </div>

@@ -1,37 +1,53 @@
-import { useState } from "react";
+import { useCallback, useState } from "react";
+import { useApiResource } from "../../hooks/useApiResource.js";
 import { useDialogFocus } from "../../hooks/useDialogFocus.js";
+import { fetchMyBooks, isBookFree } from "../../services/myBooks.js";
+import { sendRequest } from "../../services/requests.js";
+import { buttonSecondary } from "../../styles/ui.js";
 import ExchangeBookOptions from "./ExchangeBookOptions.jsx";
 import RequestDialogActions from "./RequestDialogActions.jsx";
 import RequestDialogHeader from "./RequestDialogHeader.jsx";
 import RequestOfferRows from "./RequestOfferRows.jsx";
-import { loadAvailableExchangeBooks } from "../../services/listingRequest.js";
-import { addSentRequest } from "../../services/requestsStorage.js";
 
-function ListingRequestModal({ listing, open, onClose, onSent }) {
+function ListingRequestDialog({ listing, onClose, onSent }) {
   const [selectedBookId, setSelectedBookId] = useState("");
   const [error, setError] = useState("");
-  const { dialogRef, handleKeyDown } = useDialogFocus(open, onClose);
-
-  if (!open) {
-    return null;
-  }
+  const [submitting, setSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState("");
+  const { dialogRef, handleKeyDown } = useDialogFocus(true, onClose);
 
   const isExchange = listing.modality === "Exchange";
-  const availableBooks = isExchange ? loadAvailableExchangeBooks() : [];
+  const loadBooks = useCallback(
+    async (signal) =>
+      isExchange ? (await fetchMyBooks({ signal })).filter(isBookFree) : [],
+    [isExchange],
+  );
+  const {
+    status: booksStatus,
+    data: books,
+    error: booksError,
+    reload: reloadBooks,
+  } = useApiResource(loadBooks);
+  const availableBooks = books ?? [];
 
-  const handleSubmit = (event) => {
+  const handleSubmit = async (event) => {
     event.preventDefault();
     if (isExchange && !selectedBookId) {
       setError("Select one of your available books to continue.");
       return;
     }
 
-    addSentRequest({
-      listing,
-      offeredBook: availableBooks.find((book) => book.id === selectedBookId),
-    });
-    onSent();
-    onClose();
+    setSubmitting(true);
+    setSubmitError("");
+
+    try {
+      await sendRequest(listing.id, isExchange ? selectedBookId : null);
+      onSent();
+      onClose();
+    } catch (requestError) {
+      setSubmitError(requestError?.message || "We could not send your request.");
+      setSubmitting(false);
+    }
   };
 
   const handleBookChange = (bookId) => {
@@ -58,7 +74,26 @@ function ListingRequestModal({ listing, open, onClose, onSent }) {
         <RequestOfferRows listing={listing} />
 
         <form onSubmit={handleSubmit}>
-          {isExchange && (
+          {isExchange && booksStatus === "loading" && (
+            <p role="status" className="mt-6 text-sm text-ink-muted">
+              Loading your available books...
+            </p>
+          )}
+
+          {isExchange && booksStatus === "error" && (
+            <div role="alert" className="mt-6">
+              <p className="text-sm text-ink-muted">{booksError}</p>
+              <button
+                type="button"
+                onClick={reloadBooks}
+                className={`mt-3 ${buttonSecondary}`}
+              >
+                Try again
+              </button>
+            </div>
+          )}
+
+          {isExchange && booksStatus === "success" && (
             <ExchangeBookOptions
               books={availableBooks}
               selectedBookId={selectedBookId}
@@ -68,12 +103,27 @@ function ListingRequestModal({ listing, open, onClose, onSent }) {
           )}
 
           <RequestDialogActions
-            sendDisabled={isExchange && availableBooks.length === 0}
+            sendDisabled={
+              submitting ||
+              (isExchange && (booksStatus !== "success" || availableBooks.length === 0))
+            }
+            submitting={submitting}
+            submitError={submitError}
             onCancel={onClose}
           />
         </form>
       </section>
     </div>
+  );
+}
+
+function ListingRequestModal({ listing, open, onClose, onSent }) {
+  if (!open) {
+    return null;
+  }
+
+  return (
+    <ListingRequestDialog listing={listing} onClose={onClose} onSent={onSent} />
   );
 }
 

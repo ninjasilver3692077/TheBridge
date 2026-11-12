@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { request as httpRequest } from "node:http";
 import type { AddressInfo } from "node:net";
 import { after, afterEach, before, beforeEach, mock, test } from "node:test";
 import { gzipSync } from "node:zlib";
@@ -79,6 +80,22 @@ test("JSON with an unsupported charset is 415", async () => {
   });
   assert.equal(response.status, 415);
   assert.equal(body.code, 415);
+});
+
+test("an empty body without Content-Type is not 415", async () => {
+  const status = await new Promise<number>((resolve, reject) => {
+    const request = httpRequest(
+      `${baseUrl}/api/health`,
+      { method: "DELETE", headers: { "Content-Length": "0" } },
+      (response) => {
+        response.resume();
+        resolve(response.statusCode ?? 0);
+      },
+    );
+    request.on("error", reject);
+    request.end();
+  });
+  assert.notEqual(status, 415);
 });
 
 test("invalid gzip body is 400", async () => {

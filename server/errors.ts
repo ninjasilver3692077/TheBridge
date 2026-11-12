@@ -58,7 +58,8 @@ function toHttpError(error: unknown): HttpError {
 }
 
 export const requireJsonBody: RequestHandler = (req, _res, next) => {
-  if (req.is("application/json") === false) {
+  const emptyBody = req.headers["content-length"] === "0";
+  if (!emptyBody && req.is("application/json") === false) {
     next(new HttpError(415, "Content-Type must be application/json."));
     return;
   }

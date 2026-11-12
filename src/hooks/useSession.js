@@ -15,6 +15,10 @@ export function useSession() {
   return useSyncExternalStore(subscribeToSession, readSession, () => null);
 }
 
+export function useAccountId() {
+  return useSession()?.account.id ?? null;
+}
+
 export function useSessionExpiryObserver() {
   const session = useSession();
   const navigate = useNavigate();

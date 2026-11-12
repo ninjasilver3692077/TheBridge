@@ -6,7 +6,7 @@ import ListingOverview from "../components/listing/ListingOverview.jsx";
 import ListingRequestCta from "../components/listing/ListingRequestCta.jsx";
 import ListingRequestModal from "../components/listing/ListingRequestModal.jsx";
 import ListingUnavailable from "../components/listing/ListingUnavailable.jsx";
-import { hasActiveSentRequest } from "../services/requestsStorage.js";
+import { useListingRequestState } from "../hooks/useListingRequestState.js";
 
 function formatPrice(price) {
   if (price === null || price === undefined) {
@@ -22,9 +22,7 @@ function formatPrice(price) {
 
 function ListingDetailsPage({ listing }) {
   const [requestOpen, setRequestOpen] = useState(false);
-  const [requestSent, setRequestSent] = useState(
-    () => Boolean(listing) && hasActiveSentRequest(listing.id),
-  );
+  const requestState = useListingRequestState(listing);
 
   if (!listing) {
     return (
@@ -55,7 +53,7 @@ function ListingDetailsPage({ listing }) {
 
           <ListingRequestCta
             modality={listing.modality}
-            requestSent={requestSent}
+            requestState={requestState}
             onRequest={() => setRequestOpen(true)}
           />
         </section>
@@ -65,7 +63,7 @@ function ListingDetailsPage({ listing }) {
         listing={listing}
         open={requestOpen}
         onClose={() => setRequestOpen(false)}
-        onSent={() => setRequestSent(true)}
+        onSent={() => requestState.markSent(listing.id)}
       />
     </AppShell>
   );

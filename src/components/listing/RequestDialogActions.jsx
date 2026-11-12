@@ -1,12 +1,19 @@
 import { buttonPrimary, buttonSecondary, notice } from "../../styles/ui.js";
 
-function RequestDialogActions({ sendDisabled, onCancel }) {
+function RequestDialogActions({ sendDisabled, submitting, submitError, onCancel }) {
   return (
     <>
       <p className={`mt-6 text-xs ${notice.info}`}>
-        Prototype only: this request is simulated. No message, payment, or
-        transaction will be sent.
+        The owner will see your request and can accept or reject it. TheBridge
+        does not process payments or send messages; you coordinate the handover
+        in person.
       </p>
+
+      {submitError && (
+        <p role="alert" className={`mt-4 text-sm ${notice.danger}`}>
+          {submitError}
+        </p>
+      )}
 
       <div className="mt-6 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
         <button
@@ -22,7 +29,7 @@ function RequestDialogActions({ sendDisabled, onCancel }) {
           disabled={sendDisabled}
           className={buttonPrimary}
         >
-          Send request
+          {submitting ? "Sending..." : "Send request"}
         </button>
       </div>
     </>

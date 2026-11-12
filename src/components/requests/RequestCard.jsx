@@ -1,5 +1,5 @@
-import { findListingById } from "../../services/listingsStorage.js";
 import {
+  getRequestActions,
   getRequestStatusMessage,
   requestStatusMeta,
 } from "../../services/requestStatus.js";
@@ -7,30 +7,21 @@ import { card } from "../../styles/ui.js";
 import RequestActions from "./RequestActions.jsx";
 import RequestSummary from "./RequestSummary.jsx";
 
-function RequestCard({ request, myBook, offeredBook, onStatusChange }) {
-  const listing = findListingById(request.listingId);
+function RequestCard({ request, busy, onAction }) {
   const meta = requestStatusMeta[request.status];
-
-  const source = myBook || listing;
-  const title = source?.title || "Listing no longer available";
-  const author = source?.author || "";
-  const modality = myBook?.listingModality || listing?.modality || "";
-  const cover = source?.cover || "";
+  const actions = getRequestActions(request);
   const counterpartLabel =
     request.direction === "received"
       ? `From ${request.counterpart}`
       : `To ${request.counterpart}`;
 
-  const canRespond =
-    request.direction === "received" && request.status === "Pending";
-
   return (
     <article className={`p-4 sm:p-5 ${card}`}>
       <RequestSummary
-        title={title}
-        author={author}
-        modality={modality}
-        cover={cover}
+        title={request.title}
+        author={request.author}
+        modality={request.modality}
+        cover={request.cover}
         meta={meta}
         counterpartLabel={counterpartLabel}
       />
@@ -38,23 +29,11 @@ function RequestCard({ request, myBook, offeredBook, onStatusChange }) {
       <div className="mt-3 sm:pl-[4.5rem]">
         <p className="text-sm leading-6 text-ink">{request.note}</p>
 
-        {myBook && (
-          <p className="mt-2 text-xs text-ink-muted">
-            Your copy in My Books · {myBook.condition}
-          </p>
-        )}
-
-        {offeredBook && (
-          <p className="mt-2 text-xs text-ink-muted">
-            You offered your copy of{" "}
-            <span className="font-semibold text-ink">{offeredBook.title}</span>
-          </p>
-        )}
-
-        {canRespond && (
+        {actions.length > 0 && (
           <RequestActions
-            onAccept={() => onStatusChange(request.id, "Accepted")}
-            onReject={() => onStatusChange(request.id, "Rejected")}
+            actions={actions}
+            busy={busy}
+            onAction={(action) => onAction(request.id, action)}
           />
         )}
 

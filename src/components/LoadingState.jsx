@@ -1,4 +1,7 @@
-function LoadingState() {
+function LoadingState({
+  title = "Loading books...",
+  message = "Searching Open Library for matching results.",
+}) {
   return (
     <div
       className="flex min-h-64 flex-col items-center justify-center rounded-2xl bg-surface-muted px-6 py-12 text-center"
@@ -10,11 +13,9 @@ function LoadingState() {
         aria-hidden="true"
       />
 
-      <p className="mt-5 text-sm font-semibold text-ink">Loading books...</p>
+      <p className="mt-5 text-sm font-semibold text-ink">{title}</p>
 
-      <p className="mt-1 text-xs text-ink-muted">
-        Searching Open Library for matching results.
-      </p>
+      <p className="mt-1 text-xs text-ink-muted">{message}</p>
     </div>
   );
 }

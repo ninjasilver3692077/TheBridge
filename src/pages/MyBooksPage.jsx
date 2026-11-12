@@ -1,16 +1,14 @@
-import { useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import AppShell from "../components/AppShell.jsx";
+import ErrorState from "../components/ErrorState.jsx";
+import LoadingState from "../components/LoadingState.jsx";
 import MyBooksFilters from "../components/my-books/MyBooksFilters.jsx";
 import MyBooksGrid from "../components/my-books/MyBooksGrid.jsx";
 import MyBooksHeader from "../components/my-books/MyBooksHeader.jsx";
 import { myBookFilters } from "../data/myBooks.js";
-import { useStoredState } from "../hooks/useStoredState.js";
-import { shuffleArray } from "../services/discovery.js";
-import { MY_BOOKS_EVENT } from "../services/librarySeed.js";
-import { loadMyBooksWithActivity } from "../services/myBooksStorage.js";
-import { REQUESTS_EVENT } from "../services/requestsStorage.js";
-
-const bookEvents = [MY_BOOKS_EVENT, REQUESTS_EVENT, "thebridge:book-added"];
+import { useApiResource } from "../hooks/useApiResource.js";
+import { useAccountId } from "../hooks/useSession.js";
+import { fetchMyBooks } from "../services/myBooks.js";
 
 const emptyCounts = Object.fromEntries(
   myBookFilters.map((filter) => [filter, 0]),
@@ -29,26 +27,19 @@ function countBooks(books) {
 
 function MyBooksPage() {
   const [activeFilter, setActiveFilter] = useState("All");
-  const books = useStoredState(loadMyBooksWithActivity, bookEvents);
-  const [displayOrder] = useState(() =>
-    shuffleArray(books.map((book) => book.id)),
-  );
-
-  const orderedBooks = useMemo(() => {
-    const position = new Map(displayOrder.map((id, index) => [id, index]));
-    return [...books].sort(
-      (a, b) => (position.get(a.id) ?? -1) - (position.get(b.id) ?? -1),
-    );
-  }, [books, displayOrder]);
+  const accountId = useAccountId();
+  const load = useCallback((signal) => fetchMyBooks({ signal }), []);
+  const { status, data, error, reload } = useApiResource(load, accountId);
+  const books = useMemo(() => data ?? [], [data]);
 
   const counts = useMemo(() => countBooks(books), [books]);
 
   const filteredBooks = useMemo(
     () =>
       activeFilter === "All"
-        ? orderedBooks
-        : orderedBooks.filter((book) => book.status === activeFilter),
-    [activeFilter, orderedBooks],
+        ? books
+        : books.filter((book) => book.status === activeFilter),
+    [activeFilter, books],
   );
 
   return (
@@ -59,13 +50,36 @@ function MyBooksPage() {
       <section>
         <MyBooksHeader />
 
-        <MyBooksFilters
-          activeFilter={activeFilter}
-          counts={counts}
-          onChange={setActiveFilter}
-        />
+        {status === "loading" && (
+          <div className="mt-8">
+            <LoadingState
+              title="Loading your library..."
+              message="Fetching the books you have added."
+            />
+          </div>
+        )}
 
-        <MyBooksGrid books={filteredBooks} activeFilter={activeFilter} />
+        {status === "error" && (
+          <div className="mt-8">
+            <ErrorState
+              title="We could not load your library"
+              message={error}
+              onRetry={reload}
+            />
+          </div>
+        )}
+
+        {status === "success" && (
+          <>
+            <MyBooksFilters
+              activeFilter={activeFilter}
+              counts={counts}
+              onChange={setActiveFilter}
+            />
+
+            <MyBooksGrid books={filteredBooks} activeFilter={activeFilter} />
+          </>
+        )}
       </section>
     </AppShell>
   );

@@ -32,7 +32,7 @@ Scope: the TheBridge Express API (`server/`, `routes/`) and the React client, de
 
 - Required configuration: Atlas network access opened to `0.0.0.0/0`, because Vercel serverless functions have no fixed outbound IP and an IP allowlist cannot be used.
 - Required compensation: a dedicated database user with least privilege, the `readWrite` role on the application database only, with no `atlasAdmin` and no access to other databases. The connection string must live only in the `MONGODB_URI` Vercel environment variable and in the local `.env`, which is git-ignored.
-- Verification pending: the coordinator has not yet confirmed either setting in Atlas. Non-sensitive evidence (a screenshot of the Network Access list and of the user's role, with no credentials) is to be attached here once checked.
+- Verified on 2026-11-12 by the coordinator in Atlas: Network Access lists `0.0.0.0/0`, and the application user was set to the `readWrite` role on the application database only. After the change `GET /api/health` still returned `ok` and the app kept reading and writing. No credentials or connection string are recorded in this repository.
 - Residual risk: while the database is reachable from any IP, the strength of that user's password is the only barrier. Use a long random password and rotate it if it is ever exposed.
 
 ## 6. Token in localStorage
@@ -69,5 +69,5 @@ Run against https://thebridge-sepia.vercel.app. Items marked done were checked o
 - [ ] The 11th login attempt within 15 minutes returns 429.
 - [x] Response headers include `Strict-Transport-Security` and `X-Content-Type-Options`.
 - [ ] A Member token receives 403 on `/api/admin/overview`; an Admin token receives 200. Without a token the route already returns 401. The Member and Admin cases need real credentials and are for the coordinator.
-- [ ] Atlas Network Access lists `0.0.0.0/0` and the application user has only `readWrite` on one database (section 5).
+- [x] Atlas Network Access lists `0.0.0.0/0` and the application user has only `readWrite` on one database (section 5), confirmed by the coordinator on 2026-11-12.
 - [ ] `npm run lint`, `npm run typecheck` and `npm run build` pass on the merged `main`.

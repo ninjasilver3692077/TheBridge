@@ -45,7 +45,8 @@ interface ActivityCandidate {
 function outranks(candidate: ActivityCandidate, held: ActivityCandidate | undefined): boolean {
   if (!held) return true;
   if (candidate.status !== held.status) return candidate.status === "Accepted";
-  return candidate.createdAt > held.createdAt;
+  if (candidate.createdAt !== held.createdAt) return candidate.createdAt > held.createdAt;
+  return candidate.requestId > held.requestId;
 }
 
 async function copyActivities(copyIds: Types.ObjectId[], listings: { _id: Types.ObjectId; libraryBook: Types.ObjectId }[]): Promise<Map<string, LibraryBookActivity>> {

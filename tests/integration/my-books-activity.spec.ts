@@ -125,3 +125,14 @@ test("an offered copy in a Pending Exchange is an OfferedExchange with the listi
     counterpart: { id: ownerId, name: "Laura Gomez" },
   });
 });
+
+test("with equal status and createdAt the request with the higher id is the activity", async () => {
+  const { copy, listing } = await publishedCopy("Sale");
+  const first = await requestOn(listing, requesterId, "Pending", "Sale");
+  const second = await requestOn(listing, secondRequesterId, "Pending", "Sale");
+  const sharedCreatedAt = new Date("2026-01-01T00:00:00.000Z");
+  await RequestModel.collection.updateMany({ _id: { $in: [first._id, second._id] } }, { $set: { createdAt: sharedCreatedAt } });
+  const higherId = String(first._id) > String(second._id) ? first : second;
+  const found = (await myBooks(ownerId)).find((item) => item.id === String(copy._id));
+  assert.equal(found?.activity?.requestId, String(higherId._id));
+});

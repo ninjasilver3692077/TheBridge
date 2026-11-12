@@ -50,7 +50,7 @@ export function getRequestCtaLabel(modality) {
 }
 
 export function getRequestCtaState(
-  { signedIn, isMember, isOwner, requestSent },
+  { signedIn, isMember, isOwner, requestSent, listingStatus },
   modality,
 ) {
   if (!signedIn) {
@@ -67,6 +67,10 @@ export function getRequestCtaState(
 
   if (requestSent) {
     return { label: "✓ Request sent", disabled: true, sent: true };
+  }
+
+  if (listingStatus && listingStatus !== "Available") {
+    return { label: `Currently ${listingStatus.toLowerCase()}`, disabled: true };
   }
 
   return { label: getRequestCtaLabel(modality) };

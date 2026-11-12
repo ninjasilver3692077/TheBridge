@@ -6,14 +6,16 @@ import RequestList from "../components/requests/RequestList.jsx";
 import RequestsHeader from "../components/requests/RequestsHeader.jsx";
 import RequestsTabs from "../components/requests/RequestsTabs.jsx";
 import { useApiResource } from "../hooks/useApiResource.js";
+import { useAccountId } from "../hooks/useSession.js";
 import { changeRequest, fetchRequests } from "../services/requests.js";
 import { getRequestStatusMessage } from "../services/requestStatus.js";
 import { notice } from "../styles/ui.js";
 
 function RequestsPage() {
   const [activeTab, setActiveTab] = useState("received");
+  const accountId = useAccountId();
   const load = useCallback((signal) => fetchRequests({ signal }), []);
-  const { status, data, error, reload } = useApiResource(load);
+  const { status, data, error, reload } = useApiResource(load, accountId);
   const [busyId, setBusyId] = useState(null);
   const [actionError, setActionError] = useState("");
   const [announcement, setAnnouncement] = useState("");

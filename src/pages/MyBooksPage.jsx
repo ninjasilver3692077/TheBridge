@@ -7,6 +7,7 @@ import MyBooksGrid from "../components/my-books/MyBooksGrid.jsx";
 import MyBooksHeader from "../components/my-books/MyBooksHeader.jsx";
 import { myBookFilters } from "../data/myBooks.js";
 import { useApiResource } from "../hooks/useApiResource.js";
+import { useAccountId } from "../hooks/useSession.js";
 import { fetchMyBooks } from "../services/myBooks.js";
 
 const emptyCounts = Object.fromEntries(
@@ -26,8 +27,9 @@ function countBooks(books) {
 
 function MyBooksPage() {
   const [activeFilter, setActiveFilter] = useState("All");
+  const accountId = useAccountId();
   const load = useCallback((signal) => fetchMyBooks({ signal }), []);
-  const { status, data, error, reload } = useApiResource(load);
+  const { status, data, error, reload } = useApiResource(load, accountId);
   const books = useMemo(() => data ?? [], [data]);
 
   const counts = useMemo(() => countBooks(books), [books]);

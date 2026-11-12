@@ -41,6 +41,9 @@ function CatalogSection({ marketplace }) {
         <FavoritesSection
           favorites={marketplace.favorites}
           notice={marketplace.favoritesNotice}
+          status={marketplace.favoritesStatus}
+          error={marketplace.favoritesError}
+          onRetry={marketplace.reloadFavorites}
           onToggleFavorite={marketplace.toggleFavorite}
         />
       </aside>

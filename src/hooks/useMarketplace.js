@@ -12,7 +12,7 @@ import {
 } from "../services/favorites.js";
 import { searchOpenLibraryWithCache } from "../services/openLibrary.js";
 import { useApiResource } from "./useApiResource.js";
-import { useSession } from "./useSession.js";
+import { useAccountId, useSession } from "./useSession.js";
 
 const noFavorites = [];
 
@@ -34,14 +34,19 @@ export function useMarketplace() {
   const session = useSession();
   const signedIn = Boolean(session) && !isSessionExpired(session);
   const isMember = signedIn && session.account.role === "Member";
+  const accountId = useAccountId();
   const [favoritesNotice, setFavoritesNotice] = useState("");
   const loadFavorites = useCallback(
     (signal) =>
       isMember ? fetchFavorites({ signal }) : Promise.resolve(noFavorites),
     [isMember],
   );
-  const { data: favorites, reload: reloadFavorites } =
-    useApiResource(loadFavorites);
+  const {
+    data: favorites,
+    status: favoritesStatus,
+    error: favoritesError,
+    reload: reloadFavorites,
+  } = useApiResource(loadFavorites, accountId);
   const [status, setStatus] = useState("loading");
   const [error, setError] = useState("");
   const [savedAt, setSavedAt] = useState(null);
@@ -153,9 +158,12 @@ export function useMarketplace() {
     books,
     error,
     favorites: favorites ?? noFavorites,
+    favoritesError,
+    favoritesStatus,
     favoritesNotice,
     handleSearchChange,
     handleSearchSubmit,
+    reloadFavorites,
     runSearch,
     savedAt,
     searchError,

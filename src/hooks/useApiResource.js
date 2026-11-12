@@ -1,10 +1,13 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { StaleSessionError } from "../services/apiClient.js";
 
-export function useApiResource(load) {
+export function useApiResource(load, scope = null) {
   const [reloadKey, setReloadKey] = useState(0);
   const [result, setResult] = useState(null);
-  const request = useMemo(() => ({ load, reloadKey }), [load, reloadKey]);
+  const request = useMemo(
+    () => ({ load, scope, reloadKey }),
+    [load, scope, reloadKey],
+  );
 
   useEffect(() => {
     const controller = new AbortController();

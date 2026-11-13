@@ -43,7 +43,7 @@ Scope: the TheBridge Express API (`server/`, `routes/`) and the React client, de
 - Risk: any script running on the page can read `localStorage`, so a cross-site scripting (XSS) flaw would expose the token.
 - Mitigations in place:
   - React escapes rendered text and the client has no `dangerouslySetInnerHTML`.
-  - Tokens last 24 hours (`JWT_TTL_SECONDS` must be `86400`, otherwise the server refuses to start). The client expires the session when `expiresAt` passes, on tab focus, and on any `401` from an authenticated request, then redirects to login.
+  - Tokens last 24 hours (`JWT_TTL_SECONDS` must be `86400`; the value is validated when a session is issued, so any other value makes login and registration answer `500` while the server still starts). The client expires the session when `expiresAt` passes, on tab focus, and on any `401` from an authenticated request, then redirects to login.
   - The server re-reads the account on every authenticated request, so a deleted account loses access immediately and a role change applies on the next call.
   - A session change in another tab or a re-login reloads the private data (My Books, Requests, favorites) for the new account and discards in-flight responses of the previous one.
   - Authenticated responses are sent with `Cache-Control: no-store`.
@@ -54,7 +54,7 @@ Scope: the TheBridge Express API (`server/`, `routes/`) and the React client, de
 
 - Passwords are hashed with `bcryptjs`. Login compares against a dummy hash when the email does not exist, so response time does not reveal which accounts exist.
 - Tokens are signed with `jsonwebtoken` (HS256, algorithm pinned on verification). `JWT_SECRET` must be at least 32 bytes; a shorter value makes authenticated routes fail with `500` instead of signing weak tokens.
-- `requireAuth` answers `401` for a missing, malformed, expired or unknown-account token, with one generic message that does not say which.
+- `requireAuth` answers `401` for a missing, malformed, expired or unknown-account token, with one of two generic messages: `Authentication required.` when the Bearer header is missing or malformed, and `Invalid or expired session.` when the token is invalid or expired or the account is unknown.
 - Roles are `Member` and `Admin`. Registration always creates a `Member`; the first Admin is created with `npm run bootstrap:admin`, which is not reachable over HTTP.
 - Every `/api/admin/*` route is mounted behind `requireRole("Admin")`, and a Member receives `403`.
 - Removing a listing requires a reason (maximum 500 characters), which is stored with the removal.

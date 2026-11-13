@@ -28,8 +28,28 @@ export function validateRegisterFields({ name, email, password }) {
   return errors;
 }
 
+export function validateChangePasswordFields({
+  currentPassword,
+  newPassword,
+  confirmPassword,
+}) {
+  const errors = {};
+  if (!currentPassword) errors.currentPassword = "Enter your current password.";
+  if (!newPassword) {
+    errors.newPassword = "Enter a new password.";
+  } else if (newPassword.length < minimumPasswordLength) {
+    errors.newPassword = "Use at least 8 characters.";
+  } else if (new TextEncoder().encode(newPassword).length > maximumPasswordBytes) {
+    errors.newPassword = "Use a shorter password (72 bytes maximum).";
+  }
+  if (newPassword !== confirmPassword) {
+    errors.confirmPassword = "Passwords do not match.";
+  }
+  return errors;
+}
+
 export function fieldFromServerMessage(message) {
-  const match = /^(name|email|password): (.+)$/.exec(message);
+  const match = /^(name|email|password|currentPassword|newPassword): (.+)$/.exec(message);
   if (!match) return null;
   const [, field, detail] = match;
   return { field, message: detail.charAt(0).toUpperCase() + detail.slice(1) };
@@ -55,6 +75,27 @@ export async function register({ name, email, password }) {
 
 export async function fetchCurrentAccount(signal) {
   const { data } = await apiRequest("/auth/me", { authenticated: true, signal });
+  return data;
+}
+
+export async function changePassword({ currentPassword, newPassword }) {
+  const { data } = await apiRequest("/account/password", {
+    method: "PATCH",
+    authenticated: true,
+    expireOn401: false,
+    body: { currentPassword, newPassword },
+  });
+  return data;
+}
+
+export async function deleteOwnAccount({ password }) {
+  const { data } = await apiRequest("/account", {
+    method: "DELETE",
+    authenticated: true,
+    expireOn401: false,
+    body: { password },
+  });
+  clearSession();
   return data;
 }
 

@@ -1,10 +1,10 @@
 ---
 title: "TheBridge REST API contract"
 status: proposed
-version: 5
+version: 6
 created: 2026-10-27
-updated: 2026-11-01
-issue: 23
+updated: 2026-11-13
+issue: 36
 input_prd_commit: 50edc11165184a186a5afb660a6ffb145feb1cb8
 ---
 
@@ -83,7 +83,7 @@ These validation boundaries use the existing BookMetadata and terms vocabulary. 
 
 **Offer holds.** An offer held by a Pending request leaves its copy Available but blocks it through derived activity and the active-offer index (A-4). Reserved starts at acceptance. Release applies only to the reservation held by the transitioning request, never to a copy now committed elsewhere.
 
-`Request.rejectionReason` is null unless status is Rejected. Rejected always has exactly one enum value: `OwnerRejected` (REQUEST-05), `CompetingRequestAccepted` (another request wins REQUEST-04), `ListingWithdrawn` (LISTING-07), or `ListingRemoved` (ADMIN-05, for Pending requests and for an Accepted Sale or Exchange request). Server commands set reason and status in the same transaction. This field is included in participant/Admin projections and does not contain the Admin's free-text moderation reason. It distinguishes status-message causes without exposing private moderation text. Non-Rejected states, including Cancelled, use null. There is no reconfirmation mutation in Milestone 3.
+`Request.rejectionReason` is null unless status is Rejected. Rejected always has exactly one enum value: `OwnerRejected` (REQUEST-05), `CompetingRequestAccepted` (another request wins REQUEST-04), `ListingWithdrawn` (LISTING-07), `ListingRemoved` (ADMIN-05, for Pending requests and for an Accepted Sale or Exchange request), or `AccountDeleted` (AUTH-05 / ADMIN-06, when a participant Member account with Pending requests is deleted). Server commands set reason and status in the same transaction. This field is included in participant/Admin projections and does not contain the Admin's free-text moderation reason. It distinguishes status-message causes without exposing private moderation text. Non-Rejected states, including Cancelled, use null. There is no reconfirmation mutation in Milestone 3.
 
 ## 3. Operations
 
@@ -96,11 +96,13 @@ All paths below include `/api`. Each stable operation ID cites its requirement. 
 | AUTH-01 | POST `/api/auth/register` | Public | [RegisterInput](#account-payloads) | 201 `data: AuthSession` | FR-1, FR-3 |
 | AUTH-02 | POST `/api/auth/login` | Public | [LoginInput](#account-payloads) | 200 `data: AuthSession` | FR-2, FR-4 |
 | AUTH-03 | GET `/api/auth/me` | Member or Admin | None | 200 `data: Account` | FR-2, FR-3, FR-25 |
+| AUTH-04 | PATCH `/api/account/password` | Member or Admin | [ChangePasswordInput](#account-payloads) | 200 `data: Account` | Issue #36 |
+| AUTH-05 | DELETE `/api/account` | Member | [DeleteAccountInput](#account-payloads) | 200 `data: {id, deleted: true}` | Issue #36 |
 | OPS-01 | GET `/api/health` | Public | None | 200 `data: {status: "ok"}` when configured/ready | FR-13 availability support; NFR-1 |
 
 #### Account payloads
 
-RegisterInput is `{name, email, password}`; role is always Member. Duplicate normalized email returns 409. LoginInput is `{email, password}`; wrong credentials return 401 with one generic message. AUTH-03 returns the authenticated account, not a user ID supplied by the client. OPS-01 returns a generic 503 error when required storage is unavailable and never publishes connection strings or runtime secrets.
+RegisterInput is `{name, email, password}`; role is always Member. Duplicate normalized email returns 409. LoginInput is `{email, password}`; wrong credentials return 401 with one generic message. AUTH-03 returns the authenticated account, not a user ID supplied by the client. ChangePasswordInput is `{currentPassword, newPassword}` for an authenticated Member or Admin; `newPassword` uses the same validation boundaries as registration (8 characters to 72 UTF-8 bytes), and a wrong `currentPassword` returns 401 without changing anything. DeleteAccountInput is `{password}` for an authenticated Member deleting their own account; a wrong `password` returns 401 without changing anything, and an Admin caller receives 403. Account deletion runs in a single transaction: it returns 409 and changes nothing while the Member is part of an Accepted Loan or Rental (a lent or Borrowed book) or an Accepted Sale or Exchange not yet completed; otherwise it rejects the Member's Pending requests with `rejectionReason: "AccountDeleted"`, deletes their library books, listings and favorites, and removes the Account. OPS-01 returns a generic 503 error when required storage is unavailable and never publishes connection strings or runtime secrets.
 
 For valid LoginInput with an absent email, perform one asynchronous comparison against a valid dummy bcrypt hash of the configured cost, then reject regardless of the comparison result. The dummy hash is prepared once per cost; no hash generation or early successful-login path is allowed on a missing Account. At auth startup validate the signing secret and a strictly parsed numeric TTL of 86400 seconds under architecture §5; pass the numeric TTL to `expiresIn`, never an unparsed environment string.
 
@@ -187,10 +189,11 @@ Saving the same catalogId twice returns 409; deleting a foreign/unknown favorite
 | ADMIN-03 | GET `/api/admin/requests` | Admin | page, limit, q, optional status | 200 collection of AdminRequest | FR-23 |
 | ADMIN-04 | GET `/api/admin/members` | Admin | page, limit, optional q | 200 collection of MemberSummary | FR-23 |
 | ADMIN-05 | DELETE `/api/admin/listings/:id` | Admin | `{reason}` | 200 `data: AdminListing` Removed | FR-24 |
+| ADMIN-06 | DELETE `/api/admin/accounts/:id` | Admin | None | 200 `data: {id, deleted: true}` | Issue #36 |
 
 AdminOverview is `{memberCount, listingsByStatus, requestsByStatus}` with every enum key present and nonnegative counts. MemberSummary is `{id, name, email, createdAt}` for role Member only. AdminListing extends Listing with owner email and moderation `{reason, removedAt, removedBy: {id, name}}` or null. AdminRequest extends Request with owner/requester emails. Password hashes and bearer tokens are never selected or serialized. q searches relevant title/name/email fields on these Admin-only collections, using safe bounded text search.
 
-ADMIN-05 deliberately keeps DELETE with a JSON body. For an authenticated authorized Admin, a missing body/reason, non-string reason, whitespace-only reason or trimmed reason longer than 500 characters returns 400; do not silently discard the body or substitute an empty reason. A valid reason records the acting Admin. Closed returns 409; Removed returns 409 and changes nothing, so a repeated removal never overwrites the reason or frees a copy that belongs to a newer listing. Available and Reserved listings execute the atomic effects in architecture §4 (FR-24): Pending requests become Rejected with `ListingRemoved` and their Offered Books return to Available; an Accepted Sale or Exchange request becomes Rejected with `ListingRemoved` and its Library Book and Offered Book return to Available; an Accepted Loan or Rental request stays Accepted and its Library Book stays Lent until the owner completes the request after the physical return (REQUEST-07). A Lent copy cannot be published again until then. There are no account-edit/delete, role-change or arbitrary-request-edit Admin endpoints.
+ADMIN-05 deliberately keeps DELETE with a JSON body. For an authenticated authorized Admin, a missing body/reason, non-string reason, whitespace-only reason or trimmed reason longer than 500 characters returns 400; do not silently discard the body or substitute an empty reason. A valid reason records the acting Admin. Closed returns 409; Removed returns 409 and changes nothing, so a repeated removal never overwrites the reason or frees a copy that belongs to a newer listing. Available and Reserved listings execute the atomic effects in architecture §4 (FR-24): Pending requests become Rejected with `ListingRemoved` and their Offered Books return to Available; an Accepted Sale or Exchange request becomes Rejected with `ListingRemoved` and its Library Book and Offered Book return to Available; an Accepted Loan or Rental request stays Accepted and its Library Book stays Lent until the owner completes the request after the physical return (REQUEST-07). A Lent copy cannot be published again until then. ADMIN-06 deletes a Member account in one transaction using the same active-commitment 409 guard and `AccountDeleted` request rejection cascade as AUTH-05; attempting to delete an Admin account or the caller's own account returns 403, and an unknown ID returns 404. There are no account-edit, role-change or arbitrary-request-edit Admin endpoints.
 
 ## 4. Examples and mutation preconditions
 

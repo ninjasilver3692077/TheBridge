@@ -3,6 +3,12 @@ import type { RequestHandler } from "express";
 import type { AuthSession, DataResponse, Account as AccountDto } from "@/types";
 import { AccountModel } from "../models/Account.js";
 import {
+  changeAccountPassword,
+  deleteOwnAccount,
+  parseChangePasswordInput,
+  parseDeleteAccountInput,
+} from "../server/accountManagement.js";
+import {
   createSession,
   hashPassword,
   invalidCredentials,
@@ -12,7 +18,7 @@ import {
   verifyPassword,
 } from "../server/accounts.js";
 import type { StoredAccount } from "../server/accounts.js";
-import { currentAccount, requireAuth } from "../server/auth.js";
+import { currentAccount, requireAuth, requireRole } from "../server/auth.js";
 import { requireDatabase } from "../server/db.js";
 import { HttpError, methodNotAllowed } from "../server/errors.js";
 
@@ -90,3 +96,29 @@ authRouter
   .route("/auth/me")
   .get(preventCaching, requireDatabase, requireAuth, readOwnAccount)
   .all(methodNotAllowed(["GET", "HEAD"]));
+
+authRouter
+  .route("/account/password")
+  .patch(preventCaching, requireDatabase, requireAuth, async (req, res) => {
+    const input = parseChangePasswordInput(req.body);
+    const updated = await changeAccountPassword(currentAccount(res).id, input);
+    const body: DataResponse<AccountDto> = { data: updated };
+    res.json(body);
+  })
+  .all(methodNotAllowed(["PATCH"]));
+
+authRouter
+  .route("/account")
+  .delete(
+    preventCaching,
+    requireDatabase,
+    requireAuth,
+    requireRole("Member"),
+    async (req, res) => {
+      const input = parseDeleteAccountInput(req.body);
+      const deleted = await deleteOwnAccount(currentAccount(res).id, input);
+      const body: DataResponse<{ id: string; deleted: true }> = { data: deleted };
+      res.json(body);
+    },
+  )
+  .all(methodNotAllowed(["DELETE"]));

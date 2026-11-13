@@ -55,6 +55,10 @@ function getRejectedMessage(request) {
     return "This listing was removed by a moderator, so this request was closed.";
   }
 
+  if (request.rejectionReason === "AccountDeleted") {
+    return "The other member's account was deleted, so this request was closed.";
+  }
+
   return request.direction === "received"
     ? `You rejected the request from ${request.counterpart}. They will see this listing as no longer available to them.`
     : `${request.counterpart} rejected your request. You can look for another listing in the Marketplace.`;

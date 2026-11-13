@@ -10,7 +10,8 @@ export type RejectionReason =
   | "OwnerRejected"
   | "CompetingRequestAccepted"
   | "ListingWithdrawn"
-  | "ListingRemoved";
+  | "ListingRemoved"
+  | "AccountDeleted";
 export type RequestDirection = "received" | "sent";
 
 export interface Timestamps {
@@ -202,6 +203,15 @@ export interface EditListingInput {
 
 export interface SendRequestInput {
   offeredBookId?: string;
+}
+
+export interface ChangePasswordInput {
+  currentPassword: string;
+  newPassword: string;
+}
+
+export interface DeleteAccountInput {
+  password: string;
 }
 
 export interface PageMeta {

@@ -788,3 +788,7 @@ Codex implemented the assigned Milestone 4 task against the merged main branch, 
 Validation passed with 37 unit/API tests and 46 real MongoDB replica-set integration tests, plus lint, typecheck and production build. Browser checks exercised the real local API with a mail double, password replacement and login, token reuse, expired stored sessions and fragment removal. Additional browser checks covered server-error retry, disabled loading controls, keyboard navigation, light/dark themes and 375/768/1280/1440 pixel widths. Mobile and desktop screenshots are in docs/screenshots.
 
 Peer review by Daniel and receipt/use of a real email on the Vercel preview remain pending. The coordinator configures RESEND_API_KEY, MAIL_FROM and APP_URL and records the actual sender and recipient restrictions. Existing JWTs on other devices retain their original expiry. No human post-review changes have been recorded yet.
+
+### Review follow-up for #38 (2026-11-13)
+
+Daniel approved the implementation at f674879 after checking the code and the 83 tests. The documentation now identifies the recovery contract as version 6 / issue #37 and records the residual risk of repeated recovery requests invalidating prior links, since throttling is per IP. Existing JWT lifetime is already recorded as a residual risk. This follow-up changes documentation only. The payment-method contract in #39 will need version reconciliation when the second branch incorporates the first. Live email verification still depends on coordinator configuration and authorized preview access.

@@ -1,10 +1,10 @@
 ---
 title: "TheBridge REST API contract"
 status: proposed
-version: 5
+version: 6
 created: 2026-10-27
 updated: 2026-11-13
-issue: 23
+issue: 37
 input_prd_commit: 50edc11165184a186a5afb660a6ffb145feb1cb8
 ---
 
@@ -13,6 +13,8 @@ input_prd_commit: 50edc11165184a186a5afb660a6ffb145feb1cb8
 This is the canonical HTTP design for the Milestone 3 implementation. Version 5 applies the coordinator's scope cuts in issues #22–#25, including #23 (Library books and listings), before domain code. The full product requirements remain in the merged PRD; the narrower delivery profile below explicitly defers part of FR-11/FR-18/FR-19. Architecture and deployment boundaries are in [architecture.md](_bmad-output/planning-artifacts/architecture.md). This draft changes design only and does not claim implemented or deployed endpoints.
 
 Version 5 keeps the existing operation paths and envelopes except REQUEST-08, which is deferred beyond Milestone 3. If-Match headers, entity version fields, quotedListingVersion, needsReconfirmation and a custom transaction retry runner are outside this delivery. An Available listing with any Pending request cannot be edited (409). Multi-document commands use mongoose.connection.transaction(async (session) => ...). These are the explicit delivery cuts in [#23](https://github.com/ninjasilver3692077/TheBridge/issues/23), shared by #22, #24 and #25; they do not claim that the complete PRD reconfirmation workflow has shipped.
+
+Version 6 (issue #37, Milestone 4) adds AUTH-04 and AUTH-05 for password recovery by email. The existing operation paths and envelopes retain their Milestone 3 behavior. The recovery contract is specified below.
 
 ## 1. Global rules
 

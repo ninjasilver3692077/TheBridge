@@ -17,7 +17,7 @@ import { seedDemo } from "../../server/scripts/seed.js";
 
 const secret = "listings-integration-secret-at-least-32-bytes";
 const book: BookMetadata = { catalogId: "/works/OL45804W", title: "Dune", author: "Frank Herbert", genre: "Science Fiction", coverUrl: null, year: 1965, publisher: null, isbn: "9780441172719", language: "eng" };
-const sale: ListingTerms = { desiredBook: null, priceCop: 40000, durationDays: null };
+const sale: ListingTerms = { desiredBook: null, priceCop: 40000, durationDays: null, paymentMethods: ["Cash"] };
 let repl: MongoMemoryReplSet;
 let base = "";
 let close: () => void = () => undefined;
@@ -147,7 +147,7 @@ test("LISTING-01..07: snapshot, safe populate, currentListing, terms edit and wi
   assert.equal((await api("DELETE", `/api/my-books/${copy.id}`, owner)).status, 409);
   assert.equal((await api("POST", "/api/listings", owner, { libraryBookId: copy.id, modality: "Sale", terms: sale })).status, 409);
   assert.equal((await api("PATCH", `/api/listings/${listing.id}`, stranger, { modality: "Sale", terms: sale })).status, 403);
-  const edit = await api<Listing>("PATCH", `/api/listings/${listing.id}`, owner, { modality: "Loan", terms: { desiredBook: null, priceCop: null, durationDays: 14 } });
+  const edit = await api<Listing>("PATCH", `/api/listings/${listing.id}`, owner, { modality: "Loan", terms: { desiredBook: null, priceCop: null, durationDays: 14, paymentMethods: null } });
   assert.equal(edit.status, 200);
   assert.equal(edit.body.data.modality, "Loan");
   assert.equal((await api<Listing[]>("GET", "/api/listings/mine", owner)).body.data.length, 1);
@@ -167,7 +167,7 @@ test("LISTING-01..07: snapshot, safe populate, currentListing, terms edit and wi
 
 test("search and stats: accent-insensitive search, filters, full totals, global facets and empty pages", async () => {
   await publish((await add()).id);
-  await publish((await add(owner, { ...book, catalogId: "/works/OL2W", title: "Cien a\u00f1os", author: "Gabriel Garc\u00eda M\u00e1rquez", genre: "Classic" })).id, "Rental", { desiredBook: null, priceCop: 10001, durationDays: 7 });
+  await publish((await add(owner, { ...book, catalogId: "/works/OL2W", title: "Cien a\u00f1os", author: "Gabriel Garc\u00eda M\u00e1rquez", genre: "Classic" })).id, "Rental", { desiredBook: null, priceCop: 10001, durationDays: 7, paymentMethods: null });
   await publish((await add(owner, { ...book, catalogId: "/works/OL3W", title: "Another" })).id, "Sale", { ...sale, priceCop: 40001 });
   assert.equal((await api<Listing[]>("GET", "/api/listings?limit=1")).body.meta.total, 3);
   assert.equal((await api<Listing[]>("GET", "/api/listings?q=garcia")).body.meta.total, 1);
@@ -329,10 +329,10 @@ test("missing or invalid terms identify the nested field rather than a valid req
 
 test("all modality terms validate through HTTP and Reserved listings cannot be edited or withdrawn", async () => {
   const cases = [
-    { modality: "Exchange", terms: { desiredBook: book, priceCop: null, durationDays: null } },
-    { modality: "Loan", terms: { desiredBook: null, priceCop: null, durationDays: 21 } },
-    { modality: "Rental", terms: { desiredBook: null, priceCop: 1_000_000_000, durationDays: 7 } },
-    { modality: "Sale", terms: { desiredBook: null, priceCop: 1, durationDays: null } },
+    { modality: "Exchange", terms: { desiredBook: book, priceCop: null, durationDays: null, paymentMethods: null } },
+    { modality: "Loan", terms: { desiredBook: null, priceCop: null, durationDays: 21, paymentMethods: null } },
+    { modality: "Rental", terms: { desiredBook: null, priceCop: 1_000_000_000, durationDays: 7, paymentMethods: null } },
+    { modality: "Sale", terms: { desiredBook: null, priceCop: 1, durationDays: null, paymentMethods: ["Card in person"] } },
   ] as const;
   for (const input of cases) {
     const copy = await add();

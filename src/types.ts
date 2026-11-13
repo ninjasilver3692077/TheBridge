@@ -2,6 +2,7 @@ export type Role = "Member" | "Admin";
 export type Condition = "Like new" | "Good condition" | "Used copy";
 export type Modality = "Exchange" | "Loan" | "Rental" | "Sale";
 export type DurationDays = 7 | 10 | 14 | 21;
+export type PaymentMethod = "Cash" | "Bank transfer" | "Nequi" | "Daviplata" | "Card in person";
 export type LibraryBookStatus = "Available" | "Published" | "Reserved" | "Lent" | "Transferred";
 export type ListingStatus = "Available" | "Reserved" | "Closed" | "Removed";
 export type ListingClosureReason = "Withdrawn" | "Completed";
@@ -46,6 +47,11 @@ export interface ListingTerms {
   desiredBook: BookMetadata | null;
   priceCop: number | null;
   durationDays: DurationDays | null;
+  paymentMethods: PaymentMethod[] | null;
+}
+
+export interface RequestQuotedTerms extends ListingTerms {
+  paymentMethod: PaymentMethod | null;
 }
 
 export interface CurrentListingSummary {
@@ -129,7 +135,7 @@ export interface BookRequest extends Timestamps {
   status: RequestStatus;
   rejectionReason: RejectionReason | null;
   quotedModality: Modality;
-  quotedTerms: ListingTerms;
+  quotedTerms: RequestQuotedTerms;
 }
 
 export interface Favorite {
@@ -202,6 +208,7 @@ export interface EditListingInput {
 
 export interface SendRequestInput {
   offeredBookId?: string;
+  paymentMethod?: PaymentMethod;
 }
 
 export interface PageMeta {

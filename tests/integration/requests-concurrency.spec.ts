@@ -35,8 +35,8 @@ const offeredBook: BookMetadata = {
   author: "George Orwell",
 };
 
-const saleTerms: ListingTerms = { desiredBook: null, priceCop: 40000, durationDays: null };
-const exchangeTerms: ListingTerms = { desiredBook: null, priceCop: null, durationDays: null };
+const saleTerms: ListingTerms = { desiredBook: null, priceCop: 40000, durationDays: null, paymentMethods: ["Cash"] };
+const exchangeTerms: ListingTerms = { desiredBook: null, priceCop: null, durationDays: null, paymentMethods: null };
 
 let replSet: MongoMemoryReplSet;
 let baseUrl = "";
@@ -84,7 +84,7 @@ async function sendRequest(listingId: string, requester: string, offeredBookId?:
       authorization: `Bearer ${tokenFor(requester)}`,
       "content-type": "application/json",
     },
-    body: JSON.stringify(offeredBookId ? { offeredBookId } : {}),
+    body: JSON.stringify(offeredBookId ? { offeredBookId } : { paymentMethod: "Cash" }),
   });
   const body = (await response.json()) as { data?: { quotedTerms: ListingTerms }; error?: string };
   return { status: response.status, body };
@@ -363,7 +363,7 @@ test("curl evidence executes every FAVORITE and REQUEST endpoint against the rea
     `/api/listings/${String(rejectListing._id)}/requests`,
     requesterId,
     201,
-    {},
+    { paymentMethod: "Cash" },
   );
   const rejected = await curl<BookRequest>(
     "REQUEST-05",
@@ -382,7 +382,7 @@ test("curl evidence executes every FAVORITE and REQUEST endpoint against the rea
     `/api/listings/${String(rejectListing._id)}/requests`,
     requesterId,
     201,
-    {},
+    { paymentMethod: "Cash" },
   );
   const cancelled = await curl<BookRequest>(
     "REQUEST-06",

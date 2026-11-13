@@ -39,6 +39,7 @@ export function toClientRequest(request) {
     cover: listing.coverUrl || "",
     modality: request.quotedModality,
     offeredBookTitle: request.offeredBook?.book.title ?? null,
+    paymentMethod: request.quotedTerms?.paymentMethod ?? null,
   };
 }
 
@@ -79,11 +80,14 @@ export async function fetchActiveSentListingIds({ signal } = {}) {
   );
 }
 
-export async function sendRequest(listingId, offeredBookId) {
+export async function sendRequest(listingId, { offeredBookId = null, paymentMethod = null } = {}) {
+  const body = {};
+  if (offeredBookId) body.offeredBookId = offeredBookId;
+  if (paymentMethod) body.paymentMethod = paymentMethod;
   const { data } = await apiRequest(`/listings/${encodeURIComponent(listingId)}/requests`, {
     method: "POST",
     authenticated: true,
-    body: offeredBookId ? { offeredBookId } : {},
+    body,
   });
 
   return toClientRequest(data);

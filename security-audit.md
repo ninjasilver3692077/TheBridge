@@ -32,7 +32,7 @@ Scope: the TheBridge Express API (`server/`, `routes/`) and the React client, de
 
 - Required configuration: Atlas network access opened to `0.0.0.0/0`, because Vercel serverless functions have no fixed outbound IP and an IP allowlist cannot be used.
 - Required compensation: a dedicated database user with least privilege, the `readWrite` role on the application database only, with no `atlasAdmin` and no access to other databases. The connection string must live only in the `MONGODB_URI` Vercel environment variable and in the local `.env`, which is git-ignored.
-- Verified by the coordinator in Atlas: Network Access lists `0.0.0.0/0`, and the application user holds `readWrite` on the `thebridge` database only. With that role, `GET /api/listings` on the deployed app returns `200` (checked on 2026-11-13), so reads work. Writes through the API (for example registering an account) are still to be confirmed with this role. No credentials or connection string are recorded in this repository.
+- Verified by the coordinator in Atlas: Network Access lists `0.0.0.0/0`, and the application user holds `readWrite` on the `thebridge` database only. With that role, `GET /api/listings` on the deployed app returns `200` (checked on 2026-11-13), so reads work, and registering an account through the deployed app succeeds, so writes work too. No credentials or connection string are recorded in this repository.
 - Lesson from the first attempt: an earlier privilege setting made every database query fail with `500` while `GET /api/health` kept returning `ok`, because that route only checks the connection. After changing the Atlas user, verify with a data endpoint such as `GET /api/listings`, not with `/api/health`.
 - Residual risk: while the database is reachable from any IP, the strength of that user's password is the only barrier. Use a long random password and rotate it if it is ever exposed.
 
@@ -71,5 +71,5 @@ Run against https://thebridge-sepia.vercel.app. Items marked done were checked o
 - [x] Response headers include `Strict-Transport-Security` and `X-Content-Type-Options`.
 - [ ] A Member token receives 403 on `/api/admin/overview`; an Admin token receives 200. Without a token the route already returns 401. The Member and Admin cases need real credentials and are for the coordinator.
 - [x] Atlas Network Access lists `0.0.0.0/0` and the application user has only `readWrite` on one database (section 5); reads confirmed on 2026-11-13.
-- [ ] With that role, registering an account through the deployed app succeeds (confirms writes).
+- [x] With that role, registering an account through the deployed app succeeds (confirms writes), confirmed by the coordinator on 2026-11-13.
 - [ ] `npm run lint`, `npm run typecheck` and `npm run build` pass on the merged `main`.

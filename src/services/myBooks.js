@@ -3,8 +3,12 @@ import { toBookMetadata } from "./bookMetadata.js";
 
 const PAGE_LIMIT = 100;
 
-function describeStatus({ status, activity, currentListing }) {
+function describeStatus({ status, activity, currentListing, borrowedFrom }) {
   const counterpart = activity?.counterpart.name ?? null;
+
+  if (status === "Borrowed") {
+    return { status: "Borrowed", borrowedFromName: borrowedFrom?.name ?? null };
+  }
 
   if (status === "Lent") {
     return currentListing?.modality === "Rental"
@@ -52,6 +56,7 @@ export function toClientBook(libraryBook) {
     activityStatus: null,
     activityWith: null,
     loanedTo: null,
+    borrowedFromName: null,
     ...describeStatus(libraryBook),
   };
 }

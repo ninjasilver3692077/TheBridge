@@ -9,6 +9,7 @@ export const LIBRARY_BOOK_STATUSES: readonly LibraryBookStatus[] = [
   "Published",
   "Reserved",
   "Lent",
+  "Borrowed",
   "Transferred",
 ];
 
@@ -25,6 +26,8 @@ export interface LibraryBookDocument {
   notes: string;
   status: LibraryBookStatus;
   lastModeration: StoredModerationNote | null;
+  borrowedFrom: Types.ObjectId | null;
+  sourceCopy: Types.ObjectId | null;
   revision: number;
   deletedAt: Date | null;
   createdAt: Date;
@@ -53,6 +56,8 @@ const libraryBookSchema = new Schema<LibraryBookDocument>(
       default: "Available",
     },
     lastModeration: { type: moderationNoteSchema, default: null },
+    borrowedFrom: { type: Schema.Types.ObjectId, ref: "Account", default: null },
+    sourceCopy: { type: Schema.Types.ObjectId, ref: "LibraryBook", default: null, select: false },
     revision: { type: Number, default: 0, select: false },
     deletedAt: { type: Date, default: null, select: false },
   },

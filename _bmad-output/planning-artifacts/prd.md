@@ -56,7 +56,7 @@ Milestone 2 delivered the full experience in the browser, but every visitor saw 
 - **Catalog** — the public Open Library search used to find book metadata (title, author, cover, year, publisher, ISBN, language).
 - **Library Book** — a physical book in a Member's library (My Books): catalog metadata plus a Condition and optional notes. One Member has many Library Books.
 - **Condition** — one of Like new, Good condition, Used copy.
-- **Library Book Status** — Available, Published, Reserved, Lent, or Transferred.
+- **Library Book Status** — Available, Published, Reserved, Lent, Borrowed, or Transferred. Borrowed is the status of the borrower's view of a book that belongs to another Member.
 - **Listing** — a Library Book offered under one Modality with its Terms. A Library Book has at most one open Listing.
 - **Owner** — the Member who owns the Library Book behind a Listing.
 - **Modality** — Exchange, Loan, Rental, or Sale.
@@ -332,7 +332,8 @@ An Owner can mark an Accepted Request as Completed. For Sale and Exchange this i
 **Consequences (testable):**
 - For Loan and Rental, the Library Book stays Lent from acceptance until the Owner marks the Request Completed after the physical return; only then does it return to Available and the Listing become Closed, unless the Listing is Removed, in which case it stays Removed. The Owner can then publish the book again.
 - The Completed action for a Loan or Rental is labeled as confirming the return.
-- For Sale and Exchange, the Listing becomes Closed and the Library Book becomes Transferred; in an Exchange, the Offered Book also becomes Transferred. Books do not move to the other Member's library automatically.
+- For Sale and Exchange, the Listing becomes Closed and the Library Book becomes Transferred; in an Exchange, the Offered Book also becomes Transferred. The receiving Member gets a new Available Library Book for each transferred book.
+- Accepting a Loan or Rental adds a Borrowed Library Book to the borrower's library. It is marked as not owned by the borrower, shows the lender, and cannot be listed, edited or deleted. It leaves the borrower's library when the Owner marks the Request Completed.
 
 ### 4.7 Moderation (Admin)
 

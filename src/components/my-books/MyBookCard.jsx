@@ -5,6 +5,7 @@ const STATUS_TONE = {
   Available: tone.sage,
   Published: tone.plum,
   Loaned: tone.amber,
+  Borrowed: tone.amber,
 };
 
 function MyBookCard({ book }) {

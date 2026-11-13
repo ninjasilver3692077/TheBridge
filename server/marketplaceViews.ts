@@ -79,12 +79,13 @@ async function copyActivities(copyIds: Types.ObjectId[], listings: { _id: Types.
   }]));
 }
 
-function libraryProjection(doc: HydratedDocument<LibraryBookDocument>, current: CurrentListingSummary | null, activity: LibraryBookActivity | null): LibraryBook {
+function libraryProjection(doc: HydratedDocument<LibraryBookDocument>, current: CurrentListingSummary | null, activity: LibraryBookActivity | null, lenderNames: Map<string, string>): LibraryBook {
   return {
     id: String(doc._id), book: serializeBookMetadata(doc.book), condition: doc.condition,
     notes: doc.notes, status: doc.status,
     currentListing: current,
     activity,
+    borrowedFrom: doc.borrowedFrom ? { id: String(doc.borrowedFrom), name: lenderNames.get(String(doc.borrowedFrom)) ?? "Member" } : null,
     lastModeration: doc.lastModeration ? { listingId: String(doc.lastModeration.listingId), reason: doc.lastModeration.reason, removedAt: doc.lastModeration.removedAt.toISOString() } : null,
     createdAt: doc.createdAt.toISOString(), updatedAt: doc.updatedAt.toISOString(),
   };
@@ -102,7 +103,10 @@ export async function libraryViews(docs: HydratedDocument<LibraryBookDocument>[]
     if (isOpen && !currentByCopy.has(copyId)) currentByCopy.set(copyId, { id: String(listing._id), modality: listing.modality, status: listing.status });
   }
   const activities = await copyActivities(copyIds, listings);
-  return docs.map((doc) => libraryProjection(doc, currentByCopy.get(String(doc._id)) ?? null, activities.get(String(doc._id)) ?? null));
+  const lenderIds = docs.flatMap((doc) => (doc.borrowedFrom ? [doc.borrowedFrom] : []));
+  const lenders = lenderIds.length === 0 ? [] : await AccountModel.find({ _id: { $in: lenderIds } }).select("name").exec();
+  const lenderNames = new Map(lenders.map((lender) => [String(lender._id), lender.name]));
+  return docs.map((doc) => libraryProjection(doc, currentByCopy.get(String(doc._id)) ?? null, activities.get(String(doc._id)) ?? null, lenderNames));
 }
 
 export async function libraryView(doc: HydratedDocument<LibraryBookDocument>): Promise<LibraryBook> {

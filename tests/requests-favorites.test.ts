@@ -59,7 +59,7 @@ interface StoredCopy {
   book: BookMetadata;
   condition: Condition;
   notes: string;
-  status: "Available" | "Published" | "Reserved" | "Lent" | "Transferred";
+  status: "Available" | "Published" | "Reserved" | "Lent" | "Borrowed" | "Transferred";
   save: () => Promise<StoredCopy>;
 }
 
@@ -322,6 +322,16 @@ beforeEach(() => {
   mock.method(LibraryBookModel, "findById", (id: unknown) =>
     makeChain(copies.get(String(id)) ?? null),
   );
+
+  mock.method(LibraryBookModel, "create", async (docs: unknown) => {
+    const items = Array.isArray(docs) ? docs : [docs];
+    return items.map((raw) => {
+      const data = raw as Omit<StoredCopy, "_id" | "save">;
+      const doc: StoredCopy = { ...data, _id: new Types.ObjectId(), save: async () => doc };
+      copies.set(String(doc._id), doc);
+      return doc;
+    }) as never;
+  });
 
   mock.method(ListingModel, "findById", (id: unknown) =>
     makeChain(listings.get(String(id)) ?? null),

@@ -35,6 +35,12 @@ export function getListingOfferRows(listing) {
       label: "Sale price",
       value: formatPrice(listing.price),
     },
+    {
+      label: "Payment methods",
+      value: listing.paymentMethods?.length
+        ? listing.paymentMethods.join(", ")
+        : "To be agreed with the owner",
+    },
   ];
 }
 

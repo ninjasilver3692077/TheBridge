@@ -780,3 +780,31 @@ Andrés requested changes on concurrency, dependency integration and evidence. C
 - **Sequential transaction queries in `hydrateRequestDto` (P2):** Replaced `Promise.all` inside `hydrateRequestDto` (`routes/requests.ts`) with sequential `await` calls for `owner`, `requester`, and `listing` when hydrating inside `mongoose.connection.transaction(async (session) => ...)`, complying with the MongoDB driver restriction against parallel operations on the same `ClientSession` and `api-design.md` §1.
 - **Merged `main` after PR #26 (`c34ee0f`):** Kept the reviewed `#23` modules (`a07173f` NFC metadata normalization, `mongodb-memory-server-core` dependency/lockfile, `seed` script, and all routers mounted in `server/app.ts`) and updated `tests/integration/requests-concurrency.spec.ts` to import `MongoMemoryReplSet` from `mongodb-memory-server-core`.
 - **Verification:** Re-ran `npm run lint`, `npm run typecheck`, `npm run build`, `npm test` (`25/25` passing), and `npm run test:integration` (`25/25` passing across both replica-set suites: `50/50` total).
+
+## Issue #35 — M4: Payment method on sales (2026-11-13)
+
+### Prompt or task
+
+Daniel asked Claude to implement issue #35 on `feat/m4-payment-method`: Sale listings record the payment methods the seller accepts, a Sale request chooses one of them, and the owner sees the choice. The issue references LISTING-05/06, REQUEST-01, the Request/Listing tables and PRD §7.
+
+### AI suggestions
+
+- Add `paymentMethods` to `ListingTerms` as a required key (non-empty distinct list for Sale, null otherwise) and keep `paymentMethod` inside `quotedTerms`, as the issue asks.
+- Keep stored Sale listings from before this change valid with `paymentMethods: null`, so withdrawal, acceptance and completion keep working on existing Atlas data, and requests on them send no method.
+- Store methods in a fixed order so equal choices compare equal.
+
+### Changes adopted
+
+Shared types, terms validation, listing input, REQUEST-01, the Request quote schema and DTOs, the seed, the create-listing method picker, the request dialog selector, listing details and the Requests card. `api-design.md` moves to version 6 and the PRD updates FR-10, FR-17, FR-18 and §7.
+
+### Human changes and review
+
+Daniel chose to start the implementation and reviews the diff before pushing. The treatment of Sale listings published before version 6 is a design decision flagged for Edwin and Jorge in the pull request.
+
+### Tests and verification
+
+`npm run lint`, `npm run typecheck`, `npm run build`, `npm test` and `npm run test:integration` pass locally on a real single-node replica set. New unit tests cover the vocabulary, terms per modality, listing input and request choice; new integration tests cover publish, edit, request with a valid method, missing and mismatched methods, other modalities, the owner's received view and legacy Sale listings. A local browser run published a Sale with methods, requested it with one method and showed the method on the owner's Requests screen. The Vercel preview check is still pending after the push.
+
+### Learning
+
+Adding a required field to a stored contract needs a plan for data that already exists; validating strictly at the API boundary while tolerating the old shape in the model keeps old records usable without inventing data for them.

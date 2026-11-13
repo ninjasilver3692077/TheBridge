@@ -6,9 +6,11 @@ import type {
   ListingTerms,
   Modality,
   OfferedBookSnapshot,
+  PaymentMethod,
   PublicMember,
   RejectionReason,
   RequestListingSummary,
+  RequestQuotedTerms,
   RequestStatus,
 } from "@/types";
 import { bookMetadataSchema, serializeBookMetadata } from "../server/bookMetadata.js";
@@ -19,6 +21,8 @@ import {
   LISTING_STATUSES,
   listingTermsSchema,
   MODALITIES,
+  PAYMENT_METHODS,
+  storedPaymentMethods,
 } from "../server/listingTerms.js";
 
 export {
@@ -43,6 +47,17 @@ export const REJECTION_REASONS: readonly RejectionReason[] = [
   "ListingWithdrawn",
   "ListingRemoved",
 ];
+
+const requestQuotedTermsSchema = listingTermsSchema.clone() as unknown as Schema<RequestQuotedTerms>;
+requestQuotedTermsSchema.add({
+  paymentMethod: { type: String, enum: PAYMENT_METHODS, default: null },
+});
+
+export function isValidQuotedPaymentMethod(terms: Partial<RequestQuotedTerms>): boolean {
+  const offered = storedPaymentMethods({ paymentMethods: terms.paymentMethods ?? null });
+  const chosen = terms.paymentMethod ?? null;
+  return offered === null ? chosen === null : chosen !== null && offered.includes(chosen);
+}
 
 const offeredBookSnapshotSchema = new Schema<OfferedBookSnapshot>(
   {
@@ -75,7 +90,7 @@ export interface RequestDocument {
   status: RequestStatus;
   rejectionReason: RejectionReason | null;
   quotedModality: Modality;
-  quotedTerms: ListingTerms;
+  quotedTerms: RequestQuotedTerms;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -124,13 +139,16 @@ const requestSchema = new Schema<RequestDocument>(
     },
     quotedModality: { type: String, enum: MODALITIES, required: true },
     quotedTerms: {
-      type: listingTermsSchema,
+      type: requestQuotedTermsSchema,
       required: true,
       validate: {
-        validator: function (value: ListingTerms) {
+        validator: function (value: RequestQuotedTerms) {
           const doc = this as unknown as Partial<RequestDocument>;
           return Boolean(
-            doc.quotedModality && value && areValidTermsForModality(doc.quotedModality, value),
+            doc.quotedModality &&
+              value &&
+              areValidTermsForModality(doc.quotedModality, value) &&
+              isValidQuotedPaymentMethod(value),
           );
         },
         message: "terms do not match quotedModality.",
@@ -203,6 +221,14 @@ export function serializeTerms(terms: ListingTerms): ListingTerms {
     desiredBook: terms.desiredBook ? serializeBookMetadata(terms.desiredBook) : null,
     priceCop: terms.priceCop ?? null,
     durationDays: terms.durationDays ?? null,
+    paymentMethods: storedPaymentMethods(terms),
+  };
+}
+
+export function serializeQuotedTerms(terms: RequestQuotedTerms): RequestQuotedTerms {
+  return {
+    ...serializeTerms(terms),
+    paymentMethod: (terms.paymentMethod as PaymentMethod | null | undefined) ?? null,
   };
 }
 
@@ -243,7 +269,7 @@ export function toBookRequestDto(
     status: doc.status,
     rejectionReason: doc.status === "Rejected" ? doc.rejectionReason : null,
     quotedModality: doc.quotedModality,
-    quotedTerms: serializeTerms(doc.quotedTerms),
+    quotedTerms: serializeQuotedTerms(doc.quotedTerms),
     createdAt: doc.createdAt.toISOString(),
     updatedAt: doc.updatedAt.toISOString(),
   };

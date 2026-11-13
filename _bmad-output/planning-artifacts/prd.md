@@ -2,7 +2,7 @@
 title: "PRD: TheBridge"
 status: final
 created: 2026-10-26
-updated: 2026-10-26
+updated: 2026-11-13
 ---
 
 # PRD: TheBridge
@@ -202,7 +202,8 @@ A Member can publish one of their Available Library Books with a Modality and Te
 **Milestone 2:** Implemented.
 
 **Consequences (testable):**
-- Loan requires a duration; Rental requires a price greater than 0 and a duration; Sale requires a price greater than 0; Exchange accepts an optional desired book picked from the Catalog.
+- Loan requires a duration; Rental requires a price greater than 0 and a duration; Sale requires a price greater than 0 and at least one payment method; Exchange accepts an optional desired book picked from the Catalog.
+- The payment methods a seller can accept are Cash, Bank transfer, Nequi, Daviplata, and Card in person. Other Modalities do not take payment methods. TheBridge only records the methods; it does not process payments (see §7). Sale Listings published before Milestone 4 have no recorded methods and show "To be agreed with the owner".
 - The same rules are enforced by the server, so invalid Terms are rejected even when sent outside the app.
 - Publishing sets the Library Book to Published and the Listing to Available.
 - Opening Create Listing for a book that is missing or not Available selects another Available book and explains why.
@@ -288,6 +289,7 @@ A Member can send a Request on a Listing they do not own. For Exchange, they cho
 - The request button reads Request Exchange, Request Loan, Request Rental, or Request Purchase.
 - A Member cannot request their own Listing or a Listing that is not Available.
 - A Member with a Pending or Accepted Request on a Listing cannot send another on it.
+- A Request on a Sale chooses one of the payment methods the Listing accepts; a method the Listing does not accept is rejected. The chosen method is kept with the Request even if the Listing changes later.
 - A Visitor without a Session is sent to login and returns to the Listing.
 
 #### FR-18: Review Requests
@@ -298,6 +300,7 @@ A Member can see Received and Sent Requests in separate tabs with the counterpar
 
 **Consequences (testable):**
 - Received shows only Requests on the Member's Listings; Sent shows only Requests the Member sent.
+- A Request on a Sale shows the payment method the Requester chose.
 - A change made by the counterpart appears the next time the Member opens or refreshes Requests; there are no real-time updates.
 - A Pending Request that needs reconfirmation shows the Requester a Reconfirm action and a message that the Listing changed, and shows the Owner that the Request is waiting for reconfirmation.
 
@@ -438,7 +441,7 @@ The course rubric (HW11–HW15) fixes the stack and several deliverables, so the
 
 ## 7. Non-Goals
 
-- TheBridge does not process payments; prices are informative.
+- TheBridge does not process payments; prices and payment methods are informative.
 - TheBridge does not provide chat, notifications, or email; people coordinate in person.
 - TheBridge does not handle delivery, logistics, or locations.
 - TheBridge does not support more than one community or Roles beyond Member and Admin.

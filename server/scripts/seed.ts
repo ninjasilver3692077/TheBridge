@@ -16,7 +16,12 @@ const demoBooks = [
 ] as const;
 
 function demoTerms(modality: Modality): ListingTerms {
-  return { desiredBook: null, priceCop: modality === "Sale" ? 40000 : modality === "Rental" ? 10000 : null, durationDays: modality === "Loan" || modality === "Rental" ? 14 : null };
+  return {
+    desiredBook: null,
+    priceCop: modality === "Sale" ? 40000 : modality === "Rental" ? 10000 : null,
+    durationDays: modality === "Loan" || modality === "Rental" ? 14 : null,
+    paymentMethods: modality === "Sale" ? ["Cash", "Nequi"] : null,
+  };
 }
 
 export async function seedDemo(password: string): Promise<{ members: number; listingsCreated: number }> {

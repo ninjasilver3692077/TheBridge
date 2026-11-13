@@ -1,7 +1,7 @@
-import type { Condition, ListingStatus, ListingTerms, Modality } from "@/types";
+import type { Condition, ListingStatus, ListingTerms, Modality, PaymentMethod } from "@/types";
 import { isPlainObject, parseBookMetadataInput } from "./bookMetadata.js";
 import { HttpError } from "./errors.js";
-import { areValidTermsForModality, CONDITIONS, LISTING_STATUSES, MODALITIES } from "./listingTerms.js";
+import { areValidTermsForModality, CONDITIONS, isPaymentMethodList, LISTING_STATUSES, MODALITIES, PAYMENT_METHODS } from "./listingTerms.js";
 
 export function objectInput(raw: unknown, keys: readonly string[], field = "body"): Record<string, unknown> {
   if (!isPlainObject(raw)) throw new HttpError(400, `${field}: must be a JSON object.`);
@@ -36,11 +36,35 @@ export function readNotes(raw: unknown): string {
   return raw;
 }
 
+function readPaymentMethods(modality: Modality, raw: unknown): PaymentMethod[] | null {
+  if (modality !== "Sale") {
+    if (raw !== null) throw new HttpError(400, "terms.paymentMethods: only allowed for Sale listings.");
+    return null;
+  }
+  if (!isPaymentMethodList(raw)) {
+    throw new HttpError(400, `terms.paymentMethods: choose one or more distinct methods from ${PAYMENT_METHODS.join(", ")}.`);
+  }
+  return PAYMENT_METHODS.filter((method) => raw.includes(method));
+}
+
+export function readRequestedPaymentMethod(raw: unknown, offered: readonly PaymentMethod[] | null): PaymentMethod | null {
+  if (offered === null) {
+    if (raw !== undefined && raw !== null) throw new HttpError(400, "paymentMethod: this listing does not offer payment methods.");
+    return null;
+  }
+  if (raw === undefined || raw === null) throw new HttpError(400, "paymentMethod: choose one of the listing's payment methods.");
+  if (typeof raw !== "string" || !offered.includes(raw as PaymentMethod)) {
+    throw new HttpError(400, `paymentMethod: must be one of ${offered.join(", ")}.`);
+  }
+  return raw as PaymentMethod;
+}
+
 export function listingInput(raw: unknown, creating = false) {
   const body = objectInput(raw, creating ? ["libraryBookId", "modality", "terms"] : ["modality", "terms"]);
   const modality = readEnum(body.modality, MODALITIES, "modality");
-  const input = objectInput(body.terms, ["desiredBook", "priceCop", "durationDays"], "terms");
-  for (const key of ["desiredBook", "priceCop", "durationDays"]) {
+  const termKeys = ["desiredBook", "priceCop", "durationDays", "paymentMethods"];
+  const input = objectInput(body.terms, termKeys, "terms");
+  for (const key of termKeys) {
     if (!(key in input)) throw new HttpError(400, `terms.${key}: required field.`);
   }
   if (input.priceCop !== null && (typeof input.priceCop !== "number" || !Number.isInteger(input.priceCop))) {
@@ -53,6 +77,7 @@ export function listingInput(raw: unknown, creating = false) {
     desiredBook: input.desiredBook === null ? null : parseBookMetadataInput(input.desiredBook, "terms.desiredBook"),
     priceCop: input.priceCop as number | null,
     durationDays: input.durationDays as ListingTerms["durationDays"],
+    paymentMethods: readPaymentMethods(modality, input.paymentMethods),
   };
   if (!areValidTermsForModality(modality, terms)) throw new HttpError(400, "terms: fields do not match modality.");
   return { modality, terms, libraryBookId: creating ? objectId(body.libraryBookId, "libraryBookId") : undefined };

@@ -25,6 +25,8 @@ import type { RequestDocument } from "../models/Request.js";
 import { currentAccount, requireAuth, requireRole } from "../server/auth.js";
 import { requireDatabase } from "../server/db.js";
 import { HttpError, methodNotAllowed } from "../server/errors.js";
+import { storedPaymentMethods } from "../server/listingTerms.js";
+import { readRequestedPaymentMethod } from "../server/marketplaceInput.js";
 import { readPagination, toPage } from "../server/pagination.js";
 import {
   assertAllowedQueryKeys,
@@ -122,7 +124,7 @@ requestsRouter
         throw new HttpError(400, "body: must be a JSON object.");
       }
       for (const key of Object.keys(body)) {
-        if (key !== "offeredBookId") {
+        if (key !== "offeredBookId" && key !== "paymentMethod") {
           throw new HttpError(400, `${key}: unknown field.`);
         }
       }
@@ -147,6 +149,11 @@ requestsRouter
         } else if (body.offeredBookId !== undefined && body.offeredBookId !== null) {
           throw new HttpError(400, "offeredBookId: only allowed for Exchange requests.");
         }
+
+        const quotedPaymentMethod = readRequestedPaymentMethod(
+          body.paymentMethod,
+          listing.modality === "Sale" ? storedPaymentMethods(listing.terms) : null,
+        );
 
         if (listing.status !== "Available") {
           throw new HttpError(409, "Listing is not available.");
@@ -239,7 +246,13 @@ requestsRouter
               status: "Pending",
               rejectionReason: null,
               quotedModality: listing.modality,
-              quotedTerms: listing.terms,
+              quotedTerms: {
+                desiredBook: listing.terms.desiredBook,
+                priceCop: listing.terms.priceCop,
+                durationDays: listing.terms.durationDays,
+                paymentMethods: storedPaymentMethods(listing.terms),
+                paymentMethod: quotedPaymentMethod,
+              },
             },
           ],
           { session },

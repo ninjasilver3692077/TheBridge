@@ -29,6 +29,13 @@ function RequestCard({ request, busy, onAction }) {
       <div className="mt-3 sm:pl-[4.5rem]">
         <p className="text-sm leading-6 text-ink">{request.note}</p>
 
+        {request.paymentMethod && (
+          <p className="mt-1 text-sm leading-6 text-ink">
+            <span className="font-semibold">Payment method:</span>{" "}
+            {request.paymentMethod}
+          </p>
+        )}
+
         {actions.length > 0 && (
           <RequestActions
             actions={actions}

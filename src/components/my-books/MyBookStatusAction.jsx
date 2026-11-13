@@ -44,6 +44,22 @@ function MyBookStatusAction({ book }) {
     );
   }
 
+  if (book.status === "Borrowed") {
+    return (
+      <div className="rounded-xl border border-line bg-surface-muted p-3 text-sm text-ink-muted">
+        <p className="font-semibold text-ink">Borrowed, not yours</p>
+        <p className="mt-1">
+          This book belongs to{" "}
+          <span className="font-semibold text-ink">
+            {book.borrowedFromName || "another member"}
+          </span>
+          . You cannot list, edit or delete it. It leaves your library when
+          the owner confirms the return.
+        </p>
+      </div>
+    );
+  }
+
   if (book.status === "Loaned") {
     return (
       <p className="text-sm text-ink-muted">

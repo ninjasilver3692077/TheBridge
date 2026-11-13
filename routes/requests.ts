@@ -1,7 +1,7 @@
 import { Router } from "express";
 import type { Request, Response } from "express";
 import mongoose from "mongoose";
-import type { ClientSession, HydratedDocument } from "mongoose";
+import type { ClientSession, HydratedDocument, Types } from "mongoose";
 import type {
   BookRequest,
   DataResponse,
@@ -31,6 +31,20 @@ import {
   readObjectId,
   readSearchQuery,
 } from "./favorites.js";
+
+function copyOf(
+  source: HydratedDocument<LibraryBookDocument>,
+  owner: string | Types.ObjectId,
+  extra: { status: "Available" | "Borrowed"; borrowedFrom?: Types.ObjectId; sourceCopy?: Types.ObjectId },
+) {
+  return {
+    owner,
+    book: source.book,
+    condition: source.condition,
+    notes: source.notes,
+    ...extra,
+  };
+}
 
 const allowedListQueryKeys = new Set(["direction", "page", "limit", "status", "q"]);
 
@@ -401,6 +415,19 @@ requestsRouter
             : "Reserved";
         await libraryBook.save({ session });
 
+        if (doc.quotedModality === "Loan" || doc.quotedModality === "Rental") {
+          await LibraryBookModel.create(
+            [
+              copyOf(libraryBook, extractId(doc.requester), {
+                status: "Borrowed",
+                borrowedFrom: libraryBook.owner,
+                sourceCopy: libraryBook._id,
+              }),
+            ],
+            { session },
+          );
+        }
+
         listing.status = "Reserved";
         await listing.save({ session });
 
@@ -556,6 +583,12 @@ requestsRouter
           libraryBook.status = "Available";
           await libraryBook.save({ session });
 
+          await LibraryBookModel.updateOne(
+            { sourceCopy: libraryBook._id, status: "Borrowed", deletedAt: null },
+            { $set: { deletedAt: new Date() } },
+            { session },
+          ).exec();
+
           if (listing.status === "Reserved") {
             listing.status = "Closed";
             listing.closureReason = "Completed";
@@ -585,10 +618,18 @@ requestsRouter
             }
             offeredCopy.status = "Transferred";
             await offeredCopy.save({ session });
+            await LibraryBookModel.create(
+              [copyOf(offeredCopy, extractId(doc.owner), { status: "Available" })],
+              { session },
+            );
           }
 
           libraryBook.status = "Transferred";
           await libraryBook.save({ session });
+          await LibraryBookModel.create(
+            [copyOf(libraryBook, extractId(doc.requester), { status: "Available" })],
+            { session },
+          );
 
           listing.status = "Closed";
           listing.closureReason = "Completed";

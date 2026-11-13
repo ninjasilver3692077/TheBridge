@@ -780,3 +780,25 @@ Andrés requested changes on concurrency, dependency integration and evidence. C
 - **Sequential transaction queries in `hydrateRequestDto` (P2):** Replaced `Promise.all` inside `hydrateRequestDto` (`routes/requests.ts`) with sequential `await` calls for `owner`, `requester`, and `listing` when hydrating inside `mongoose.connection.transaction(async (session) => ...)`, complying with the MongoDB driver restriction against parallel operations on the same `ClientSession` and `api-design.md` §1.
 - **Merged `main` after PR #26 (`c34ee0f`):** Kept the reviewed `#23` modules (`a07173f` NFC metadata normalization, `mongodb-memory-server-core` dependency/lockfile, `seed` script, and all routers mounted in `server/app.ts`) and updated `tests/integration/requests-concurrency.spec.ts` to import `MongoMemoryReplSet` from `mongodb-memory-server-core`.
 - **Verification:** Re-ran `npm run lint`, `npm run typecheck`, `npm run build`, `npm test` (`25/25` passing), and `npm run test:integration` (`25/25` passing across both replica-set suites: `50/50` total).
+
+## M4 — Issue #36: Account Management (Change Password, Delete Own Account, Admin Deletes Member Accounts)
+
+### Prompt or task
+
+Implement Milestone 4 account management (`PATCH /api/account/password`, `DELETE /api/account`, `DELETE /api/admin/accounts/:id`), transactional cascade deletion with `AccountDeleted` request rejection and `409` active-handoff blocks, Member and Admin UI confirmation dialogs, contract/PRD updates, and unit + integration tests.
+
+### Changes adopted
+
+- Added `server/accountManagement.ts` and routes in `routes/auth.ts` (`PATCH /api/account/password`, `DELETE /api/account`) and `routes/admin.ts` (`DELETE /api/admin/accounts/:id`).
+- Extended `RejectionReason` in `src/types.ts` and `REJECTION_REASONS` in `models/Request.ts` with `"AccountDeleted"`, and preserved original `owner`/`requester`/`listing` ObjectIds in `toBookRequestDto` when populated references resolve to `null` after account deletion.
+- Added `ChangePasswordDialog.jsx`, `DeleteAccountDialog.jsx`, `DeleteMemberDialog.jsx`, header triggers in `AccountMenu.jsx`, and the delete action in `AdminPage.jsx` / `AdminRows.jsx`.
+- Updated `api-design.md` and `_bmad-output/planning-artifacts/prd.md` Section 4.7 and Section 7 non-goals.
+- Added unit tests (`tests/account-management.test.ts`) and replica-set integration tests (`tests/integration/account-management.spec.ts`).
+
+### Tests and verification
+
+- `npm run lint`: 0 errors and 0 warnings.
+- `npm run typecheck`: 0 TypeScript errors.
+- `npm run build`: production bundle built cleanly.
+- `npm test`: 36 of 36 unit tests passing.
+- `npm run test:integration`: 41 of 41 integration tests passing against `MongoMemoryReplSet`.

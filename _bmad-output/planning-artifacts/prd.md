@@ -336,7 +336,7 @@ An Owner can mark an Accepted Request as Completed. For Sale and Exchange this i
 
 ### 4.7 Moderation (Admin)
 
-**Description:** The Admin Area is a separate section only Admins see. It shows totals and lists of Listings, Requests, and Members, and lets the Admin remove a Listing with a reason. Admins cannot edit or delete Accounts. Realizes UJ-4.
+**Description:** The Admin Area is a separate section only Admins see. It shows totals and lists of Listings, Requests, and Members, and lets the Admin remove a Listing with a reason or delete a Member Account that has no active Accepted request. Realizes UJ-4.
 
 **Functional Requirements:**
 
@@ -442,8 +442,8 @@ The course rubric (HW11–HW15) fixes the stack and several deliverables, so the
 - TheBridge does not provide chat, notifications, or email; people coordinate in person.
 - TheBridge does not handle delivery, logistics, or locations.
 - TheBridge does not support more than one community or Roles beyond Member and Admin.
-- Admins do not edit, suspend, or delete Accounts.
-- Members cannot edit their profile or change or reset their password in Milestone 3.
+- Admins do not edit or suspend Accounts, and cannot delete Admin Accounts or their own Account; deleting a Member Account is supported in Milestone 4 (issue #36).
+- Profile fields (name, email, role) are not editable after registration; changing the account password and deleting one's own Member Account are supported in Milestone 4 (issue #36).
 - Ratings, reviews, and handoff history are not part of Milestone 3.
 
 ## 8. Scope by Week

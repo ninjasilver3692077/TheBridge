@@ -42,6 +42,7 @@ export const REJECTION_REASONS: readonly RejectionReason[] = [
   "CompetingRequestAccepted",
   "ListingWithdrawn",
   "ListingRemoved",
+  "AccountDeleted",
 ];
 
 const offeredBookSnapshotSchema = new Schema<OfferedBookSnapshot>(
@@ -161,16 +162,16 @@ requestSchema.index(
 requestSchema.index({ owner: 1, createdAt: -1, _id: -1 });
 requestSchema.index({ requester: 1, createdAt: -1, _id: -1 });
 
-function extractMember(refValue: unknown, fallbackName = "Member"): PublicMember {
+function extractMember(refValue: unknown, fallbackId = "", fallbackName = "Member"): PublicMember {
   if (typeof refValue === "object" && refValue !== null && "name" in refValue) {
     const populated = refValue as { _id?: unknown; id?: unknown; name: unknown };
-    const rawId = populated._id ?? populated.id ?? "";
+    const rawId = populated._id ?? populated.id ?? fallbackId;
     return {
       id: String(rawId),
       name: typeof populated.name === "string" ? populated.name : fallbackName,
     };
   }
-  return { id: String(refValue), name: fallbackName };
+  return { id: String(refValue ?? fallbackId), name: fallbackName };
 }
 
 export function extractId(refValue: unknown): string {
@@ -214,7 +215,9 @@ export function toBookRequestDto(
     listingStatus?: ListingStatus;
   },
 ): BookRequest {
-  const listingId = extractId(doc.listing);
+  const listingId = extractId(doc.listing ?? doc.populated("listing") ?? doc.listingSummary.id);
+  const ownerId = extractId(doc.owner ?? doc.populated("owner") ?? "");
+  const requesterId = extractId(doc.requester ?? doc.populated("requester") ?? "");
   const currentStatus =
     overrides?.listingStatus ?? extractListingStatus(doc.listing, doc.listingSummary.status);
   const offeredBookSnapshot = doc.offeredBookSnapshot
@@ -228,8 +231,8 @@ export function toBookRequestDto(
   return {
     id: String(doc._id),
     listingId,
-    owner: overrides?.owner ?? extractMember(doc.owner),
-    requester: overrides?.requester ?? extractMember(doc.requester),
+    owner: overrides?.owner ?? extractMember(doc.owner, ownerId),
+    requester: overrides?.requester ?? extractMember(doc.requester, requesterId),
     listing: {
       id: doc.listingSummary.id || listingId,
       title: doc.listingSummary.title,

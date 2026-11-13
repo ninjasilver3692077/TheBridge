@@ -12,7 +12,7 @@ function TopHeader({
 }) {
   return (
     <header className="sticky top-0 z-30 border-b border-line/70 bg-canvas/85 backdrop-blur-xl">
-      <div className="mx-auto flex min-h-16 max-w-[1180px] items-center justify-between gap-4 px-4 py-3 sm:px-6 lg:px-10">
+      <div className="mx-auto flex min-h-16 max-w-[1180px] flex-wrap items-center justify-between gap-2 px-4 py-3 sm:flex-nowrap sm:gap-4 sm:px-6 lg:px-10">
         <div className="flex min-w-0 items-center gap-2.5">
           <MobileBrand />
 

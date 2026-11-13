@@ -15,6 +15,13 @@ import type { StoredAccount } from "../server/accounts.js";
 import { currentAccount, requireAuth } from "../server/auth.js";
 import { requireDatabase } from "../server/db.js";
 import { HttpError, methodNotAllowed } from "../server/errors.js";
+import {
+  parseForgotPasswordInput,
+  parseResetPasswordInput,
+  passwordResetMessage,
+  requestPasswordReset,
+  resetPassword,
+} from "../server/passwordReset.js";
 
 export const authRouter = Router();
 
@@ -75,6 +82,24 @@ const readOwnAccount: RequestHandler = async (_req, res) => {
   const body: DataResponse<AccountDto> = { data: toAccount(account) };
   res.json(body);
 };
+
+authRouter
+  .route("/auth/forgot-password")
+  .post(preventCaching, requireDatabase, async (req, res) => {
+    const { email } = parseForgotPasswordInput(req.body);
+    await requestPasswordReset(email);
+    res.json({ data: { message: passwordResetMessage } });
+  })
+  .all(methodNotAllowed(["POST"]));
+
+authRouter
+  .route("/auth/reset-password")
+  .post(preventCaching, requireDatabase, async (req, res) => {
+    const { token, newPassword } = parseResetPasswordInput(req.body);
+    await resetPassword(token, newPassword);
+    res.json({ data: { message: "Your password was reset. Sign in with your new password." } });
+  })
+  .all(methodNotAllowed(["POST"]));
 
 authRouter
   .route("/auth/register")

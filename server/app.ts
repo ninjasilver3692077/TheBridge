@@ -45,6 +45,8 @@ export function createApp(): express.Express {
   app.use(express.json({ limit: "32kb" }));
   app.use("/api/auth/login", authLimiter(10));
   app.use("/api/auth/register", authLimiter(5));
+  app.use("/api/auth/forgot-password", authLimiter(10));
+  app.use("/api/auth/reset-password", authLimiter(10));
   app.use("/api", healthRouter);
   app.use("/api", authRouter);
   app.use("/api", listingsRouter);

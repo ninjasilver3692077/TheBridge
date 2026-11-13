@@ -1,10 +1,10 @@
 ---
 title: "TheBridge REST API contract"
 status: proposed
-version: 5
+version: 6
 created: 2026-10-27
-updated: 2026-11-01
-issue: 23
+updated: 2026-11-13
+issue: 37
 input_prd_commit: 50edc11165184a186a5afb660a6ffb145feb1cb8
 ---
 
@@ -13,6 +13,8 @@ input_prd_commit: 50edc11165184a186a5afb660a6ffb145feb1cb8
 This is the canonical HTTP design for the Milestone 3 implementation. Version 5 applies the coordinator's scope cuts in issues #22–#25, including #23 (Library books and listings), before domain code. The full product requirements remain in the merged PRD; the narrower delivery profile below explicitly defers part of FR-11/FR-18/FR-19. Architecture and deployment boundaries are in [architecture.md](_bmad-output/planning-artifacts/architecture.md). This draft changes design only and does not claim implemented or deployed endpoints.
 
 Version 5 keeps the existing operation paths and envelopes except REQUEST-08, which is deferred beyond Milestone 3. If-Match headers, entity version fields, quotedListingVersion, needsReconfirmation and a custom transaction retry runner are outside this delivery. An Available listing with any Pending request cannot be edited (409). Multi-document commands use mongoose.connection.transaction(async (session) => ...). These are the explicit delivery cuts in [#23](https://github.com/ninjasilver3692077/TheBridge/issues/23), shared by #22, #24 and #25; they do not claim that the complete PRD reconfirmation workflow has shipped.
+
+Version 6 (issue #37, Milestone 4) adds AUTH-04 and AUTH-05 for password recovery by email. The existing operation paths and envelopes retain their Milestone 3 behavior. The recovery contract is specified below.
 
 ## 1. Global rules
 
@@ -105,6 +107,21 @@ RegisterInput is `{name, email, password}`; role is always Member. Duplicate nor
 For valid LoginInput with an absent email, perform one asynchronous comparison against a valid dummy bcrypt hash of the configured cost, then reject regardless of the comparison result. The dummy hash is prepared once per cost; no hash generation or early successful-login path is allowed on a missing Account. At auth startup validate the signing secret and a strictly parsed numeric TTL of 86400 seconds under architecture §5; pass the numeric TTL to `expiresIn`, never an unparsed environment string.
 
 Logout is a client service operation clearing the token/private cache; there is no pretend server logout endpoint. Tokens otherwise remain valid until expiration. No refresh or public Admin creation/promotion endpoint is included. Only a protected-operation 401 matching the active generation/account invalidates the session. AUTH-02 invalid-credentials 401 remains a form error, not an expiry event. Expiry and safe post-login return behavior are specified in architecture §5.
+
+### Milestone 4 password recovery (issue #37)
+
+| ID | Method and path | Access | Input | Success | Requirement |
+| --- | --- | --- | --- | --- | --- |
+| AUTH-04 | POST /api/auth/forgot-password | Public | ForgotPasswordInput {email} | 200 data: PasswordResetResult {message} | FR-29 |
+| AUTH-05 | POST /api/auth/reset-password | Public | ResetPasswordInput {token, newPassword} | 200 data: PasswordResetResult {message} | FR-29 |
+
+For a valid normalized email, AUTH-04 always responds with the same message, "If an account matches that email, you will receive a password reset link.", whether the account exists or delivery fails. Invalid email/body fields return 400. Both recovery endpoints have independent limits of 10 requests per IP per 15 minutes, including invalid attempts, with the existing 429 envelope. Both send Cache-Control: no-store.
+
+Reset tokens are 32 cryptographically random bytes, encoded as 64 lowercase hexadecimal characters. Only the SHA-256 digest and an expiry timestamp are stored on the Account, excluded from projections. They expire after one hour. Each new request replaces the previous link. A single conditional Account update consumes a matching, unexpired token, replaces the bcrypt password hash and clears the token fields atomically. Concurrent uses have exactly one winner. An invalid, expired, superseded, used or deleted-account token returns the same generic 400 message. A new password follows the registration rules, including the 72 UTF-8 byte maximum. Password validation errors do not consume the token. Existing Accounts need no backfill.
+
+The server sends plain-text email using Resend's HTTPS API. RESEND_API_KEY and MAIL_FROM configure the sender. APP_URL is the trusted client base URL for the active deployment, including the preview URL when testing. HTTPS is required except for localhost development. Request headers never select the reset destination. The secret is carried in the link fragment at /reset-password#token=..., read into page memory and removed from the visible URL with history replacement. It reaches the API only in the reset POST body. Raw reset tokens, passwords, email provider responses and credentials are never logged or returned by the API. Delivery failure clears only the matching token, so an older failed send cannot clear a newer request.
+
+Recovery is available for Member and Admin accounts without an active session. It does not automatically sign the person in. On success the current browser session is cleared and the page links to sign in. Existing JWTs held elsewhere remain valid until their normal expiry. Provider delivery timing may distinguish known emails even though status and payload are identical. The instance-local limiter has the serverless limitations recorded in security-audit.md. Real email delivery requires coordinator configuration and preview verification.
 
 ### Personal library
 

@@ -64,6 +64,10 @@ function LoginPage() {
           </button>
         </form>
 
+        <p className="mt-5 text-center text-sm">
+          <Link to="/forgot-password" className={textLink}>Forgot your password?</Link>
+        </p>
+
         <p className="mt-6 text-center text-sm text-ink-muted">
           New to TheBridge?{" "}
           <Link to="/register" state={location.state} className={textLink}>

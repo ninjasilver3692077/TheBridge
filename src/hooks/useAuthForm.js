@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { fieldFromServerMessage, safeReturnPath } from "../services/auth.js";
 
-export function useAuthForm({ initialValues, validate, submit }) {
+export function useAuthForm({ initialValues, validate, submit, onSuccess }) {
   const navigate = useNavigate();
   const location = useLocation();
   const [values, setValues] = useState(initialValues);
@@ -37,10 +37,9 @@ export function useAuthForm({ initialValues, validate, submit }) {
 
     setIsSubmitting(true);
     try {
-      const session = await submit(values);
-      navigate(safeReturnPath(location.state?.from, session.account.role), {
-        replace: true,
-      });
+      const result = await submit(values);
+      if (onSuccess) onSuccess(result);
+      else navigate(safeReturnPath(location.state?.from, result.account.role), { replace: true });
     } catch (error) {
       const fieldError = fieldFromServerMessage(error?.message ?? "");
       if (fieldError) setErrors({ [fieldError.field]: fieldError.message });

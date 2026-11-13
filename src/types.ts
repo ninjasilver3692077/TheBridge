@@ -178,6 +178,19 @@ export interface LoginInput {
   password: string;
 }
 
+export interface ForgotPasswordInput {
+  email: string;
+}
+
+export interface ResetPasswordInput {
+  token: string;
+  newPassword: string;
+}
+
+export interface PasswordResetResult {
+  message: string;
+}
+
 export interface AddBookInput {
   book: BookMetadata;
   condition: Condition;

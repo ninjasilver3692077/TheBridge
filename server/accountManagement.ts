@@ -1,4 +1,5 @@
 import mongoose from "mongoose";
+import type { ClientSession } from "mongoose";
 import type { Account, ChangePasswordInput, DeleteAccountInput } from "@/types";
 import { AccountModel } from "../models/Account.js";
 import { FavoriteModel } from "../models/Favorite.js";
@@ -63,9 +64,33 @@ export async function changeAccountPassword(
     throw new HttpError(401, wrongCurrentPasswordMessage);
   }
 
-  account.passwordHash = await hashPassword(input.newPassword);
-  await account.save();
-  return toAccount(account.toObject() as StoredAccount);
+  const verifiedPasswordHash = account.passwordHash;
+  const nextPasswordHash = await hashPassword(input.newPassword);
+  const updated = await AccountModel.findOneAndUpdate(
+    { _id: account._id, passwordHash: verifiedPasswordHash },
+    { $set: { passwordHash: nextPasswordHash } },
+    { new: true },
+  )
+    .select("+passwordHash")
+    .exec();
+  if (!updated) {
+    throw new HttpError(409, "Password changed while this request was running. Try again.");
+  }
+  return toAccount(updated.toObject() as StoredAccount);
+}
+
+export async function touchActiveMember(
+  accountId: string,
+  session: ClientSession,
+): Promise<void> {
+  const touched = await AccountModel.updateOne(
+    { _id: accountId, role: "Member" },
+    { $inc: { activityRevision: 1 } },
+    { session },
+  ).exec();
+  if (touched.matchedCount !== 1) {
+    throw new HttpError(401, "Invalid or expired session.");
+  }
 }
 
 async function deleteMemberAccountInTransaction(

@@ -1,7 +1,9 @@
 import { Router } from "express";
 import type { Request, Response } from "express";
+import mongoose from "mongoose";
 import type { EditBookInput } from "@/types";
 import { LibraryBookModel, LIBRARY_BOOK_STATUSES } from "../models/LibraryBook.js";
+import { touchActiveMember } from "../server/accountManagement.js";
 import { currentAccount, requireAuth, requireRole } from "../server/auth.js";
 import { parseBookMetadataInput } from "../server/bookMetadata.js";
 import { requireDatabase } from "../server/db.js";
@@ -28,7 +30,14 @@ myBooksRouter.route("/my-books")
   })
   .post(...member, async (req: Request, res: Response) => {
     const body = objectInput(req.body, ["book", "condition", "notes"]);
-    const doc = await LibraryBookModel.create({ owner: currentAccount(res).id, book: parseBookMetadataInput(body.book), condition: readCondition(body.condition), notes: body.notes === undefined ? "" : readNotes(body.notes) });
+    const owner = currentAccount(res).id;
+    const copy = { owner, book: parseBookMetadataInput(body.book), condition: readCondition(body.condition), notes: body.notes === undefined ? "" : readNotes(body.notes) };
+    const doc = await mongoose.connection.transaction(async (session) => {
+      await touchActiveMember(owner, session);
+      const [created] = await LibraryBookModel.create([copy], { session });
+      if (!created) throw new HttpError(500, "Unexpected server error.");
+      return created;
+    });
     res.status(201).json({ data: await libraryView(doc) });
   })
   .all(methodNotAllowed(["GET", "HEAD", "POST"]));

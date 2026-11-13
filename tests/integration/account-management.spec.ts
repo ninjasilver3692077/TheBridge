@@ -498,3 +498,104 @@ test("deleting a Member account atomically removes books, listings and favorites
   assert.equal(adminRequestsRes.status, 200);
   assert.equal((adminRequestsRes.body.meta as { total: number }).total, 2);
 });
+
+test("two concurrent password changes with the same current password never overwrite each other", async () => {
+  const member = await createAccountWithToken("Laura Gomez", "laura@example.edu", "Member");
+
+  const [first, second] = await Promise.all([
+    apiCall("/api/account/password", {
+      method: "PATCH",
+      token: member.token,
+      body: { currentPassword: initialPassword, newPassword: "first-new-password" },
+    }),
+    apiCall("/api/account/password", {
+      method: "PATCH",
+      token: member.token,
+      body: { currentPassword: initialPassword, newPassword: "second-new-password" },
+    }),
+  ]);
+
+  const outcomes = [first, second];
+  const winners = outcomes.filter((outcome) => outcome.status === 200);
+  const losers = outcomes.filter((outcome) => outcome.status !== 200);
+  assert.equal(winners.length, 1);
+  assert.equal(losers.length, 1);
+  assert.ok([401, 409].includes(losers[0]!.status));
+
+  const winningPassword = first.status === 200 ? "first-new-password" : "second-new-password";
+  const losingPassword = first.status === 200 ? "second-new-password" : "first-new-password";
+
+  const winnerLogin = await apiCall("/api/auth/login", {
+    method: "POST",
+    body: { email: member.email, password: winningPassword },
+  });
+  assert.equal(winnerLogin.status, 200);
+
+  const loserLogin = await apiCall("/api/auth/login", {
+    method: "POST",
+    body: { email: member.email, password: losingPassword },
+  });
+  assert.equal(loserLogin.status, 401);
+});
+
+test("deleting a Member account concurrently with creating books, favorites and requests leaves no orphan documents", async () => {
+  const admin = await createAccountWithToken("Admin Root", "admin@example.edu", "Admin");
+  const seller = await createAccountWithToken("Seller One", "seller@example.edu", "Member");
+  const sellerCopy = await LibraryBookModel.create({
+    owner: seller.id,
+    book: secondBook,
+    condition: "Good condition",
+    notes: "",
+    status: "Available",
+  });
+  const listingRes = await apiCall("/api/listings", {
+    method: "POST",
+    token: seller.token,
+    body: {
+      libraryBookId: String(sellerCopy._id),
+      modality: "Sale",
+      terms: termsByModality.Sale,
+    },
+  });
+  assert.equal(listingRes.status, 201);
+  const listingId = (listingRes.body.data as { id: string }).id;
+
+  for (let round = 0; round < 6; round += 1) {
+    const victim = await createAccountWithToken(`Victim ${round}`, `victim${round}@example.edu`, "Member");
+
+    const responses = await Promise.all([
+      apiCall(`/api/admin/accounts/${victim.id}`, { method: "DELETE", token: admin.token }),
+      apiCall("/api/my-books", {
+        method: "POST",
+        token: victim.token,
+        body: { book: sampleBook, condition: "Good condition", notes: "" },
+      }),
+      apiCall("/api/favorites", {
+        method: "POST",
+        token: victim.token,
+        body: { book: sampleBook },
+      }),
+      apiCall(`/api/listings/${listingId}/requests`, {
+        method: "POST",
+        token: victim.token,
+        body: {},
+      }),
+    ]);
+
+    assert.equal(responses[0]!.status, 200);
+    for (const response of responses.slice(1)) {
+      assert.ok([201, 401].includes(response.status), `unexpected status ${response.status}`);
+    }
+
+    assert.equal(await AccountModel.countDocuments({ _id: victim.id }), 0);
+    assert.equal(await LibraryBookModel.countDocuments({ owner: victim.id }), 0);
+    assert.equal(await FavoriteModel.countDocuments({ owner: victim.id }), 0);
+    assert.equal(
+      await RequestModel.countDocuments({
+        requester: victim.id,
+        status: { $in: ["Pending", "Accepted"] },
+      }),
+      0,
+    );
+  }
+});

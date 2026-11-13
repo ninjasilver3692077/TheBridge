@@ -69,7 +69,7 @@ Run against https://thebridge-sepia.vercel.app. Items marked done were checked o
 - [x] A request with a foreign `Origin` header returns 403.
 - [ ] The 11th login attempt within 15 minutes returns 429.
 - [x] Response headers include `Strict-Transport-Security` and `X-Content-Type-Options`.
-- [ ] A Member token receives 403 on `/api/admin/overview`; an Admin token receives 200. Without a token the route already returns 401. The Member and Admin cases need real credentials and are for the coordinator.
+- [x] A Member token receives 403 on `/api/admin/overview`; an Admin token receives 200. Without a token the route returns 401. Confirmed by the coordinator on 2026-11-13 against the deployed app.
 - [x] Atlas Network Access lists `0.0.0.0/0` and the application user has only `readWrite` on one database (section 5); reads confirmed on 2026-11-13.
 - [x] With that role, registering an account through the deployed app succeeds (confirms writes), confirmed by the coordinator on 2026-11-13.
 - [ ] `npm run lint`, `npm run typecheck` and `npm run build` pass on the merged `main`.

@@ -18,6 +18,8 @@ import AddBookPage from "./pages/AddBookPage.jsx";
 import AdminPage from "./pages/AdminPage.jsx";
 import CreateListingPage from "./pages/CreateListingPage.jsx";
 import HomePage from "./pages/HomePage.jsx";
+import ForgotPasswordPage from "./pages/ForgotPasswordPage.jsx";
+import ResetPasswordPage from "./pages/ResetPasswordPage.jsx";
 import ListingDetailsPage from "./pages/ListingDetailsPage.jsx";
 import LoginPage from "./pages/LoginPage.jsx";
 import MarketplacePage from "./pages/MarketplacePage.jsx";
@@ -124,6 +126,8 @@ function App() {
             <Route path="/register" element={<RegisterPage />} />
           </Route>
 
+          <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+          <Route path="/reset-password" element={<ResetPasswordPage />} />
           <Route path="/about" element={<AboutPage />} />
           <Route path="*" element={<NotFoundPage />} />
         </Route>

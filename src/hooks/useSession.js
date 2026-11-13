@@ -27,7 +27,7 @@ export function useSessionExpiryObserver() {
 
   useEffect(() => {
     const redirectToLogin = () => {
-      if (location.pathname === "/login") return;
+      if (["/login", "/forgot-password", "/reset-password"].includes(location.pathname)) return;
       navigate("/login", { replace: true, state: { from: currentPath } });
     };
 

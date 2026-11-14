@@ -18,6 +18,7 @@ import { HttpError } from "./errors.js";
 
 const wrongCurrentPasswordMessage = "Current password is incorrect.";
 const wrongDeletePasswordMessage = "Password is incorrect.";
+const passwordChangedMessage = "Password changed while this request was running. Try again.";
 const activeCommitmentMessage =
   "Complete active accepted requests and book returns before deleting this account.";
 
@@ -74,7 +75,7 @@ export async function changeAccountPassword(
     .select("+passwordHash")
     .exec();
   if (!updated) {
-    throw new HttpError(409, "Password changed while this request was running. Try again.");
+    throw new HttpError(409, passwordChangedMessage);
   }
   return toAccount(updated.toObject() as StoredAccount);
 }
@@ -96,14 +97,21 @@ export async function touchActiveMember(
 async function deleteMemberAccountInTransaction(
   targetId: string,
   missingStatus: 401 | 404,
+  verifiedPasswordHash?: string,
 ): Promise<{ id: string; deleted: true }> {
   await mongoose.connection.transaction(async (session) => {
-    const account = await AccountModel.findById(targetId).session(session).exec();
+    const account = await AccountModel.findById(targetId)
+      .select("+passwordHash")
+      .session(session)
+      .exec();
     if (!account) {
       throw new HttpError(
         missingStatus,
         missingStatus === 401 ? "Invalid or expired session." : "Account not found.",
       );
+    }
+    if (verifiedPasswordHash !== undefined && account.passwordHash !== verifiedPasswordHash) {
+      throw new HttpError(409, passwordChangedMessage);
     }
     if (account.role !== "Member") {
       throw new HttpError(403, "Admin accounts cannot be deleted.");
@@ -174,7 +182,11 @@ async function deleteMemberAccountInTransaction(
     await FavoriteModel.deleteMany({ owner: account._id }, { session }).exec();
 
     const deleted = await AccountModel.deleteOne(
-      { _id: account._id, role: "Member" },
+      {
+        _id: account._id,
+        role: "Member",
+        ...(verifiedPasswordHash === undefined ? {} : { passwordHash: verifiedPasswordHash }),
+      },
       { session },
     ).exec();
     if (deleted.deletedCount !== 1) {
@@ -202,7 +214,7 @@ export async function deleteOwnAccount(
     throw new HttpError(401, wrongDeletePasswordMessage);
   }
 
-  return deleteMemberAccountInTransaction(accountId, 401);
+  return deleteMemberAccountInTransaction(accountId, 401, account.passwordHash);
 }
 
 export async function deleteAccountByAdmin(

@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import type { AddressInfo } from "node:net";
-import { after, before, beforeEach, test } from "node:test";
+import { after, before, beforeEach, mock, test } from "node:test";
 import { MongoMemoryReplSet } from "mongodb-memory-server-core";
 import mongoose from "mongoose";
 import type { BookMetadata, ListingTerms, Modality } from "@/types";
@@ -598,4 +598,60 @@ test("deleting a Member account concurrently with creating books, favorites and 
       0,
     );
   }
+});
+
+test("self-deletion is rejected and rolled back when the confirmed password changes before the transaction runs", async () => {
+  const member = await createAccountWithToken("Laura Gomez", "laura@example.edu", "Member");
+  await FavoriteModel.create({ owner: member.id, book: sampleBook });
+
+  const runTransaction = mongoose.connection.transaction.bind(mongoose.connection);
+  let enteredTransaction: () => void = () => undefined;
+  const transactionEntered = new Promise<void>((resolve) => {
+    enteredTransaction = resolve;
+  });
+  let releaseTransaction: () => void = () => undefined;
+  const transactionGate = new Promise<void>((resolve) => {
+    releaseTransaction = resolve;
+  });
+  mock.method(
+    mongoose.connection,
+    "transaction",
+    async (...args: Parameters<typeof runTransaction>) => {
+      enteredTransaction();
+      await transactionGate;
+      return runTransaction(...args);
+    },
+  );
+
+  try {
+    const pendingDelete = apiCall("/api/account", {
+      method: "DELETE",
+      token: member.token,
+      body: { password: initialPassword },
+    });
+    await transactionEntered;
+
+    const passwordChange = await apiCall("/api/account/password", {
+      method: "PATCH",
+      token: member.token,
+      body: { currentPassword: initialPassword, newPassword: "replacement-password" },
+    });
+    assert.equal(passwordChange.status, 200);
+
+    releaseTransaction();
+    const deletion = await pendingDelete;
+    assert.equal(deletion.status, 409);
+  } finally {
+    releaseTransaction();
+    mock.restoreAll();
+  }
+
+  assert.equal(await AccountModel.countDocuments({ _id: member.id }), 1);
+  assert.equal(await FavoriteModel.countDocuments({ owner: member.id }), 1);
+
+  const login = await apiCall("/api/auth/login", {
+    method: "POST",
+    body: { email: member.email, password: "replacement-password" },
+  });
+  assert.equal(login.status, 200);
 });

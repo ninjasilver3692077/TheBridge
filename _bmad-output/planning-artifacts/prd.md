@@ -19,6 +19,8 @@ Vocabulary is fixed by the Glossary (§3). Features (§4) group the functional r
 
 Cross-cutting non-functional requirements are in §5. Every assumption made while drafting was confirmed by Juan on 2026-10-26 and is now stated as a requirement.
 
+Milestone 4 adds password recovery by email under issue #37 and FR-29 below. The Milestone 3 baseline remains the context for the other requirements.
+
 ## 1. Vision
 
 TheBridge is a web marketplace where members of a local community share physical books by Exchange, Loan, Rental, or Sale. A member adds a book to their library, publishes it with clear terms, and receives requests that they accept or reject; the handoff happens in person.
@@ -56,7 +58,7 @@ Milestone 2 delivered the full experience in the browser, but every visitor saw 
 - **Catalog** — the public Open Library search used to find book metadata (title, author, cover, year, publisher, ISBN, language).
 - **Library Book** — a physical book in a Member's library (My Books): catalog metadata plus a Condition and optional notes. One Member has many Library Books.
 - **Condition** — one of Like new, Good condition, Used copy.
-- **Library Book Status** — Available, Published, Reserved, Lent, or Transferred.
+- **Library Book Status** — Available, Published, Reserved, Lent, Borrowed, or Transferred. Borrowed is the status of the borrower's view of a book that belongs to another Member.
 - **Listing** — a Library Book offered under one Modality with its Terms. A Library Book has at most one open Listing.
 - **Owner** — the Member who owns the Library Book behind a Listing.
 - **Modality** — Exchange, Loan, Rental, or Sale.
@@ -121,8 +123,23 @@ A session expires after a fixed time, and the person is sent to the login page w
 **Milestone 2:** New.
 
 **Consequences (testable):**
-- An expired session on any page redirects to login with "Your session expired. Please log in again."
+- An expired session is cleared on every page. Password recovery pages remain accessible so the emailed link can be used. Other pages redirect to login with "Your session expired. Please log in again."
 - After logging in again, the person returns to the page they were on.
+
+#### FR-29: Recover a password by email (Milestone 4)
+
+A Member or Admin who has forgotten their password can request a recovery email from the login page and choose a new password through the emailed link.
+
+**Milestone 2:** New.
+
+**Acceptance criteria**
+- The request page accepts the account email and shows the same confirmation for registered and unregistered addresses.
+- A cryptographically random reset token is stored only as a hash, expires after one hour, and can be used once. A newer request replaces the prior link.
+- The reset page validates the new password with the registration rules and asks for confirmation. Invalid, expired or used links explain how to request another link.
+- The password update and token consumption are atomic. Reuse and simultaneous submissions cannot change the password twice.
+- Recovery endpoints are independently rate limited. Reset links use the configured application URL and carry the secret in a fragment, which the client removes after reading.
+- Successful reset clears the current browser session and offers sign-in with the new password. JWTs held on other devices retain their existing expiry.
+- Email delivery uses an HTTP provider configured by the coordinator. Preview acceptance includes the actual sender, receipt of a real email and a successful reset through that link.
 
 ### 4.2 Catalog Search and Favorites
 
@@ -335,7 +352,8 @@ An Owner can mark an Accepted Request as Completed. For Sale and Exchange this i
 **Consequences (testable):**
 - For Loan and Rental, the Library Book stays Lent from acceptance until the Owner marks the Request Completed after the physical return; only then does it return to Available and the Listing become Closed, unless the Listing is Removed, in which case it stays Removed. The Owner can then publish the book again.
 - The Completed action for a Loan or Rental is labeled as confirming the return.
-- For Sale and Exchange, the Listing becomes Closed and the Library Book becomes Transferred; in an Exchange, the Offered Book also becomes Transferred. Books do not move to the other Member's library automatically.
+- For Sale and Exchange, the Listing becomes Closed and the Library Book becomes Transferred; in an Exchange, the Offered Book also becomes Transferred. The receiving Member gets a new Available Library Book for each transferred book.
+- Accepting a Loan or Rental adds a Borrowed Library Book to the borrower's library. It is marked as not owned by the borrower, shows the lender, and cannot be listed, edited or deleted. It leaves the borrower's library when the Owner marks the Request Completed.
 
 ### 4.7 Moderation (Admin)
 
@@ -442,11 +460,11 @@ The course rubric (HW11–HW15) fixes the stack and several deliverables, so the
 ## 7. Non-Goals
 
 - TheBridge does not process payments; prices and payment methods are informative.
-- TheBridge does not provide chat, notifications, or email; people coordinate in person.
+- TheBridge provides password recovery email in Milestone 4 (FR-29). Chat and general activity notifications remain outside this scope, and people coordinate in person.
 - TheBridge does not handle delivery, logistics, or locations.
 - TheBridge does not support more than one community or Roles beyond Member and Admin.
 - Admins do not edit, suspend, or delete Accounts.
-- Members cannot edit their profile or change or reset their password in Milestone 3.
+- Profile editing and password changes remain outside this task. Password recovery by email is included in Milestone 4 (FR-29).
 - Ratings, reviews, and handoff history are not part of Milestone 3.
 
 ## 8. Scope by Week

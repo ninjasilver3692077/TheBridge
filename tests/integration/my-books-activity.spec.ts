@@ -136,3 +136,46 @@ test("with equal status and createdAt the request with the higher id is the acti
   const found = (await myBooks(ownerId)).find((item) => item.id === String(copy._id));
   assert.equal(found?.activity?.requestId, String(higherId._id));
 });
+
+async function patchRequest(requestId: string, action: "accept" | "complete", actorId: string) {
+  const response = await fetch(`${baseUrl}/api/requests/${requestId}/${action}`, {
+    method: "PATCH",
+    headers: { authorization: `Bearer ${tokenFor(actorId)}`, "content-type": "application/json" },
+    body: "{}",
+  });
+  assert.equal(response.status, 200);
+}
+
+async function publishAsBorrower(copyId: string, accountId: string) {
+  const response = await fetch(`${baseUrl}/api/listings`, {
+    method: "POST",
+    headers: { authorization: `Bearer ${tokenFor(accountId)}`, "content-type": "application/json" },
+    body: JSON.stringify({ libraryBookId: copyId, modality: "Sale", terms: termsByModality.Sale }),
+  });
+  return response.status;
+}
+
+test("completing a Sale moves the book to the buyer's library and hides it from the seller's", async () => {
+  const { copy, listing } = await publishedCopy("Sale");
+  const request = await requestOn(listing, requesterId, "Pending", "Sale");
+  await patchRequest(String(request._id), "accept", ownerId);
+  await patchRequest(String(request._id), "complete", ownerId);
+  assert.equal((await myBooks(ownerId)).some((item) => item.id === String(copy._id)), false);
+  const bought = (await myBooks(requesterId)).find((item) => item.book.catalogId === book.catalogId && item.status === "Available" && item.id !== String(copy._id));
+  assert.ok(bought);
+  assert.equal(bought.borrowedFrom, null);
+});
+
+test("accepting a Loan gives the borrower a Borrowed copy that cannot be listed, and the return removes it", async () => {
+  const { copy, listing } = await publishedCopy("Loan");
+  const request = await requestOn(listing, secondRequesterId, "Pending", "Loan");
+  await patchRequest(String(request._id), "accept", ownerId);
+  const borrowed = (await myBooks(secondRequesterId)).find((item) => item.status === "Borrowed");
+  assert.ok(borrowed);
+  assert.deepEqual(borrowed.borrowedFrom, { id: ownerId, name: "Laura Gomez" });
+  assert.equal(await publishAsBorrower(borrowed.id, secondRequesterId), 409);
+  assert.equal((await myBooks(ownerId)).find((item) => item.id === String(copy._id))?.status, "Lent");
+  await patchRequest(String(request._id), "complete", ownerId);
+  assert.equal((await myBooks(secondRequesterId)).some((item) => item.id === borrowed.id), false);
+  assert.equal((await myBooks(ownerId)).find((item) => item.id === String(copy._id))?.status, "Available");
+});

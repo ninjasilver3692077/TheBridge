@@ -3,7 +3,7 @@ export type Condition = "Like new" | "Good condition" | "Used copy";
 export type Modality = "Exchange" | "Loan" | "Rental" | "Sale";
 export type DurationDays = 7 | 10 | 14 | 21;
 export type PaymentMethod = "Cash" | "Bank transfer" | "Nequi" | "Daviplata" | "Card in person";
-export type LibraryBookStatus = "Available" | "Published" | "Reserved" | "Lent" | "Transferred";
+export type LibraryBookStatus = "Available" | "Published" | "Reserved" | "Lent" | "Borrowed" | "Transferred";
 export type ListingStatus = "Available" | "Reserved" | "Closed" | "Removed";
 export type ListingClosureReason = "Withdrawn" | "Completed";
 export type RequestStatus = "Pending" | "Accepted" | "Rejected" | "Cancelled" | "Completed";
@@ -82,6 +82,7 @@ export interface LibraryBook extends Timestamps {
   currentListing: CurrentListingSummary | null;
   activity: LibraryBookActivity | null;
   lastModeration: ModerationNote | null;
+  borrowedFrom: PublicMember | null;
 }
 
 export interface Listing extends Timestamps {
@@ -182,6 +183,19 @@ export interface RegisterInput {
 export interface LoginInput {
   email: string;
   password: string;
+}
+
+export interface ForgotPasswordInput {
+  email: string;
+}
+
+export interface ResetPasswordInput {
+  token: string;
+  newPassword: string;
+}
+
+export interface PasswordResetResult {
+  message: string;
 }
 
 export interface AddBookInput {

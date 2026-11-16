@@ -780,3 +780,15 @@ Andrés requested changes on concurrency, dependency integration and evidence. C
 - **Sequential transaction queries in `hydrateRequestDto` (P2):** Replaced `Promise.all` inside `hydrateRequestDto` (`routes/requests.ts`) with sequential `await` calls for `owner`, `requester`, and `listing` when hydrating inside `mongoose.connection.transaction(async (session) => ...)`, complying with the MongoDB driver restriction against parallel operations on the same `ClientSession` and `api-design.md` §1.
 - **Merged `main` after PR #26 (`c34ee0f`):** Kept the reviewed `#23` modules (`a07173f` NFC metadata normalization, `mongodb-memory-server-core` dependency/lockfile, `seed` script, and all routers mounted in `server/app.ts`) and updated `tests/integration/requests-concurrency.spec.ts` to import `MongoMemoryReplSet` from `mongodb-memory-server-core`.
 - **Verification:** Re-ran `npm run lint`, `npm run typecheck`, `npm run build`, `npm test` (`25/25` passing), and `npm run test:integration` (`25/25` passing across both replica-set suites: `50/50` total).
+
+## Password recovery by email (#37, 2026-11-13)
+
+Codex implemented the assigned Milestone 4 task against the merged main branch, using Resend's HTTP email API and the existing auth fields, services and form flow. The implementation adds random one-hour reset tokens stored as hidden SHA-256 digests on Accounts, atomic single-use consumption, independent rate limits, public recovery pages and local session clearing after reset. The API contract, PRD (FR-29), environment template and security audit describe the behavior and remaining deployment checks.
+
+Validation passed with 37 unit/API tests and 46 real MongoDB replica-set integration tests, plus lint, typecheck and production build. Browser checks exercised the real local API with a mail double, password replacement and login, token reuse, expired stored sessions and fragment removal. Additional browser checks covered server-error retry, disabled loading controls, keyboard navigation, light/dark themes and 375/768/1280/1440 pixel widths. Mobile and desktop screenshots are in docs/screenshots.
+
+Peer review by Daniel and receipt/use of a real email on the Vercel preview remain pending. The coordinator configures RESEND_API_KEY, MAIL_FROM and APP_URL and records the actual sender and recipient restrictions. Existing JWTs on other devices retain their original expiry. No human post-review changes have been recorded yet.
+
+### Review follow-up for #38 (2026-11-13)
+
+Daniel approved the implementation at f674879 after checking the code and the 83 tests. The documentation now identifies the recovery contract as version 6 / issue #37 and records the residual risk of repeated recovery requests invalidating prior links, since throttling is per IP. Existing JWT lifetime is already recorded as a residual risk. This follow-up changes documentation only. The payment-method contract in #39 will need version reconciliation when the second branch incorporates the first. Live email verification still depends on coordinator configuration and authorized preview access.

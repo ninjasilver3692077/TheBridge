@@ -48,7 +48,7 @@ function requireAuthConfig(): AuthConfig {
   }
 }
 
-function readObjectBody(body: unknown, allowedFields: readonly string[]): Record<string, unknown> {
+export function readObjectBody(body: unknown, allowedFields: readonly string[]): Record<string, unknown> {
   if (typeof body !== "object" || body === null || Array.isArray(body)) {
     throw new HttpError(400, "Request body must be a JSON object.");
   }

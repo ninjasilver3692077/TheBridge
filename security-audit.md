@@ -72,7 +72,7 @@ Run against https://thebridge-sepia.vercel.app. Items marked done were checked o
 - [x] A Member token receives 403 on `/api/admin/overview`; an Admin token receives 200. Without a token the route returns 401. Confirmed by the coordinator on 2026-11-13 against the deployed app.
 - [x] Atlas Network Access lists `0.0.0.0/0` and the application user has only `readWrite` on one database (section 5); reads confirmed on 2026-11-13.
 - [x] With that role, registering an account through the deployed app succeeds (confirms writes), confirmed by the coordinator on 2026-11-13.
-- [ ] `npm run lint`, `npm run typecheck` and `npm run build` pass on the merged `main`.
+- [x] `npm run lint`, `npm run typecheck` and `npm run build` pass on the merged `main`, and the 46 unit tests pass (checked on 2026-11-15).
 
 ## 9. Milestone 4 password recovery (issue #37)
 
@@ -86,10 +86,11 @@ Run against https://thebridge-sepia.vercel.app. Items marked done were checked o
 
 ### Preview verification for #37
 
-- [ ] Coordinator configures RESEND_API_KEY, MAIL_FROM and APP_URL in the preview environment. Record the sender address and whether its domain is verified, without recording the API key.
-- [ ] A real reset email arrives for a controlled Member account. Record the preview URL, sender, recipient limitation and verification date.
-- [ ] Opening that email changes the password, the new password logs in, the old password fails, and the link cannot be reused.
-- [ ] A second recovery email supersedes the first link. An expired link is refused.
+- [x] Coordinator configured RESEND_API_KEY, MAIL_FROM and APP_URL in Production and Preview on 2026-11-15. The sender is `onboarding@resend.dev`, a Resend testing sender with no verified domain of our own.
+- [x] A real reset email arrived for a controlled Member account on https://thebridge-sepia.vercel.app on 2026-11-15. Recipient limitation: the resend.dev sender delivers only to the Resend account's own address.
+- [x] Opening that email changed the password, the new password logged in, the old password failed, and the link could not be reused (2026-11-15).
+- [x] A second recovery email superseded the first link (2026-11-15).
+- [ ] An expired link is refused.
 - [ ] A controlled Admin account can also recover its password.
 - [ ] The 11th attempt receives 429. Confirm the identical response for an unknown email.
 

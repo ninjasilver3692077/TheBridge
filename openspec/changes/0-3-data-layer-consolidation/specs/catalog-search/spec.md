@@ -22,11 +22,7 @@ Every catalog search SHALL reject an empty query with the message "Enter a title
 - **THEN** the catalog is queried and its results, empty state, or error state are shown
 
 ### Requirement: Search results show covers consistently
-Every catalog search result, and every catalog book saved as a favorite, SHALL show its cover image when the catalog provides one, including favorites saved before this change.
-
-#### Scenario: Previously saved favorite
-- **WHEN** a user who saved a favorite before this change opens the Marketplace
-- **THEN** that favorite still shows its cover
+Every catalog search result SHALL show its cover image when the catalog provides one.
 
 #### Scenario: Offline search after a successful one
 - **WHEN** a user repeats a search while offline after it succeeded online

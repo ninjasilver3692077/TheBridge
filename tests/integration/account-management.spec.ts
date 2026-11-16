@@ -40,10 +40,10 @@ const secondBook: BookMetadata = {
 };
 
 const termsByModality: Record<Modality, ListingTerms> = {
-  Sale: { desiredBook: null, priceCop: 45000, durationDays: null },
-  Exchange: { desiredBook: null, priceCop: null, durationDays: null },
-  Loan: { desiredBook: null, priceCop: null, durationDays: 14 },
-  Rental: { desiredBook: null, priceCop: 12000, durationDays: 7 },
+  Sale: { desiredBook: null, priceCop: 45000, durationDays: null, paymentMethods: ["Cash"] },
+  Exchange: { desiredBook: null, priceCop: null, durationDays: null, paymentMethods: null },
+  Loan: { desiredBook: null, priceCop: null, durationDays: 14, paymentMethods: null },
+  Rental: { desiredBook: null, priceCop: 12000, durationDays: 7, paymentMethods: null },
 };
 
 let replSet: MongoMemoryReplSet;
@@ -280,7 +280,7 @@ test("DELETE /api/account and DELETE /api/admin/accounts/:id return 409 for Acce
     const requestRes = await apiCall(`/api/listings/${listingId}/requests`, {
       method: "POST",
       token: requester.token,
-      body: offeredBookId ? { offeredBookId } : {},
+      body: offeredBookId ? { offeredBookId } : modality === "Sale" ? { paymentMethod: "Cash" } : {},
     });
     assert.equal(requestRes.status, 201);
     const requestId = (requestRes.body.data as { id: string }).id;
@@ -578,7 +578,7 @@ test("deleting a Member account concurrently with creating books, favorites and 
       apiCall(`/api/listings/${listingId}/requests`, {
         method: "POST",
         token: victim.token,
-        body: {},
+        body: { paymentMethod: "Cash" },
       }),
     ]);
 

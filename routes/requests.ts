@@ -1,7 +1,7 @@
 import { Router } from "express";
 import type { Request, Response } from "express";
 import mongoose from "mongoose";
-import type { ClientSession, HydratedDocument } from "mongoose";
+import type { ClientSession, HydratedDocument, Types } from "mongoose";
 import type {
   BookRequest,
   DataResponse,
@@ -26,12 +26,28 @@ import { touchActiveMember } from "../server/accountManagement.js";
 import { currentAccount, requireAuth, requireRole } from "../server/auth.js";
 import { requireDatabase } from "../server/db.js";
 import { HttpError, methodNotAllowed } from "../server/errors.js";
+import { storedPaymentMethods } from "../server/listingTerms.js";
+import { readRequestedPaymentMethod } from "../server/marketplaceInput.js";
 import { readPagination, toPage } from "../server/pagination.js";
 import {
   assertAllowedQueryKeys,
   readObjectId,
   readSearchQuery,
 } from "./favorites.js";
+
+function copyOf(
+  source: HydratedDocument<LibraryBookDocument>,
+  owner: string | Types.ObjectId,
+  extra: { status: "Available" | "Borrowed"; borrowedFrom?: Types.ObjectId; sourceCopy?: Types.ObjectId },
+) {
+  return {
+    owner,
+    book: source.book,
+    condition: source.condition,
+    notes: source.notes,
+    ...extra,
+  };
+}
 
 const allowedListQueryKeys = new Set(["direction", "page", "limit", "status", "q"]);
 
@@ -123,7 +139,7 @@ requestsRouter
         throw new HttpError(400, "body: must be a JSON object.");
       }
       for (const key of Object.keys(body)) {
-        if (key !== "offeredBookId") {
+        if (key !== "offeredBookId" && key !== "paymentMethod") {
           throw new HttpError(400, `${key}: unknown field.`);
         }
       }
@@ -149,6 +165,11 @@ requestsRouter
         } else if (body.offeredBookId !== undefined && body.offeredBookId !== null) {
           throw new HttpError(400, "offeredBookId: only allowed for Exchange requests.");
         }
+
+        const quotedPaymentMethod = readRequestedPaymentMethod(
+          body.paymentMethod,
+          listing.modality === "Sale" ? storedPaymentMethods(listing.terms) : null,
+        );
 
         if (listing.status !== "Available") {
           throw new HttpError(409, "Listing is not available.");
@@ -241,7 +262,13 @@ requestsRouter
               status: "Pending",
               rejectionReason: null,
               quotedModality: listing.modality,
-              quotedTerms: listing.terms,
+              quotedTerms: {
+                desiredBook: listing.terms.desiredBook,
+                priceCop: listing.terms.priceCop,
+                durationDays: listing.terms.durationDays,
+                paymentMethods: storedPaymentMethods(listing.terms),
+                paymentMethod: quotedPaymentMethod,
+              },
             },
           ],
           { session },
@@ -403,6 +430,19 @@ requestsRouter
             : "Reserved";
         await libraryBook.save({ session });
 
+        if (doc.quotedModality === "Loan" || doc.quotedModality === "Rental") {
+          await LibraryBookModel.create(
+            [
+              copyOf(libraryBook, extractId(doc.requester), {
+                status: "Borrowed",
+                borrowedFrom: libraryBook.owner,
+                sourceCopy: libraryBook._id,
+              }),
+            ],
+            { session },
+          );
+        }
+
         listing.status = "Reserved";
         await listing.save({ session });
 
@@ -558,6 +598,12 @@ requestsRouter
           libraryBook.status = "Available";
           await libraryBook.save({ session });
 
+          await LibraryBookModel.updateOne(
+            { sourceCopy: libraryBook._id, status: "Borrowed", deletedAt: null },
+            { $set: { deletedAt: new Date() } },
+            { session },
+          ).exec();
+
           if (listing.status === "Reserved") {
             listing.status = "Closed";
             listing.closureReason = "Completed";
@@ -587,10 +633,18 @@ requestsRouter
             }
             offeredCopy.status = "Transferred";
             await offeredCopy.save({ session });
+            await LibraryBookModel.create(
+              [copyOf(offeredCopy, extractId(doc.owner), { status: "Available" })],
+              { session },
+            );
           }
 
           libraryBook.status = "Transferred";
           await libraryBook.save({ session });
+          await LibraryBookModel.create(
+            [copyOf(libraryBook, extractId(doc.requester), { status: "Available" })],
+            { session },
+          );
 
           listing.status = "Closed";
           listing.closureReason = "Completed";

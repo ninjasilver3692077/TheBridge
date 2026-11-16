@@ -9,6 +9,7 @@ const initialValues = {
   rentalPrice: "",
   rentalDuration: "",
   salePrice: "",
+  salePaymentMethods: [],
 };
 
 export function useListingForm(onPublish) {

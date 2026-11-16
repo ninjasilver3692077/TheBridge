@@ -3,7 +3,7 @@ import type { AddressInfo } from "node:net";
 import { after, afterEach, before, beforeEach, mock, test } from "node:test";
 import jwt from "jsonwebtoken";
 import mongoose, { Types } from "mongoose";
-import type { BookMetadata, Condition, ListingStatus, ListingTerms, Modality, Role } from "@/types";
+import type { BookMetadata, Condition, ListingStatus, ListingTerms, Modality, RequestQuotedTerms, Role } from "@/types";
 import { AccountModel } from "../models/Account.js";
 import { FavoriteModel } from "../models/Favorite.js";
 import { LibraryBookModel } from "../models/LibraryBook.js";
@@ -59,7 +59,7 @@ interface StoredCopy {
   book: BookMetadata;
   condition: Condition;
   notes: string;
-  status: "Available" | "Published" | "Reserved" | "Lent" | "Transferred";
+  status: "Available" | "Published" | "Reserved" | "Lent" | "Borrowed" | "Transferred";
   save: () => Promise<StoredCopy>;
 }
 
@@ -100,7 +100,7 @@ interface StoredRequest {
     | "ListingRemoved"
     | null;
   quotedModality: Modality;
-  quotedTerms: ListingTerms;
+  quotedTerms: RequestQuotedTerms;
   createdAt: Date;
   updatedAt: Date;
   save: () => Promise<StoredRequest>;
@@ -293,6 +293,7 @@ beforeEach(() => {
         desiredBook: null,
         priceCop: null,
         durationDays: 14,
+        paymentMethods: null,
       }),
     ],
   ]);
@@ -322,6 +323,16 @@ beforeEach(() => {
   mock.method(LibraryBookModel, "findById", (id: unknown) =>
     makeChain(copies.get(String(id)) ?? null),
   );
+
+  mock.method(LibraryBookModel, "create", async (docs: unknown) => {
+    const items = Array.isArray(docs) ? docs : [docs];
+    return items.map((raw) => {
+      const data = raw as Omit<StoredCopy, "_id" | "save">;
+      const doc: StoredCopy = { ...data, _id: new Types.ObjectId(), save: async () => doc };
+      copies.set(String(doc._id), doc);
+      return doc;
+    }) as never;
+  });
 
   mock.method(ListingModel, "findById", (id: unknown) =>
     makeChain(listings.get(String(id)) ?? null),
@@ -562,7 +573,7 @@ test("RequestModel and FavoriteModel schemas enforce validation and partial uniq
     status: "Pending",
     rejectionReason: null,
     quotedModality: "Exchange",
-    quotedTerms: { desiredBook: null, priceCop: null, durationDays: null },
+    quotedTerms: { desiredBook: null, priceCop: null, durationDays: null, paymentMethods: null, paymentMethod: null },
   });
   await assert.rejects(
     async () => invalidExchangeReq.validate(),
@@ -704,6 +715,7 @@ test("REQUEST-01, 04, 05, 06, 07 handle Exchange offers, reject, cancel and tran
       desiredBook: offeredBookMeta,
       priceCop: null,
       durationDays: null,
+      paymentMethods: null,
     }),
   );
 

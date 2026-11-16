@@ -9,6 +9,8 @@ export interface AccountDocument {
   passwordHash: string;
   role: Role;
   activityRevision?: number;
+  passwordResetHash?: string;
+  passwordResetExpiresAt?: Date;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -32,11 +34,14 @@ const accountSchema = new Schema<AccountDocument>(
     passwordHash: { type: String, required: true, select: false },
     role: { type: String, enum: ROLES, required: true, default: "Member" },
     activityRevision: { type: Number, default: 0, select: false },
+    passwordResetHash: { type: String, select: false },
+    passwordResetExpiresAt: { type: Date, select: false },
   },
   { timestamps: true },
 );
 
 accountSchema.index({ email: 1 }, { unique: true });
+accountSchema.index({ passwordResetHash: 1 }, { sparse: true });
 
 export const AccountModel =
   (mongoose.models.Account as mongoose.Model<AccountDocument> | undefined) ??

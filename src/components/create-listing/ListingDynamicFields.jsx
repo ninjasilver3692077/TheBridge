@@ -1,5 +1,6 @@
 import DesiredBookPicker from "./DesiredBookPicker.jsx";
 import DurationSelect from "./DurationSelect.jsx";
+import PaymentMethodPicker from "./PaymentMethodPicker.jsx";
 import PriceInput from "./PriceInput.jsx";
 
 function ListingDynamicFields({ modality, values, errors, onChange }) {
@@ -50,14 +51,22 @@ function ListingDynamicFields({ modality, values, errors, onChange }) {
 
   if (modality === "Sale") {
     return (
-      <PriceInput
-        name="salePrice"
-        label="Sale price"
-        placeholder="25000"
-        value={values.salePrice}
-        onChange={onChange}
-        error={errors.salePrice}
-      />
+      <div className="space-y-6">
+        <PriceInput
+          name="salePrice"
+          label="Sale price"
+          placeholder="25000"
+          value={values.salePrice}
+          onChange={onChange}
+          error={errors.salePrice}
+        />
+
+        <PaymentMethodPicker
+          value={values.salePaymentMethods}
+          onChange={(methods) => onChange("salePaymentMethods", methods)}
+          error={errors.salePaymentMethods}
+        />
+      </div>
     );
   }
 

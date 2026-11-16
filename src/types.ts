@@ -2,7 +2,8 @@ export type Role = "Member" | "Admin";
 export type Condition = "Like new" | "Good condition" | "Used copy";
 export type Modality = "Exchange" | "Loan" | "Rental" | "Sale";
 export type DurationDays = 7 | 10 | 14 | 21;
-export type LibraryBookStatus = "Available" | "Published" | "Reserved" | "Lent" | "Transferred";
+export type PaymentMethod = "Cash" | "Bank transfer" | "Nequi" | "Daviplata" | "Card in person";
+export type LibraryBookStatus = "Available" | "Published" | "Reserved" | "Lent" | "Borrowed" | "Transferred";
 export type ListingStatus = "Available" | "Reserved" | "Closed" | "Removed";
 export type ListingClosureReason = "Withdrawn" | "Completed";
 export type RequestStatus = "Pending" | "Accepted" | "Rejected" | "Cancelled" | "Completed";
@@ -47,6 +48,11 @@ export interface ListingTerms {
   desiredBook: BookMetadata | null;
   priceCop: number | null;
   durationDays: DurationDays | null;
+  paymentMethods: PaymentMethod[] | null;
+}
+
+export interface RequestQuotedTerms extends ListingTerms {
+  paymentMethod: PaymentMethod | null;
 }
 
 export interface CurrentListingSummary {
@@ -77,6 +83,7 @@ export interface LibraryBook extends Timestamps {
   currentListing: CurrentListingSummary | null;
   activity: LibraryBookActivity | null;
   lastModeration: ModerationNote | null;
+  borrowedFrom: PublicMember | null;
 }
 
 export interface Listing extends Timestamps {
@@ -130,7 +137,7 @@ export interface BookRequest extends Timestamps {
   status: RequestStatus;
   rejectionReason: RejectionReason | null;
   quotedModality: Modality;
-  quotedTerms: ListingTerms;
+  quotedTerms: RequestQuotedTerms;
 }
 
 export interface Favorite {
@@ -179,6 +186,19 @@ export interface LoginInput {
   password: string;
 }
 
+export interface ForgotPasswordInput {
+  email: string;
+}
+
+export interface ResetPasswordInput {
+  token: string;
+  newPassword: string;
+}
+
+export interface PasswordResetResult {
+  message: string;
+}
+
 export interface AddBookInput {
   book: BookMetadata;
   condition: Condition;
@@ -203,6 +223,7 @@ export interface EditListingInput {
 
 export interface SendRequestInput {
   offeredBookId?: string;
+  paymentMethod?: PaymentMethod;
 }
 
 export interface ChangePasswordInput {

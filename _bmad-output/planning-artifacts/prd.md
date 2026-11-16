@@ -2,7 +2,7 @@
 title: "PRD: TheBridge"
 status: final
 created: 2026-10-26
-updated: 2026-10-26
+updated: 2026-11-13
 ---
 
 # PRD: TheBridge
@@ -18,6 +18,8 @@ Vocabulary is fixed by the Glossary (§3). Features (§4) group the functional r
 - **New** — the behavior does not exist yet.
 
 Cross-cutting non-functional requirements are in §5. Every assumption made while drafting was confirmed by Juan on 2026-10-26 and is now stated as a requirement.
+
+Milestone 4 adds password recovery by email under issue #37 and FR-29 below. The Milestone 3 baseline remains the context for the other requirements.
 
 ## 1. Vision
 
@@ -56,7 +58,7 @@ Milestone 2 delivered the full experience in the browser, but every visitor saw 
 - **Catalog** — the public Open Library search used to find book metadata (title, author, cover, year, publisher, ISBN, language).
 - **Library Book** — a physical book in a Member's library (My Books): catalog metadata plus a Condition and optional notes. One Member has many Library Books.
 - **Condition** — one of Like new, Good condition, Used copy.
-- **Library Book Status** — Available, Published, Reserved, Lent, or Transferred.
+- **Library Book Status** — Available, Published, Reserved, Lent, Borrowed, or Transferred. Borrowed is the status of the borrower's view of a book that belongs to another Member.
 - **Listing** — a Library Book offered under one Modality with its Terms. A Library Book has at most one open Listing.
 - **Owner** — the Member who owns the Library Book behind a Listing.
 - **Modality** — Exchange, Loan, Rental, or Sale.
@@ -121,8 +123,23 @@ A session expires after a fixed time, and the person is sent to the login page w
 **Milestone 2:** New.
 
 **Consequences (testable):**
-- An expired session on any page redirects to login with "Your session expired. Please log in again."
+- An expired session is cleared on every page. Password recovery pages remain accessible so the emailed link can be used. Other pages redirect to login with "Your session expired. Please log in again."
 - After logging in again, the person returns to the page they were on.
+
+#### FR-29: Recover a password by email (Milestone 4)
+
+A Member or Admin who has forgotten their password can request a recovery email from the login page and choose a new password through the emailed link.
+
+**Milestone 2:** New.
+
+**Acceptance criteria**
+- The request page accepts the account email and shows the same confirmation for registered and unregistered addresses.
+- A cryptographically random reset token is stored only as a hash, expires after one hour, and can be used once. A newer request replaces the prior link.
+- The reset page validates the new password with the registration rules and asks for confirmation. Invalid, expired or used links explain how to request another link.
+- The password update and token consumption are atomic. Reuse and simultaneous submissions cannot change the password twice.
+- Recovery endpoints are independently rate limited. Reset links use the configured application URL and carry the secret in a fragment, which the client removes after reading.
+- Successful reset clears the current browser session and offers sign-in with the new password. JWTs held on other devices retain their existing expiry.
+- Email delivery uses an HTTP provider configured by the coordinator. Preview acceptance includes the actual sender, receipt of a real email and a successful reset through that link.
 
 ### 4.2 Catalog Search and Favorites
 
@@ -202,7 +219,8 @@ A Member can publish one of their Available Library Books with a Modality and Te
 **Milestone 2:** Implemented.
 
 **Consequences (testable):**
-- Loan requires a duration; Rental requires a price greater than 0 and a duration; Sale requires a price greater than 0; Exchange accepts an optional desired book picked from the Catalog.
+- Loan requires a duration; Rental requires a price greater than 0 and a duration; Sale requires a price greater than 0 and at least one payment method; Exchange accepts an optional desired book picked from the Catalog.
+- The payment methods a seller can accept are Cash, Bank transfer, Nequi, Daviplata, and Card in person. Other Modalities do not take payment methods. TheBridge only records the methods; it does not process payments (see §7). Sale Listings published before Milestone 4 have no recorded methods and show "To be agreed with the owner".
 - The same rules are enforced by the server, so invalid Terms are rejected even when sent outside the app.
 - Publishing sets the Library Book to Published and the Listing to Available.
 - Opening Create Listing for a book that is missing or not Available selects another Available book and explains why.
@@ -288,6 +306,7 @@ A Member can send a Request on a Listing they do not own. For Exchange, they cho
 - The request button reads Request Exchange, Request Loan, Request Rental, or Request Purchase.
 - A Member cannot request their own Listing or a Listing that is not Available.
 - A Member with a Pending or Accepted Request on a Listing cannot send another on it.
+- A Request on a Sale chooses one of the payment methods the Listing accepts; a method the Listing does not accept is rejected. The chosen method is kept with the Request even if the Listing changes later.
 - A Visitor without a Session is sent to login and returns to the Listing.
 
 #### FR-18: Review Requests
@@ -298,6 +317,7 @@ A Member can see Received and Sent Requests in separate tabs with the counterpar
 
 **Consequences (testable):**
 - Received shows only Requests on the Member's Listings; Sent shows only Requests the Member sent.
+- A Request on a Sale shows the payment method the Requester chose.
 - A change made by the counterpart appears the next time the Member opens or refreshes Requests; there are no real-time updates.
 - A Pending Request that needs reconfirmation shows the Requester a Reconfirm action and a message that the Listing changed, and shows the Owner that the Request is waiting for reconfirmation.
 
@@ -332,7 +352,8 @@ An Owner can mark an Accepted Request as Completed. For Sale and Exchange this i
 **Consequences (testable):**
 - For Loan and Rental, the Library Book stays Lent from acceptance until the Owner marks the Request Completed after the physical return; only then does it return to Available and the Listing become Closed, unless the Listing is Removed, in which case it stays Removed. The Owner can then publish the book again.
 - The Completed action for a Loan or Rental is labeled as confirming the return.
-- For Sale and Exchange, the Listing becomes Closed and the Library Book becomes Transferred; in an Exchange, the Offered Book also becomes Transferred. Books do not move to the other Member's library automatically.
+- For Sale and Exchange, the Listing becomes Closed and the Library Book becomes Transferred; in an Exchange, the Offered Book also becomes Transferred. The receiving Member gets a new Available Library Book for each transferred book.
+- Accepting a Loan or Rental adds a Borrowed Library Book to the borrower's library. It is marked as not owned by the borrower, shows the lender, and cannot be listed, edited or deleted. It leaves the borrower's library when the Owner marks the Request Completed.
 
 ### 4.7 Moderation (Admin)
 
@@ -438,12 +459,12 @@ The course rubric (HW11–HW15) fixes the stack and several deliverables, so the
 
 ## 7. Non-Goals
 
-- TheBridge does not process payments; prices are informative.
-- TheBridge does not provide chat, notifications, or email; people coordinate in person.
+- TheBridge does not process payments; prices and payment methods are informative.
+- TheBridge provides password recovery email in Milestone 4 (FR-29). Chat and general activity notifications remain outside this scope, and people coordinate in person.
 - TheBridge does not handle delivery, logistics, or locations.
 - TheBridge does not support more than one community or Roles beyond Member and Admin.
 - Admins do not edit or suspend Accounts, and cannot delete Admin Accounts or their own Account; deleting a Member Account is supported in Milestone 4 (issue #36).
-- Profile fields (name, email, role) are not editable after registration; changing the account password and deleting one's own Member Account are supported in Milestone 4 (issue #36).
+- Profile fields (name, email, role) are not editable after registration; changing the account password and deleting one's own Member Account are supported in Milestone 4 (issue #36). Password recovery by email is included in Milestone 4 (FR-29).
 - Ratings, reviews, and handoff history are not part of Milestone 3.
 
 ## 8. Scope by Week

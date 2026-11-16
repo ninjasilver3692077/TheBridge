@@ -820,3 +820,25 @@ Daniel chose to start the implementation and reviews the diff before pushing. Th
 ### Learning
 
 Adding a required field to a stored contract needs a plan for data that already exists; validating strictly at the API boundary while tolerating the old shape in the model keeps old records usable without inventing data for them.
+
+## M4 — Issue #36: Account Management (Change Password, Delete Own Account, Admin Deletes Member Accounts)
+
+### Prompt or task
+
+Implement Milestone 4 account management (`PATCH /api/account/password`, `DELETE /api/account`, `DELETE /api/admin/accounts/:id`), transactional cascade deletion with `AccountDeleted` request rejection and `409` active-handoff blocks, Member and Admin UI confirmation dialogs, contract/PRD updates, and unit + integration tests.
+
+### Changes adopted
+
+- Added `server/accountManagement.ts` and routes in `routes/auth.ts` (`PATCH /api/account/password`, `DELETE /api/account`) and `routes/admin.ts` (`DELETE /api/admin/accounts/:id`).
+- Extended `RejectionReason` in `src/types.ts` and `REJECTION_REASONS` in `models/Request.ts` with `"AccountDeleted"`, and preserved original `owner`/`requester`/`listing` ObjectIds in `toBookRequestDto` when populated references resolve to `null` after account deletion.
+- Added `ChangePasswordDialog.jsx`, `DeleteAccountDialog.jsx`, `DeleteMemberDialog.jsx`, header triggers in `AccountMenu.jsx`, and the delete action in `AdminPage.jsx` / `AdminRows.jsx`.
+- Updated `api-design.md` and `_bmad-output/planning-artifacts/prd.md` Section 4.7 and Section 7 non-goals.
+- Added unit tests (`tests/account-management.test.ts`) and replica-set integration tests (`tests/integration/account-management.spec.ts`).
+
+### Tests and verification
+
+- `npm run lint`: 0 errors and 0 warnings.
+- `npm run typecheck`: 0 TypeScript errors.
+- `npm run build`: production bundle built cleanly.
+- `npm test`: 36 of 36 unit tests passing.
+- `npm run test:integration`: 41 of 41 integration tests passing against `MongoMemoryReplSet`.

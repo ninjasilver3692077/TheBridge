@@ -22,6 +22,7 @@ import {
   toBookRequestDto,
 } from "../models/Request.js";
 import type { RequestDocument } from "../models/Request.js";
+import { touchActiveMember } from "../server/accountManagement.js";
 import { currentAccount, requireAuth, requireRole } from "../server/auth.js";
 import { requireDatabase } from "../server/db.js";
 import { HttpError, methodNotAllowed } from "../server/errors.js";
@@ -146,6 +147,7 @@ requestsRouter
       const account = currentAccount(res);
 
       const createdRequest = await mongoose.connection.transaction(async (session) => {
+        await touchActiveMember(account.id, session);
         const listing = await ListingModel.findById(listingId).session(session).exec();
         if (!listing || listing.status === "Removed") {
           throw new HttpError(404, "Listing not found.");

@@ -34,7 +34,10 @@ async function readErrorMessage(response) {
   }
 }
 
-export async function apiRequest(path, { method = "GET", body, authenticated = false, signal } = {}) {
+export async function apiRequest(
+  path,
+  { method = "GET", body, authenticated = false, expireOn401 = true, signal } = {},
+) {
   const headers = { Accept: "application/json" };
   const generation = readSessionGeneration();
   const session = readSession();
@@ -65,7 +68,11 @@ export async function apiRequest(path, { method = "GET", body, authenticated = f
 
   if (!response.ok) {
     const message = await readErrorMessage(response);
-    if (authenticated && response.status === 401) expireActiveSession();
+    const isSessionFailure =
+      message === "Invalid or expired session." || message === "Authentication required.";
+    if (authenticated && response.status === 401 && (expireOn401 || isSessionFailure)) {
+      expireActiveSession();
+    }
     throw new ApiError(response.status, message);
   }
 

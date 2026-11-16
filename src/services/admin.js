@@ -48,3 +48,12 @@ export async function removeAdminListing(listingId, reason) {
 
   return data;
 }
+
+export async function deleteAdminMember(memberId) {
+  const { data } = await apiRequest(`/admin/accounts/${encodeURIComponent(memberId)}`, {
+    method: "DELETE",
+    authenticated: true,
+  });
+
+  return data;
+}

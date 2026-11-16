@@ -1,5 +1,6 @@
 import { Router } from "express";
 import type { Request, Response } from "express";
+import mongoose from "mongoose";
 import type { DataResponse, Favorite, PageResponse } from "@/types";
 import {
   FavoriteModel,
@@ -7,6 +8,7 @@ import {
   parseBookMetadataInput,
   toFavoriteDto,
 } from "../models/Favorite.js";
+import { touchActiveMember } from "../server/accountManagement.js";
 import { currentAccount, requireAuth, requireRole } from "../server/auth.js";
 import { requireDatabase } from "../server/db.js";
 import { HttpError, methodNotAllowed } from "../server/errors.js";
@@ -131,9 +133,13 @@ favoritesRouter
         throw new HttpError(409, "This book is already in your favorites.");
       }
 
-      const created = await FavoriteModel.create({
-        owner: account.id,
-        book,
+      const created = await mongoose.connection.transaction(async (session) => {
+        await touchActiveMember(account.id, session);
+        const [favorite] = await FavoriteModel.create([{ owner: account.id, book }], { session });
+        if (!favorite) {
+          throw new HttpError(500, "Unexpected server error.");
+        }
+        return favorite;
       });
 
       res.status(201).json({ data: toFavoriteDto(created) });

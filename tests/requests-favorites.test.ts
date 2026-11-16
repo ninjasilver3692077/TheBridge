@@ -374,8 +374,12 @@ beforeEach(() => {
     return makeChain(found ?? null);
   });
 
+  mock.method(AccountModel, "updateOne", (filter: Record<string, unknown>) =>
+    makeChain({ matchedCount: accounts.has(String(filter._id)) ? 1 : 0 }),
+  );
+
   mock.method(FavoriteModel, "create", async (input: unknown) => {
-    const data = input as { owner: string; book: BookMetadata };
+    const [data] = input as [{ owner: string; book: BookMetadata }];
     const id = new Types.ObjectId();
     const now = new Date();
     const doc: StoredFavorite = {
@@ -386,7 +390,7 @@ beforeEach(() => {
       updatedAt: now,
     };
     favorites.set(String(id), doc);
-    return doc as never;
+    return [doc] as never;
   });
 
   mock.method(FavoriteModel, "countDocuments", (filter: Record<string, unknown>) => {

@@ -6,6 +6,7 @@ import { AccountModel } from "../models/Account.js";
 import { ListingModel } from "../models/Listing.js";
 import type { ListingDocument } from "../models/Listing.js";
 import { REQUEST_STATUSES, RequestModel, toBookRequestDto } from "../models/Request.js";
+import { deleteAccountByAdmin } from "../server/accountManagement.js";
 import { currentAccount, requireAuth, requireRole } from "../server/auth.js";
 import { requireDatabase } from "../server/db.js";
 import { HttpError, methodNotAllowed } from "../server/errors.js";
@@ -143,3 +144,12 @@ adminRouter.route("/admin/members")
     res.set("Cache-Control", "no-store").json(toPage(data, total, pagination));
   })
   .all(methodNotAllowed(["GET", "HEAD"]));
+
+adminRouter.route("/admin/accounts/:id")
+  .delete(...admin, async (req: Request<{ id: string }>, res: Response) => {
+    const id = objectId(req.params.id);
+    if (req.body !== undefined) objectInput(req.body, []);
+    const deleted = await deleteAccountByAdmin(id, currentAccount(res).id);
+    res.set("Cache-Control", "no-store").json({ data: deleted });
+  })
+  .all(methodNotAllowed(["DELETE"]));

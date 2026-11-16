@@ -8,6 +8,7 @@ export interface AccountDocument {
   email: string;
   passwordHash: string;
   role: Role;
+  activityRevision?: number;
   passwordResetHash?: string;
   passwordResetExpiresAt?: Date;
   createdAt: Date;
@@ -32,6 +33,7 @@ const accountSchema = new Schema<AccountDocument>(
     },
     passwordHash: { type: String, required: true, select: false },
     role: { type: String, enum: ROLES, required: true, default: "Member" },
+    activityRevision: { type: Number, default: 0, select: false },
     passwordResetHash: { type: String, select: false },
     passwordResetExpiresAt: { type: Date, select: false },
   },

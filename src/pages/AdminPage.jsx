@@ -7,6 +7,7 @@ import {
   AdminRequestRow,
 } from "../components/admin/AdminRows.jsx";
 import AdminTabs from "../components/admin/AdminTabs.jsx";
+import DeleteMemberDialog from "../components/admin/DeleteMemberDialog.jsx";
 import RemoveListingDialog from "../components/admin/RemoveListingDialog.jsx";
 import AppShell from "../components/AppShell.jsx";
 import ErrorState from "../components/ErrorState.jsx";
@@ -29,6 +30,7 @@ function AdminPage() {
   const session = useSession();
   const [activeTab, setActiveTab] = useState("Listings");
   const [removing, setRemoving] = useState(null);
+  const [deletingMember, setDeletingMember] = useState(null);
   const [reloadKey, setReloadKey] = useState(0);
   const [announcement, setAnnouncement] = useState("");
   const loadOverview = useCallback((signal) => fetchAdminOverview({ signal }), []);
@@ -42,6 +44,13 @@ function AdminPage() {
   const handleRemoved = () => {
     setAnnouncement(`${removing.book.title} was removed.`);
     setRemoving(null);
+    setReloadKey((key) => key + 1);
+    reloadOverview();
+  };
+
+  const handleMemberDeleted = () => {
+    setAnnouncement(`${deletingMember.name} was deleted.`);
+    setDeletingMember(null);
     setReloadKey((key) => key + 1);
     reloadOverview();
   };
@@ -116,10 +125,16 @@ function AdminPage() {
           key="Members"
           label="Members"
           fetchPage={fetchAdminMembers}
-          columns={["Name", "Email", "Joined"]}
+          columns={["Name", "Email", "Joined", ""]}
           emptyText="No members match your search."
           reloadKey={reloadKey}
-          renderRow={(member) => <AdminMemberRow key={member.id} member={member} />}
+          renderRow={(member) => (
+            <AdminMemberRow
+              key={member.id}
+              member={member}
+              onDelete={setDeletingMember}
+            />
+          )}
         />
       )}
 
@@ -128,6 +143,14 @@ function AdminPage() {
           listing={removing}
           onClose={() => setRemoving(null)}
           onRemoved={handleRemoved}
+        />
+      )}
+
+      {deletingMember && (
+        <DeleteMemberDialog
+          member={deletingMember}
+          onClose={() => setDeletingMember(null)}
+          onDeleted={handleMemberDeleted}
         />
       )}
 

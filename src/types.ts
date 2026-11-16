@@ -2,7 +2,7 @@ export type Role = "Member" | "Admin";
 export type Condition = "Like new" | "Good condition" | "Used copy";
 export type Modality = "Exchange" | "Loan" | "Rental" | "Sale";
 export type DurationDays = 7 | 10 | 14 | 21;
-export type LibraryBookStatus = "Available" | "Published" | "Reserved" | "Lent" | "Transferred";
+export type LibraryBookStatus = "Available" | "Published" | "Reserved" | "Lent" | "Borrowed" | "Transferred";
 export type ListingStatus = "Available" | "Reserved" | "Closed" | "Removed";
 export type ListingClosureReason = "Withdrawn" | "Completed";
 export type RequestStatus = "Pending" | "Accepted" | "Rejected" | "Cancelled" | "Completed";
@@ -76,6 +76,7 @@ export interface LibraryBook extends Timestamps {
   currentListing: CurrentListingSummary | null;
   activity: LibraryBookActivity | null;
   lastModeration: ModerationNote | null;
+  borrowedFrom: PublicMember | null;
 }
 
 export interface Listing extends Timestamps {

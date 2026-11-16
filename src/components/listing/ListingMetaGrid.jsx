@@ -26,6 +26,10 @@ function ListingMetaGrid({ listing, priceLabel }) {
       <ListingMetaItem label="Price" value={priceLabel} />
       <ListingMetaItem label="Duration" value={listing.duration} />
       <ListingMetaItem
+        label="Payment methods"
+        value={listing.paymentMethods?.join(", ")}
+      />
+      <ListingMetaItem
         label="Looking for"
         value={listing.desiredBook}
         wide

@@ -19,10 +19,10 @@ const book: BookMetadata = {
 };
 
 const termsByModality: Record<Modality, ListingTerms> = {
-  Sale: { desiredBook: null, priceCop: 40000, durationDays: null },
-  Exchange: { desiredBook: null, priceCop: null, durationDays: null },
-  Loan: { desiredBook: null, priceCop: null, durationDays: 14 },
-  Rental: { desiredBook: null, priceCop: 8000, durationDays: 7 },
+  Sale: { desiredBook: null, priceCop: 40000, durationDays: null, paymentMethods: ["Cash", "Nequi"] },
+  Exchange: { desiredBook: null, priceCop: null, durationDays: null, paymentMethods: null },
+  Loan: { desiredBook: null, priceCop: null, durationDays: 14, paymentMethods: null },
+  Rental: { desiredBook: null, priceCop: 8000, durationDays: 7, paymentMethods: null },
 };
 
 let replSet: MongoMemoryReplSet;
@@ -57,7 +57,7 @@ async function requestOn(listing: { _id: mongoose.Types.ObjectId; status: Listin
     offeredBook: offered?._id ?? null,
     offeredBookSnapshot: offered ? { id: String(offered._id), book: offered.book, condition: offered.condition } : null,
     listingSummary: { id: String(listing._id), title: book.title, author: book.author, coverUrl: null, modality, status: listing.status },
-    status, quotedModality: modality, quotedTerms: termsByModality[modality],
+    status, quotedModality: modality, quotedTerms: { ...termsByModality[modality], paymentMethod: modality === "Sale" ? "Nequi" : null },
   });
 }
 

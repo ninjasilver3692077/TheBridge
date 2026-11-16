@@ -4,6 +4,7 @@ import { AccountModel } from "../models/Account.js";
 import type { LibraryBookDocument } from "../models/LibraryBook.js";
 import { ListingModel } from "../models/Listing.js";
 import type { ListingDocument } from "../models/Listing.js";
+import { storedPaymentMethods } from "./listingTerms.js";
 import { RequestModel } from "../models/Request.js";
 import { serializeBookMetadata } from "./bookMetadata.js";
 
@@ -21,6 +22,7 @@ export function listingView(doc: HydratedDocument<ListingDocument>): Listing {
     modality: doc.modality, terms: {
       desiredBook: doc.terms.desiredBook ? serializeBookMetadata(doc.terms.desiredBook) : null,
       priceCop: doc.terms.priceCop, durationDays: doc.terms.durationDays,
+      paymentMethods: storedPaymentMethods(doc.terms),
     },
     status: doc.status, closureReason: doc.closureReason,
     createdAt: doc.createdAt.toISOString(), updatedAt: doc.updatedAt.toISOString(),

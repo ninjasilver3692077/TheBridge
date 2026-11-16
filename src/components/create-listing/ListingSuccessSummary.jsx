@@ -1,4 +1,7 @@
-import { formatListingPrice } from "../../services/listingValidation.js";
+import {
+  formatListingPrice,
+  formatPaymentMethods,
+} from "../../services/listingValidation.js";
 
 function SummaryRow({ label, value }) {
   return (
@@ -50,7 +53,13 @@ function ListingSuccessSummary({ listing }) {
       )}
 
       {modality === "Sale" && (
-        <SummaryRow label="Price" value={formatListingPrice(listing.price)} />
+        <>
+          <SummaryRow label="Price" value={formatListingPrice(listing.price)} />
+          <SummaryRow
+            label="Payment methods"
+            value={formatPaymentMethods(listing.paymentMethods)}
+          />
+        </>
       )}
     </dl>
   );

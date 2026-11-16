@@ -25,6 +25,14 @@ export const listingModalities = [
   },
 ];
 
+export const paymentMethodOptions = [
+  "Cash",
+  "Bank transfer",
+  "Nequi",
+  "Daviplata",
+  "Card in person",
+];
+
 export const listingDurations = [
   "7 days",
   "10 days",
@@ -40,7 +48,7 @@ export const modalityMessages = {
   Rental:
     "Rental selected. Set a price and how long the book is rented.",
   Sale:
-    "Sale selected. Set the price for the book.",
+    "Sale selected. Set the price and the payment methods you accept.",
 };
 
 export const idleModalityMessage =

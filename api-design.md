@@ -1,10 +1,10 @@
 ---
 title: "TheBridge REST API contract"
 status: proposed
-version: 6
+version: 7
 created: 2026-10-27
 updated: 2026-11-13
-issue: 37
+issue: 35
 input_prd_commit: 50edc11165184a186a5afb660a6ffb145feb1cb8
 ---
 
@@ -16,6 +16,7 @@ Version 5 keeps the existing operation paths and envelopes except REQUEST-08, wh
 
 Version 6 (issue #37, Milestone 4) adds AUTH-04 and AUTH-05 for password recovery by email. The existing operation paths and envelopes retain their Milestone 3 behavior. The recovery contract is specified below.
 
+Version 7 (issue #35, Milestone 4) adds payment methods to Sale terms and to Sale requests. Operation paths and envelopes are unchanged; the new `terms.paymentMethods` key and the optional `paymentMethod` request field are described in §2 and under REQUEST-01.
 ## 1. Global rules
 
 Base path: `/api`. JSON request bodies require `Content-Type: application/json`; 32 KiB body limit. HTTPS is required in deployed environments. Dates are UTC ISO 8601 strings. Database IDs are 24-hex strings exposed as `id`; malformed IDs return 400 and well-formed unknown IDs return 404. Catalog IDs such as `/works/OL45804W` are separate strings, not database IDs.
@@ -61,7 +62,7 @@ Root `src/types.ts` will define these contracts once and both runtimes will impo
 | BookMetadata | `catalogId`, `title`, `author`, `genre`, `coverUrl`, `year`, `publisher`, `isbn`, `language`. `genre` defaults to `Uncategorized`; cover/year/publisher/isbn/language may be null; all response keys are present. |
 | LibraryBook | id, book: BookMetadata, condition, notes, status, currentListing, activity, lastModeration, borrowedFrom, timestamps. borrowedFrom is null or a PublicMember (the lender) and is set only while status is Borrowed. currentListing is null or {id, modality, status} for an Available/Reserved listing. A Lent copy on a Removed listing has null currentListing but retains Accepted activity. Activity is null or {requestId, status, kind, counterpart: PublicMember}; kind is ReceivedRequest or OfferedExchange, status Pending or Accepted. lastModeration is null or {listingId, reason, removedAt}. |
 | Listing | id, libraryBookId, owner: PublicMember, book, condition, description, modality, terms, status, closureReason, timestamps. Publication-time book/condition/description snapshots are immutable; closureReason is null, Withdrawn or Completed. No entity version field. |
-| Request | id, listingId, owner: PublicMember, requester: PublicMember, listing: RequestListingSummary, offeredBookId, offeredBook, status, rejectionReason, quotedModality, quotedTerms, timestamps. offeredBookId/offeredBook are non-null for Exchange and null otherwise. offeredBook is an immutable {id, book: BookMetadata, condition} snapshot restricted to participants/Admin. Terminal requests retain snapshots but hold no copy. No version, quotedListingVersion or needsReconfirmation field. |
+| Request | id, listingId, owner: PublicMember, requester: PublicMember, listing: RequestListingSummary, offeredBookId, offeredBook, status, rejectionReason, quotedModality, quotedTerms, timestamps. quotedTerms is the listing terms at request time plus `paymentMethod`, the method the requester chose for a Sale (null otherwise). offeredBookId/offeredBook are non-null for Exchange and null otherwise. offeredBook is an immutable {id, book: BookMetadata, condition} snapshot restricted to participants/Admin. Terminal requests retain snapshots but hold no copy. No version, quotedListingVersion or needsReconfirmation field. |
 | RequestListingSummary | id, title, author, coverUrl, modality, status. Metadata and modality are request-time snapshots; modality equals quotedModality. Status is the current retained Listing status. |
 | Favorite | `id`, `book: BookMetadata`, `createdAt`. Favorite ID is independent of catalogId. |
 | AuthSession | `token`, `expiresAt`, `account: Account`. |
@@ -70,14 +71,16 @@ BookMetadata input requires nonempty `catalogId` (Open Library work key), `title
 
 Condition is exactly `Like new`, `Good condition` or `Used copy`. Notes and moderation reason are plain text; notes max 2000 characters, reason trimmed 1–500. Name is trimmed 1–100 characters. Email is normalized and validated, max 254 characters. Password is at least eight characters and at most 72 UTF-8 bytes; it is never returned.
 
-`terms` always contains `desiredBook`, `priceCop`, `durationDays`:
+`terms` always contains `desiredBook`, `priceCop`, `durationDays`, `paymentMethods`:
 
-| Modality | desiredBook | priceCop | durationDays |
-| --- | --- | --- | --- |
-| Exchange | BookMetadata or null for Open to offers | null | null |
-| Loan | null | null | 7, 10, 14 or 21 |
-| Rental | null | Positive integer, max 1000000000 | 7, 10, 14 or 21 |
-| Sale | null | Positive integer, max 1000000000 | null |
+| Modality | desiredBook | priceCop | durationDays | paymentMethods |
+| --- | --- | --- | --- | --- |
+| Exchange | BookMetadata or null for Open to offers | null | null | null |
+| Loan | null | null | 7, 10, 14 or 21 | null |
+| Rental | null | Positive integer, max 1000000000 | 7, 10, 14 or 21 | null |
+| Sale | null | Positive integer, max 1000000000 | null | Non-empty list of distinct PaymentMethod values |
+
+PaymentMethod is exactly `Cash`, `Bank transfer`, `Nequi`, `Daviplata` or `Card in person`. TheBridge records the method and never processes a payment. LISTING-05 and LISTING-06 require the `paymentMethods` key: a Sale without a valid non-empty list, or a non-null value on another modality, returns 400 naming `terms.paymentMethods`. The server stores the list in the order above. Sale listings published before version 7 have no stored methods and return `paymentMethods: null`; they stay valid for withdrawal, acceptance and completion, and a seller adds methods with LISTING-06.
 
 These validation boundaries use the existing BookMetadata and terms vocabulary. Reject inconsistent non-null terms with 400. Listing book/condition/description are snapshots of the physical copy at publication. Request creation captures the current listing summary, modality/terms and offered-copy summary; later metadata edits do not rewrite that quote. A listing with Pending requests cannot change terms; Reserved listings cannot be edited.
 
@@ -177,7 +180,7 @@ Allowed modality/condition query values are the corresponding enums; genre is a 
 
 #### Request payloads and transitions
 
-SendRequestInput is {offeredBookId} for Exchange and {} otherwise; missing Exchange offer or a non-null offer outside Exchange returns 400. Owner/requester come from the token/listing. Own listing returns 403; unavailable listing, duplicate active request or unavailable/occupied offer returns 409. Unknown/foreign offered copy returns 404. Pending/Accepted requests block a second request by that member on the listing; terminal requests do not, but the listing must still be Available.
+SendRequestInput is {offeredBookId} for Exchange, {paymentMethod} for a Sale and {} otherwise; missing Exchange offer or a non-null offer outside Exchange returns 400. On a Sale with stored methods, `paymentMethod` is required and must be one of the listing's `paymentMethods` (400 otherwise). On any other listing, including a Sale published before version 7, a non-null `paymentMethod` returns 400. The choice is stored in `quotedTerms.paymentMethod` with the rest of the immutable quote and is shown to both participants. Owner/requester come from the token/listing. Own listing returns 403; unavailable listing, duplicate active request or unavailable/occupied offer returns 409. Unknown/foreign offered copy returns 404. Pending/Accepted requests block a second request by that member on the listing; terminal requests do not, but the listing must still be Available.
 
 `direction` is received or sent, default received. Requests are restricted to the token account, never an arbitrary account query parameter. q searches the authorized listing title/author and counterpart name only. Status filters use the Request status enum. Request summaries remain accessible after public listing removal/closure; a Member who is neither owner nor requester receives 404. No full public account/email projection is populated.
 
@@ -229,7 +232,7 @@ Content-Type: application/json
 
 Success is 201 with a complete Listing under data, including id, status Available, book metadata and the safe owner projection. Missing duration is 400; a Published copy is 409. Transactional state checks and a unique index protect creation; there is no If-Match requirement.
 
-Send a non-Exchange request on an Available listing:
+Send a Loan or Rental request on an Available listing:
 
 ```http
 POST /api/listings/507f1f77bcf86cd799439012/requests
@@ -240,6 +243,14 @@ Content-Type: application/json
 ```json
 {}
 ```
+
+Send a Sale request choosing one of the listing's payment methods:
+
+```json
+{"paymentMethod":"Nequi"}
+```
+
+Success is 201 with `quotedTerms.paymentMethods` holding the listing's methods and `quotedTerms.paymentMethod` holding `Nequi`. A method the listing does not accept returns 400.
 
 Accept a Pending request:
 

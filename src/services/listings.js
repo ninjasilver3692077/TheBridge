@@ -40,6 +40,7 @@ export function toClientListing(listing) {
     desiredBookMeta: toClientBook(terms.desiredBook),
     price: terms.priceCop,
     duration: terms.durationDays ? `${terms.durationDays} days` : null,
+    paymentMethods: terms.paymentMethods ?? null,
     owner: listing.owner.name,
     ownerId: listing.owner.id,
     university: null,
@@ -81,11 +82,17 @@ function listingTerms(modality, values) {
       desiredBook: values.desiredBookMeta ? toBookMetadata(values.desiredBookMeta) : null,
       priceCop: null,
       durationDays: null,
+      paymentMethods: null,
     };
   }
 
   if (modality === "Loan") {
-    return { desiredBook: null, priceCop: null, durationDays: durationDays(values.loanDuration) };
+    return {
+      desiredBook: null,
+      priceCop: null,
+      durationDays: durationDays(values.loanDuration),
+      paymentMethods: null,
+    };
   }
 
   if (modality === "Rental") {
@@ -93,10 +100,16 @@ function listingTerms(modality, values) {
       desiredBook: null,
       priceCop: Number(values.rentalPrice),
       durationDays: durationDays(values.rentalDuration),
+      paymentMethods: null,
     };
   }
 
-  return { desiredBook: null, priceCop: Number(values.salePrice), durationDays: null };
+  return {
+    desiredBook: null,
+    priceCop: Number(values.salePrice),
+    durationDays: null,
+    paymentMethods: values.salePaymentMethods,
+  };
 }
 
 export async function publishListing(libraryBookId, modality, values) {

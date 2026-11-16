@@ -5,6 +5,7 @@ import { fetchMyBooks, isBookFree } from "../../services/myBooks.js";
 import { sendRequest } from "../../services/requests.js";
 import { buttonSecondary } from "../../styles/ui.js";
 import ExchangeBookOptions from "./ExchangeBookOptions.jsx";
+import PaymentMethodOptions from "./PaymentMethodOptions.jsx";
 import RequestDialogActions from "./RequestDialogActions.jsx";
 import RequestDialogHeader from "./RequestDialogHeader.jsx";
 import RequestOfferRows from "./RequestOfferRows.jsx";
@@ -12,11 +13,16 @@ import RequestOfferRows from "./RequestOfferRows.jsx";
 function ListingRequestDialog({ listing, onClose, onSent }) {
   const [selectedBookId, setSelectedBookId] = useState("");
   const [error, setError] = useState("");
+  const [paymentMethod, setPaymentMethod] = useState("");
+  const [paymentError, setPaymentError] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState("");
   const { dialogRef, handleKeyDown } = useDialogFocus(true, onClose);
 
   const isExchange = listing.modality === "Exchange";
+  const paymentMethods =
+    listing.modality === "Sale" ? listing.paymentMethods ?? [] : [];
+  const choosesPayment = paymentMethods.length > 0;
   const loadBooks = useCallback(
     async (signal) =>
       isExchange ? (await fetchMyBooks({ signal })).filter(isBookFree) : [],
@@ -36,18 +42,30 @@ function ListingRequestDialog({ listing, onClose, onSent }) {
       setError("Select one of your available books to continue.");
       return;
     }
+    if (choosesPayment && !paymentMethod) {
+      setPaymentError("Choose how you will pay to continue.");
+      return;
+    }
 
     setSubmitting(true);
     setSubmitError("");
 
     try {
-      await sendRequest(listing.id, isExchange ? selectedBookId : null);
+      await sendRequest(listing.id, {
+        offeredBookId: isExchange ? selectedBookId : null,
+        paymentMethod: choosesPayment ? paymentMethod : null,
+      });
       onSent();
       onClose();
     } catch (requestError) {
       setSubmitError(requestError?.message || "We could not send your request.");
       setSubmitting(false);
     }
+  };
+
+  const handlePaymentChange = (method) => {
+    setPaymentMethod(method);
+    setPaymentError("");
   };
 
   const handleBookChange = (bookId) => {
@@ -99,6 +117,15 @@ function ListingRequestDialog({ listing, onClose, onSent }) {
               selectedBookId={selectedBookId}
               error={error}
               onChange={handleBookChange}
+            />
+          )}
+
+          {choosesPayment && (
+            <PaymentMethodOptions
+              methods={paymentMethods}
+              selectedMethod={paymentMethod}
+              error={paymentError}
+              onChange={handlePaymentChange}
             />
           )}
 

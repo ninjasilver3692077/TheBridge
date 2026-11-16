@@ -45,9 +45,17 @@ export function validateListing(modality, values) {
     ) {
       errors.salePrice = "Enter a price greater than 0.";
     }
+
+    if (!values.salePaymentMethods?.length) {
+      errors.salePaymentMethods = "Choose at least one payment method.";
+    }
   }
 
   return errors;
+}
+
+export function formatPaymentMethods(methods) {
+  return methods?.length ? methods.join(", ") : "To be agreed with the owner";
 }
 
 export function formatListingPrice(value) {

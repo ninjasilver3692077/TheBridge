@@ -14,7 +14,7 @@ function toClientBook(book) {
         publisher: book.publisher,
         isbn: book.isbn,
         language: book.language,
-        coverUrl: book.coverUrl,
+        cover: book.coverUrl || "",
       }
     : null;
 }

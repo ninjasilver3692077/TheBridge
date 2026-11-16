@@ -52,9 +52,9 @@ function FavoritesSection({
         <ul className="mt-3 divide-y divide-line">
           {favorites.map((book) => (
             <li key={book.id} className="flex items-center gap-3 py-3">
-              {book.coverUrl ? (
+              {book.cover ? (
                 <img
-                  src={book.coverUrl}
+                  src={book.cover}
                   alt=""
                   className="h-14 w-10 shrink-0 rounded-md object-cover"
                   loading="lazy"

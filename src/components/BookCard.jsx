@@ -4,7 +4,7 @@ import BookDetailsDisclosure from "./catalog/BookDetailsDisclosure.jsx";
 import FavoriteButton from "./catalog/FavoriteButton.tsx";
 
 function BookCard({ book, isFavorite, onToggleFavorite }) {
-  const summary = [book.publicationYear || book.year, book.publisher]
+  const summary = [book.year, book.publisher]
     .filter(Boolean)
     .join(" · ");
   const hasDetails =
@@ -14,7 +14,7 @@ function BookCard({ book, isFavorite, onToggleFavorite }) {
     <article className={`group flex flex-col overflow-hidden ${cardInteractive}`}>
       <div className="relative aspect-[3/4] overflow-hidden">
         <BookCover
-          src={book.coverUrl}
+          src={book.cover}
           title={book.title}
           className="h-full w-full transition duration-500 group-hover:scale-[1.02]"
         />

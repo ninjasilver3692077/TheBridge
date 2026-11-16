@@ -9,7 +9,7 @@ function toDesiredBookMeta(book) {
     title: book.title,
     author: book.author,
     year: book.year,
-    coverUrl: book.coverUrl || null,
+    cover: book.cover || "",
     isbn: book.isbn || null,
     publisher: book.publisher || null,
   };

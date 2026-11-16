@@ -8,8 +8,8 @@
 
 ## 1. Book shape and search rule
 
-- [ ] 1.1 Make `normalizeOpenLibraryBooks` emit `cover` and `year`; delete `toCatalogBook`, `coverUrl`, `publicationYear`, and the related fallbacks in client code; rename the cache key to `thebridge:openlibrary-cache-v2`; verify `grep -rnE 'coverUrl|publicationYear' src` matches only the API mapping layer and `src/types.ts`, and the offline cover scenario passes
-- [ ] 1.2 Add `validateCatalogQuery` to `src/services/catalogSearch.js` and use it in `useMarketplace` and `useCatalogSearch`; verify the `catalog-search` query scenarios in the Marketplace, Add Book, and desired-book searches
+- [x] 1.1 Make `normalizeOpenLibraryBooks` emit `cover` and `year`; delete `toCatalogBook`, `coverUrl`, `publicationYear`, and the related fallbacks in client code; rename the cache key to `thebridge:openlibrary-cache-v2`; verify `grep -rnE 'coverUrl|publicationYear' src` matches only the API mapping layer and `src/types.ts`, and the offline cover scenario passes
+- [x] 1.2 Add `validateCatalogQuery` to `src/services/catalogSearch.js` and use it in `useMarketplace` and `useCatalogSearch`; verify the `catalog-search` query scenarios in the Marketplace, Add Book, and desired-book searches
 
 ## 2. Verify
 

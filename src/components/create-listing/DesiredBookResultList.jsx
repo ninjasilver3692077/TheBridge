@@ -21,7 +21,7 @@ function DesiredBookResultList({ results, onSelect }) {
               className="flex w-full items-center gap-3 p-3 text-left transition-colors hover:bg-surface-muted focus:outline-none focus-visible:bg-wine-soft"
             >
               <BookCover
-                src={book.coverUrl}
+                src={book.cover}
                 title={book.title}
                 className="h-16 w-11 shrink-0 rounded-md"
               />

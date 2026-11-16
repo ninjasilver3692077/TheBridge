@@ -7,6 +7,7 @@ export function useCatalogSearch() {
   const [submittedQuery, setSubmittedQuery] = useState("");
   const [status, setStatus] = useState("idle");
   const [results, setResults] = useState([]);
+  const [savedAt, setSavedAt] = useState(null);
   const [validationError, setValidationError] = useState("");
 
   useEffect(() => {
@@ -18,14 +19,16 @@ export function useCatalogSearch() {
 
     const loadResults = async () => {
       try {
-        const { books } = await searchOpenLibraryWithCache(
+        const { books, savedAt: savedAtResult } = await searchOpenLibraryWithCache(
           submittedQuery,
           controller.signal,
         );
         setResults(books);
+        setSavedAt(savedAtResult);
         setStatus(books.length > 0 ? "results" : "no-results");
       } catch (requestError) {
         if (requestError.name !== "AbortError") {
+          setSavedAt(null);
           setStatus("error");
         }
       }
@@ -62,6 +65,7 @@ export function useCatalogSearch() {
     setQuery("");
     setSubmittedQuery("");
     setResults([]);
+    setSavedAt(null);
     setValidationError("");
     setStatus("idle");
   };
@@ -75,6 +79,7 @@ export function useCatalogSearch() {
     submittedQuery,
     status,
     results,
+    savedAt,
     validationError,
     handleQueryChange,
     handleSubmit,

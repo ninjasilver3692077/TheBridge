@@ -38,7 +38,12 @@ function DesiredBookResults({ search, onSelect }) {
   }
 
   return (
-    <DesiredBookResultList results={search.results} onSelect={onSelect} />
+    <DesiredBookResultList
+      results={search.results}
+      savedAt={search.savedAt}
+      onRetry={search.retrySearch}
+      onSelect={onSelect}
+    />
   );
 }
 

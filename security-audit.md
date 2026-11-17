@@ -48,7 +48,7 @@ Scope: the TheBridge Express API (`server/`, `routes/`) and the React client, de
   - A session change in another tab or a re-login reloads the private data (My Books, Requests, favorites) for the new account and discards in-flight responses of the previous one.
   - Authenticated responses are sent with `Cache-Control: no-store`.
 - Not mitigated: there is no refresh-token rotation and no server-side revocation, so a stolen token works until it expires.
-- Decision tracking (issue #53): `DECISIONS.md` now contains a concrete proposal to retain localStorage for the academic delivery, its rationale, current controls, the HttpOnly-cookie alternative and an acknowledgement table. Status: proposed on 2026-11-17; Juan and Jorge must state their positions in the PR and Daniel must review it. Team acceptance and the acceptance date remain pending. Once the required acknowledgements exist, update both documents with the actual names, dates and evidence before closing #53.
+- Decision tracking (issue #53): `DECISIONS.md` now contains a concrete proposal to retain localStorage for the academic delivery, its rationale, current controls, the HttpOnly-cookie alternative and an acknowledgement table. Status: proposed on 2026-11-17. Juan explicitly acknowledged and accepted the proposal on 2026-11-17 in his [COMMENTED review](https://github.com/ninjasilver3692077/TheBridge/pull/56#pullrequestreview-5944844208); this is not a formal APPROVED review. Jorge's acknowledgement, Daniel's independent review and the final required PR approvals remain pending. Full team acceptance and its date are not recorded yet. Complete both documents with the actual positions, dates and evidence before closing #53.
 
 ## 7. Authentication and authorization
 

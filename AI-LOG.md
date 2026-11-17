@@ -4,7 +4,7 @@
 
 OpenAI Codex prepared the DECISIONS.md token-storage proposal and the matching security-audit.md status against the current authStorage, apiClient, server authentication and architecture. The proposal explains the course-delivery rationale, residual XSS risk, current mitigations and the HttpOnly-cookie alternative, with OWASP and MDN references.
 
-No human agreement or approval date was invented. Juan's and Jorge's positions and Daniel's independent review remain pending in the acknowledgement table. After actual responses arrive, the names, dates, evidence and audit status must be updated together. The existing authentication implementation is unchanged.
+Juan's explicit acknowledgement and acceptance on 2026-11-17 are now recorded from his [COMMENTED review](https://github.com/ninjasilver3692077/TheBridge/pull/56#pullrequestreview-5944844208). This does not claim a formal APPROVED review. Jorge's position, Daniel's independent review and final PR approvals remain pending. The names, dates, evidence and audit status were updated together; the authentication implementation is unchanged.
 
 Verification: npm run lint and npm run build pass. This is documentation-only work; it does not claim a production security test or team acceptance.
 

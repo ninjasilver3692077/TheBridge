@@ -39,7 +39,7 @@ Scope: the TheBridge Express API (`server/`, `routes/`) and the React client, de
 ## 6. Token in localStorage
 
 - Design: `POST /api/auth/login` and `/register` return a session `{token, expiresAt, account}`. `src/services/authStorage.js` keeps it in `localStorage` under `thebridge:session`, and `src/services/apiClient.js` sends the token as `Authorization: Bearer`.
-- Benefit: no cookies, so no CSRF.
+- Transport: apiClient sends the Bearer header explicitly. Authentication does not use automatically attached session cookies; this does not protect against XSS.
 - Risk: any script running on the page can read `localStorage`, so a cross-site scripting (XSS) flaw would expose the token.
 - Mitigations in place:
   - React escapes rendered text and the client has no `dangerouslySetInnerHTML`.
@@ -48,7 +48,7 @@ Scope: the TheBridge Express API (`server/`, `routes/`) and the React client, de
   - A session change in another tab or a re-login reloads the private data (My Books, Requests, favorites) for the new account and discards in-flight responses of the previous one.
   - Authenticated responses are sent with `Cache-Control: no-store`.
 - Not mitigated: there is no refresh-token rotation and no server-side revocation, so a stolen token works until it expires.
-- Risk acceptance: `DECISIONS.md` records this as a residual XSS risk for reviewer acknowledgement, not as recorded team acceptance. No team decision accepting it exists yet; it remains open until the team records one.
+- Decision tracking (issue #53): `DECISIONS.md` now contains a concrete proposal to retain localStorage for the academic delivery, its rationale, current controls, the HttpOnly-cookie alternative and an acknowledgement table. Status: proposed on 2026-11-17; Juan and Jorge must state their positions in the PR and Daniel must review it. Team acceptance and the acceptance date remain pending. Once the required acknowledgements exist, update both documents with the actual names, dates and evidence before closing #53.
 
 ## 7. Authentication and authorization
 

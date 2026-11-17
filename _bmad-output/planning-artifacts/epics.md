@@ -5,10 +5,11 @@ inputDocuments:
   - _bmad-output/planning-artifacts/prd.md
   - _bmad-output/planning-artifacts/architecture.md
   - _bmad-output/planning-artifacts/architecture/architecture-TheBridge-2026-10-27/ARCHITECTURE-SPINE.md
-  - api-design.md (contract version 4, PR #19 at 700e107)
+  - api-design.md (planning baseline: contract version 4, PR #19 at 700e107; delivered profile: version 8)
   - openspec/specs/app-navigation/spec.md
-  - openspec/changes/0-2-rubric-compliance (PR #17)
-  - openspec/changes/0-3-data-layer-consolidation (PR #18)
+  - openspec/changes/0-2-rubric-compliance (PR #17, merged)
+  - openspec/changes/0-3-data-layer-consolidation (PR #18, merged)
+  - security-audit.md
   - Course READMEs HW11–HW15 (provided by Juan on 2026-10-30; not in the repository)
 ---
 
@@ -42,7 +43,7 @@ FR-17: A Member can send a Request on a Listing they do not own, choosing an Ava
 FR-18: A Member sees Received and Sent Requests in separate tabs with counterpart, Listing, status and message; changes appear on open or refresh (no real time); a Request needing reconfirmation shows the Requester a Reconfirm action and tells the Owner it is waiting.
 FR-19: An Owner can accept or reject a Pending Request; accepting reserves the Listing, rejects the other Pending Requests, sets the book Lent (Loan/Rental) or Reserved (Sale/Exchange, plus the Offered Book), and tells both people to meet in person; a Request needing reconfirmation can be rejected but not accepted.
 FR-20: A Requester can cancel their own Pending Request; it stops blocking a new Request and frees its Offered Book.
-FR-21: An Owner can complete an Accepted Request: Loan/Rental after the physical return (labeled as confirming the return), when the book returns to Available and the Listing becomes Closed, or stays Removed; Sale/Exchange after the handoff, when the Listing closes and the books become Transferred without moving between libraries.
+FR-21: An Owner can complete an Accepted Request: Loan/Rental after the physical return (labeled as confirming the return), when the book returns to Available and the Listing becomes Closed, or stays Removed; Sale/Exchange after the handoff, when the Listing closes and the original copies become Transferred; since #34 the receiving Member gets a new Available copy (Exchange in both directions), and an accepted Loan/Rental shows the borrower a Borrowed copy that leaves their library on return.
 FR-22: An Admin sees totals of Members, Listings by status and Requests by status.
 FR-23: An Admin can list every Listing, Request and Member with search and pages; Listing rows show Owner name and email, Request rows show Requester, Owner and Listing; passwords are never shown.
 FR-24: An Admin can remove a Listing that is not Closed or Removed with a required reason; it disappears for everyone; Pending Requests and an Accepted Sale/Exchange become Rejected and free their books; an Accepted Loan/Rental stays Accepted and Lent until completed; a repeated removal is refused and frees nothing; the Owner sees the reason in My Books.
@@ -75,7 +76,7 @@ NFR-19: Every page works from 360 px to desktop, keeps Milestone 2 accessibility
 
 ### Additional Requirements
 
-From the architecture, the spine and API contract version 4:
+Historical planning baseline, written against API contract version 4 and superseded where "Differences in the delivered profile" below says so:
 
 - No starter template: this is a brownfield React 19 + Vite client. The first backend work splits the existing `src/` into `client/src/` and adds `server/`, root `routes/`, `models/`, `api/index.js` and `vercel.json` in the layout of architecture §3, with one root package and lock.
 - Graded files live at the literal rubric paths in the repository root: `api-design.md`, `routes/`, `models/`, `deployment.txt`, `.env.example`, `tsconfig.json`, `src/types.ts`, `security-audit.md`. Route and model files are the real implementation, not wrappers.
@@ -94,6 +95,14 @@ From the architecture, the spine and API contract version 4:
 - Course detail (HW11 README): the rubric names GET/POST/PUT/DELETE as the correct methods, while LISTING-06 uses PATCH with a full replacement body. Any change belongs to the contract owner (Andrés) through a pull request to `architecture.md` and `api-design.md`.
 - Existing Epic 0 work: 0.1 removed dead code (merged); 0.2 rubric compliance (PR #17) and 0.3 data-layer consolidation (PR #18) await spec approval and must merge before the `client/` split.
 
+### Differences in the delivered profile (api-design.md version 8)
+
+- `If-Match` preconditions, entity version fields, `quotedListingVersion`, `needsReconfirmation` and REQUEST-08 were not delivered; the contract has no operation for them. An Available Listing with a Pending Request cannot be edited (409). This defers the reconfirmation parts of FR-11, FR-18 and FR-19, as scoped in issue #23.
+- Multi-document mutations use `mongoose.connection.transaction`, not a custom bounded retry runner.
+- The login and registration rate limiter is per serverless instance, so the effective limit on Vercel is looser than configured (`security-audit.md` section 1); a shared store was not added.
+- The `client/src/` split was not done; the client remains in `src/` and the server in `server/`, `routes/` and `models/`.
+- PRs #17 and #18 are merged; the contract also gained AUTH-04 and AUTH-05 (version 6), Sale payment methods (version 7) and account management (version 8).
+
 ### UX Design Requirements
 
 No UX design document exists. The Milestone 2 interface is the reference for every screen; stories that change UI state the visible behavior in their acceptance criteria and keep NFR-18 and NFR-19.
@@ -110,15 +119,15 @@ FR-7: Epic 1
 FR-8: Epic 1
 FR-9: Epic 1
 FR-10: Epic 1
-FR-11: Epic 1
+FR-11: Epic 1 (reconfirmation deferred)
 FR-12: Epic 1
 FR-13: Epic 1
 FR-14: Epic 1
 FR-15: Epic 1
 FR-16: Epic 1
 FR-17: Epic 3
-FR-18: Epic 3
-FR-19: Epic 3
+FR-18: Epic 3 (Reconfirm action deferred)
+FR-19: Epic 3 (reconfirmation rule deferred)
 FR-20: Epic 3
 FR-21: Epic 3
 FR-22: Epic 4

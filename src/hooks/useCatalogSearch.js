@@ -1,27 +1,13 @@
 import { useEffect, useState } from "react";
+import { validateCatalogQuery } from "../services/catalogSearch.js";
 import { searchOpenLibraryWithCache } from "../services/openLibrary.js";
-
-function toCatalogBook(book) {
-  return {
-    id: book.id,
-    title: book.title,
-    author: book.author,
-    year: book.year,
-    publicationYear: book.publicationYear,
-    publisher: book.publisher,
-    isbn: book.isbn,
-    language: book.language,
-    editionCount: book.editionCount,
-    coverUrl: book.coverUrl,
-    cover: book.coverUrl || "",
-  };
-}
 
 export function useCatalogSearch() {
   const [query, setQuery] = useState("");
   const [submittedQuery, setSubmittedQuery] = useState("");
   const [status, setStatus] = useState("idle");
   const [results, setResults] = useState([]);
+  const [savedAt, setSavedAt] = useState(null);
   const [validationError, setValidationError] = useState("");
 
   useEffect(() => {
@@ -33,15 +19,16 @@ export function useCatalogSearch() {
 
     const loadResults = async () => {
       try {
-        const { books } = await searchOpenLibraryWithCache(
+        const { books, savedAt: savedAtResult } = await searchOpenLibraryWithCache(
           submittedQuery,
           controller.signal,
         );
-        const matches = books.map(toCatalogBook);
-        setResults(matches);
-        setStatus(matches.length > 0 ? "results" : "no-results");
+        setResults(books);
+        setSavedAt(savedAtResult);
+        setStatus(books.length > 0 ? "results" : "no-results");
       } catch (requestError) {
         if (requestError.name !== "AbortError") {
+          setSavedAt(null);
           setStatus("error");
         }
       }
@@ -58,14 +45,14 @@ export function useCatalogSearch() {
   };
 
   const submitSearch = () => {
-    const trimmedQuery = query.trim();
+    const message = validateCatalogQuery(query);
 
-    if (trimmedQuery.length < 2) {
-      setValidationError("Enter at least 2 characters to search.");
+    if (message) {
+      setValidationError(message);
       return;
     }
 
-    setSubmittedQuery(trimmedQuery);
+    setSubmittedQuery(query.trim());
     setStatus("loading");
   };
 
@@ -78,6 +65,7 @@ export function useCatalogSearch() {
     setQuery("");
     setSubmittedQuery("");
     setResults([]);
+    setSavedAt(null);
     setValidationError("");
     setStatus("idle");
   };
@@ -91,6 +79,7 @@ export function useCatalogSearch() {
     submittedQuery,
     status,
     results,
+    savedAt,
     validationError,
     handleQueryChange,
     handleSubmit,

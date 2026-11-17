@@ -1,7 +1,7 @@
 import { formatLanguage } from "../../services/languages.js";
 
 const FIELDS = {
-  year: { label: "Year", read: (book) => book.publicationYear || book.year },
+  year: { label: "Year", read: (book) => book.year },
   publisher: { label: "Publisher", read: (book) => book.publisher },
   language: { label: "Language", read: (book) => formatLanguage(book.language) },
   isbn: { label: "ISBN", read: (book) => book.isbn },

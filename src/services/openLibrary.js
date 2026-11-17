@@ -27,19 +27,18 @@ function normalizeOpenLibraryBooks(docs = []) {
       title: book.title || "Untitled",
       author: book.author_name?.[0] || "Unknown author",
       year,
-      publicationYear: year,
       publisher: book.publisher?.[0] || null,
       isbn: pickIsbn(book.isbn),
       language: pickLanguage(book.language),
       editionCount: book.edition_count || 1,
-      coverUrl: book.cover_i
+      cover: book.cover_i
         ? `https://covers.openlibrary.org/b/id/${book.cover_i}-M.jpg`
-        : null,
+        : "",
     };
   });
 }
 
-const CACHE_KEY = "thebridge:openlibrary-cache";
+const CACHE_KEY = "thebridge:openlibrary-cache-v2";
 const MAX_CACHED_QUERIES = 10;
 
 function getCacheKey(query) {

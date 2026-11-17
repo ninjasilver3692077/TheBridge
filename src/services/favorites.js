@@ -4,8 +4,11 @@ import { toBookMetadata } from "./bookMetadata.js";
 const PAGE_LIMIT = 100;
 
 function toClientFavorite(favorite) {
+  const { coverUrl, ...book } = favorite.book;
+
   return {
-    ...favorite.book,
+    ...book,
+    cover: coverUrl || "",
     id: favorite.book.catalogId,
     favoriteId: favorite.id,
   };

@@ -1,12 +1,17 @@
 import BookCover from "../catalog/BookCover.tsx";
+import SavedDataNotice from "../catalog/SavedDataNotice.jsx";
 
 const MAX_RESULTS = 8;
 
-function DesiredBookResultList({ results, onSelect }) {
+function DesiredBookResultList({ results, savedAt, onRetry, onSelect }) {
   const visibleResults = results.slice(0, MAX_RESULTS);
 
   return (
     <div className="mt-3">
+      {savedAt && (
+        <SavedDataNotice savedAt={savedAt} onRetry={onRetry} className="mb-3" />
+      )}
+
       <p className="text-xs text-ink-muted" role="status">
         Select the exact book you want ({visibleResults.length}{" "}
         {visibleResults.length === 1 ? "result" : "results"}).
@@ -21,7 +26,7 @@ function DesiredBookResultList({ results, onSelect }) {
               className="flex w-full items-center gap-3 p-3 text-left transition-colors hover:bg-surface-muted focus:outline-none focus-visible:bg-wine-soft"
             >
               <BookCover
-                src={book.coverUrl}
+                src={book.cover}
                 title={book.title}
                 className="h-16 w-11 shrink-0 rounded-md"
               />

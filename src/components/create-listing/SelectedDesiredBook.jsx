@@ -16,7 +16,7 @@ function SelectedDesiredBook({
 
       <div className="flex gap-4 rounded-2xl border border-wine/30 bg-wine-soft p-4">
         <BookCover
-          src={selected.coverUrl}
+          src={selected.cover}
           title={selected.title}
           className="h-24 w-16 shrink-0 rounded-md shadow-card"
         />

@@ -10,21 +10,12 @@ import {
   fetchFavorites,
   removeFavorite,
 } from "../services/favorites.js";
+import { validateCatalogQuery } from "../services/catalogSearch.js";
 import { searchOpenLibraryWithCache } from "../services/openLibrary.js";
 import { useApiResource } from "./useApiResource.js";
 import { useAccountId, useSession } from "./useSession.js";
 
 const noFavorites = [];
-
-function validateSearch(value) {
-  const query = value.trim();
-
-  if (!query) {
-    return "Enter a title, author, or keyword.";
-  }
-
-  return query.length < 3 ? "Use at least 3 characters." : "";
-}
 
 export function useMarketplace() {
   const [searchInput, setSearchInput] = useState("");
@@ -110,13 +101,13 @@ export function useMarketplace() {
   const handleSearchChange = (event) => {
     const value = event.target.value;
     setSearchInput(value);
-    setSearchError(value ? validateSearch(value) : "");
+    setSearchError(value ? validateCatalogQuery(value) : "");
   };
 
   const handleSearchSubmit = async (event) => {
     event.preventDefault();
 
-    const message = validateSearch(searchInput);
+    const message = validateCatalogQuery(searchInput);
     setSearchError(message);
 
     if (message) {

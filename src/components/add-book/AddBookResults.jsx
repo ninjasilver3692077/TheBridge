@@ -1,9 +1,21 @@
 import { buttonGhost } from "../../styles/ui.js";
+import SavedDataNotice from "../catalog/SavedDataNotice.jsx";
 import AddBookResultCard from "./AddBookResultCard.jsx";
 
-function AddBookResults({ results, submittedQuery, onClear, onSelect }) {
+function AddBookResults({
+  results,
+  savedAt,
+  submittedQuery,
+  onClear,
+  onRetry,
+  onSelect,
+}) {
   return (
     <div className="mt-10">
+      {savedAt && (
+        <SavedDataNotice savedAt={savedAt} onRetry={onRetry} className="mb-6" />
+      )}
+
       <div className="flex items-center justify-between gap-4">
         <p className="text-sm text-ink-muted">
           <span className="font-semibold text-ink">{results.length}</span>{" "}

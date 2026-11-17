@@ -2,7 +2,7 @@ import { useState } from "react";
 import type { BookMetadata } from "@/types";
 
 interface BookCoverProps {
-  src?: BookMetadata["coverUrl"];
+  src?: string | null;
   title?: BookMetadata["title"];
   className?: string;
   loading?: "lazy" | "eager";

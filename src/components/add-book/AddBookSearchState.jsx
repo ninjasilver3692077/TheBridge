@@ -62,8 +62,10 @@ function AddBookSearchState({ search, onSelect }) {
   return (
     <AddBookResults
       results={search.results}
+      savedAt={search.savedAt}
       submittedQuery={search.submittedQuery}
       onClear={search.resetSearch}
+      onRetry={search.retrySearch}
       onSelect={onSelect}
     />
   );

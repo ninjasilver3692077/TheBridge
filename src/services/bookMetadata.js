@@ -16,7 +16,7 @@ export function toBookMetadata(book) {
     title: book.title.slice(0, 300),
     author: book.author.slice(0, 200),
     ...(book.genre ? { genre: book.genre.slice(0, 80) } : {}),
-    coverUrl: book.coverUrl || null,
+    coverUrl: book.cover || null,
     year: cleanYear(book.year),
     publisher: book.publisher ? book.publisher.slice(0, 200) : null,
     isbn: cleanIsbn(book.isbn),

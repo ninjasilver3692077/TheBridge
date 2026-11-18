@@ -900,3 +900,32 @@ Daniel chose to start the task and reviews the diff before pushing. Jorge review
 ### Learning
 
 Comparing the rendered DOM of the old and new versions under the same scripted flow is a cheap way to prove that a refactor preserved behavior, and it caught nothing only because the extraction stayed mechanical.
+
+## Issue #49 — Docs: README describes the real M3/M4 product (2026-11-17)
+
+### Prompt or task
+
+Daniel asked Claude to update README.md for issue #49 on `feat/docs-readme-current-state`: replace the Milestone 2 scope (mock data, no backend), update the intro, implemented screens and the `src/data/listings.js` line, and keep the live URL, integrants, local development steps and links.
+
+### AI suggestions
+
+- Describe the product from the code on `main`: client routes and navigation, the API operations in api-design.md, the environment variables in `.env.example` and the scripts in package.json.
+- Replace the Milestone 2 scope with an in-scope summary and an out-of-scope list taken from PRD §7.
+- Keep the Home cover-wall sample data as a known gap linked to issue #57 instead of omitting it.
+- State that transactions require a MongoDB replica set, as docs/m3-listings.md already says.
+
+### Changes adopted
+
+README.md rewritten with the current product, deployment, local development, documentation links, team roles from CONTRIBUTING.md (fixing the garbled accented names) and scope. Two claims were corrected after checking the code: the My Books filters (Available, Published, Loaned, Borrowed) and the Admin capabilities (lists, listing removal with a reason, Member deletion).
+
+### Human changes and review
+
+Daniel reviews the text before pushing. Jorge reviews the pull request and Juan, as owner of README.md, is tagged.
+
+### Tests and verification
+
+Each feature claim was checked against `src/`, `routes/`, `api-design.md` and `.env.example`. The local development steps were followed from a clean clone with a local single-node replica set: `npm install`, `.env` from `.env.example`, `npm run seed`, `npm run bootstrap:admin`, `npm run dev:server` and the Vite client; `/api/health`, a demo login and `GET /api/listings` through the Vite proxy succeeded, and `npm test` passed 46/46. `npm run lint` and `npm run build` pass.
+
+### Learning
+
+A README drifts quickly once a backend lands; checking each sentence against the code and running the setup steps from a clean clone is what makes it trustworthy.

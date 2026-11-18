@@ -59,7 +59,7 @@ These proposals are documentation for review, not proof of implementation, deplo
 
 ## Issue #53: Session token storage for the academic delivery
 
-**Status:** Proposed on 2026-11-17 by Edwin (AndresMonca). Juan has explicitly acknowledged and accepted the proposal; Jorge's acknowledgement and Daniel's independent review remain pending. The full team decision and final PR approvals are not complete.
+**Status:** Proposed on 2026-11-17 by Edwin (AndresMonca). Juan accepted the proposal and approved record acc7596; Daniel independently reviewed and approved that record. Jorge's acknowledgement remains pending, so full team acceptance is incomplete. The updated final record still requires review before merge.
 
 ### Proposed decision and rationale
 
@@ -86,9 +86,9 @@ A Secure, HttpOnly cookie could prevent JavaScript from reading the cookie value
 
 | Participant | Role | Position | Date | Evidence |
 | --- | --- | --- | --- | --- |
-| Juan (ninjasilver3692077) | Required team acknowledgement | Explicitly acknowledged and accepted the proposal; formal PR approval pending | 2026-11-17 | [Juan's COMMENTED review](https://github.com/ninjasilver3692077/TheBridge/pull/56#pullrequestreview-5944844208) |
+| Juan (ninjasilver3692077) | Required team acknowledgement | Accepted the proposal and approved record acc7596 | 2026-11-17 (America/Bogota) | [Acknowledgement](https://github.com/ninjasilver3692077/TheBridge/pull/56#pullrequestreview-5944844208); [APPROVED review](https://github.com/ninjasilver3692077/TheBridge/pull/56#pullrequestreview-5945877261) |
 | Jorge (jfontx) | Required team acknowledgement | Pending | Pending | Pending PR conversation or review |
-| Daniel (danieloro07) | Independent reviewer | Pending | Pending | Pending PR review |
+| Daniel (danieloro07) | Independent reviewer | Independently reviewed and approved acc7596; explicitly accepted the proposal | 2026-11-17 23:10 -05:00 (America/Bogota) | [APPROVED review](https://github.com/ninjasilver3692077/TheBridge/pull/56#pullrequestreview-5950684340) |
 
 Record the actual position, date and link from each participant's own PR response. Silence, an assignment or an earlier code approval does not establish acceptance of this proposal. Keep issue #53 open until both required positions are recorded and the final PR has the approvals required by the issue, including Daniel's independent review. After both acknowledgements, update this entry and security-audit.md section 6 together to state the actual decision and evidence; then obtain review of the final text before the coordinator merges. If the team chooses another storage mechanism, open a separate implementation issue and keep this record aligned with that choice.
 

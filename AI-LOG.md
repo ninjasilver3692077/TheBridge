@@ -871,3 +871,32 @@ Daniel is the requested independent reviewer; the coordinator merges. Final inte
 ### Learning
 
 Comparing the rendered DOM and actions against a fixed baseline checks that component extraction preserves behavior across responsive layouts and dialogs.
+
+## Issue #47 — HW10: split account, header, login and route table components (2026-11-17)
+
+### Prompt or task
+
+Daniel asked Claude to implement issue #47 on `feat/hw10-split-account-components`: bring `AccountMenu.jsx` (147 lines), `App.jsx` (139), `ChangePasswordDialog.jsx` (137), `DeleteAccountDialog.jsx` (101), `NavIcon.jsx` (82) and `LoginPage.jsx` (82) to 80 lines or fewer without changing rendered output, routes, services or behavior.
+
+### AI suggestions
+
+- Move the account menu state and its outside-press and Escape listeners into `useAccountMenu`, and split the trigger button and the menu items into their own components. The container ref stays in `AccountMenu` because the React hooks lint rule rejects returning a ref from a hook object.
+- Share one `AccountDialogFrame` (portal, overlay, focus trap, title and description) and one `AccountDialogActions` (error, Cancel, submit) between the two account dialogs, with their form state in `useChangePasswordForm` and `useDeleteAccountForm`.
+- Keep the SVG paths of `NavIcon` as data in `navIconPaths.jsx` so the component renders one `svg` with the matching paths.
+- Move `SessionBoundary`, `ProtectedRoute` and `GuestOnlyRoute` to `src/components/routing/` and `ListingRoute` to `src/pages/`, leaving `App.jsx` as the route table only; move the login form into `LoginForm.jsx`.
+
+### Changes adopted
+
+All of the above. The six assigned files now have 54, 55, 61, 40, 18 and 37 lines; every new component file is at most 58 lines. No service, route, text or class changed, and `LoginPage` and `App` no longer touch `localStorage` directly.
+
+### Human changes and review
+
+Daniel chose to start the task and reviews the diff before pushing. Jorge reviews the pull request.
+
+### Tests and verification
+
+`npm run lint`, `npm run typecheck`, `npm run build` and `npm test` (46/46) pass. A local Playwright run against the real API and a temporary MongoDB replica set loaded `main` and this branch side by side and compared the rendered HTML in 32 states: home and 404, protected and Admin-only redirects, login validation, wrong password, session-expired notice, account menu open/Escape/outside click, change password (empty, mismatch, wrong current password, Escape, success), delete account (empty, wrong password, cancel, success), sign out, listing details and missing listing, Admin login and menu, and the login page at 375, 768 and 1440 pixels. All 32 states were identical apart from the Admin member counter, which reflects the shared test database rather than the code. Console output matched in both versions (only the intentional 401 and 404 responses).
+
+### Learning
+
+Comparing the rendered DOM of the old and new versions under the same scripted flow is a cheap way to prove that a refactor preserved behavior, and it caught nothing only because the extraction stayed mechanical.

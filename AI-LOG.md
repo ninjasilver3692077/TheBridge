@@ -988,3 +988,57 @@ Remove `src/data/listings.js` and feed the Home hero cover wall from the API thr
 ### Tests and verification
 
 `npm run lint`, `npm run typecheck`, `npm test` (46 of 46) and `npm run build` pass. The 375px, 768px, 1280px and 1440px light and dark checks with the API unreachable were not run in a browser.
+
+## Final verification checkpoint - Issue #50 (2026-11-18)
+
+### Scope and status
+
+**In progress; not final acceptance.** OpenAI Codex began this task after the coordinator merged #55 (#48), #59 (#47), #60 (#49) and #64 (#46). The source under test was main commit 281027c, with no application code changes in this verification branch. The public site was https://thebridge-sepia.vercel.app; its module asset index-BtIH4JF-.js matched the production build from that commit. All dates below are 2026-11-18 in America/Bogota.
+
+### Local checks on main
+
+| Check | Result | Evidence |
+| --- | --- | --- |
+| npm run lint | PASS | Exit 0, no lint errors or warnings |
+| npm run typecheck | PASS | Exit 0, strict TypeScript check |
+| npm test | PASS | 46 tests, 0 failures |
+| npm run build | PASS | Exit 0; production module index-BtIH4JF-.js |
+| npm run test:integration | PASS | Prescribed command completed without a serial retry: 61 tests, 0 failures, disposable real MongoDB replica sets |
+| JSX line limit | PASS | Counted physical lines including blank lines in all 151 src/**/*.jsx files; none exceeds 80. RemoveListingForm.jsx is the largest at 80 |
+
+### Live browser checks with real services
+
+These were automated Chrome interactions with the deployed UI and real API/Open Library responses, without mocked endpoints. They are not a separate human walkthrough or proof of Admin or email acceptance.
+
+| Check | Result | Evidence |
+| --- | --- | --- |
+| Public routing and responsive layout | PASS | Home, Marketplace, Login, Register, Forgot Password, Reset Password without a token, About and an unknown route rendered without horizontal overflow at 375/768/1280/1440 px in light and dark themes |
+| Guest route guards | PASS | My Books and Admin redirected unauthenticated visitors to Login |
+| Member registration and login | PASS | Two disposable Members registered, signed out and signed in through the UI |
+| Add Book and four publication modalities | PASS | Selected four real catalog records, added copies through the UI and published Exchange, Loan (7 days), Rental (COP 8,000 / 7 days), and Sale (COP 25,000 / Cash) |
+| Send, reject, accept and complete | PASS | The second Member requested Loan and Sale; the owner rejected Loan, accepted Sale and marked that transfer completed through Requests |
+| My Books and responsive Member views | PASS | My Books displayed the four publication modalities; My Books, Requests and Member Marketplace had no horizontal overflow at all four widths in both themes using the actual theme toggle |
+| Keyboard and modal dismissal | PASS | Tab and Shift+Tab stayed inside each tested request dialog; Escape closed it and restored focus to its trigger. ArrowRight activated the Sent request tab |
+| Favorites | PASS | Saved a real catalog result, confirmed persistence after page reload and removed it through the saved-favorites UI |
+| Member Admin restriction | PASS | A Member was redirected away from Admin |
+| Account deletion and fixture cleanup | PASS | Both disposable accounts were deleted through the UI after completing the accepted transfer; only test-owned data was touched. Earlier harness retries also deleted their own temporary accounts through the own-account API |
+| Marketplace online/offline/reconnect | PASS | Searched Dune online, resubmitted the same query offline, saw Showing saved data, reconnected and retried; the notice cleared after the real provider responded |
+| JavaScript exceptions | PASS for tested paths | None observed in the completed public and Member runs |
+| Empty browser console | FAIL overall | The completed Member run had no console errors. Deliberate offline mode produced expected network errors. Separately, initial catalog discovery for art intermittently produced CORS / net::ERR_FAILED online; isolated browser rechecks reproduced it. Tracked in [#66](https://github.com/ninjasilver3692077/TheBridge/issues/66), not fixed in this PR |
+
+The final runs above completed after correcting harness selectors and waits. Only reproduced product/provider failures are tracked as bugs. Mobile dark Home and desktop light Marketplace screenshots were visually inspected as well.
+
+### Outstanding acceptance gates
+
+| Check | Status | Next step |
+| --- | --- | --- |
+| Live Admin totals, tables and listing removal | PENDING | A controlled Admin session is unavailable. The account holder will coordinate access with Juan. Do not bootstrap, promote an account or change deployment variables from this task |
+| Real password recovery and mailbox use | PENDING | Coordinate the authorized provider recipient and mailbox with Juan; open the real reset email, change the password, verify login and link reuse/expiry as applicable. No production email-delivery claim is made here |
+| Admin responsive/keyboard/console checks | PENDING | Repeat the four widths and both themes, keyboard and modal checks with the controlled Admin session |
+| AI-LOG final-state completeness | PENDING | Four literal Pending team review entries remain (HW06, HW07 and the two Milestone 2 audit entries); Daniel owns completion in #54. Their human experience and changes have not been invented. The security-decision acknowledgement is updated separately in #65. Historical entries remain dated evidence, not a claim of current unfinished application behavior |
+| Provider console failure | OPEN BUG | Coordinator triage and resolution of #66, followed by a repeat check; this verification PR contains no implementation fix |
+| Independent review and final merge | PENDING | Daniel reviews the completed evidence after the remaining checks; only the coordinator merges. Keep this checkpoint in a draft PR and keep #50 open |
+
+### AI assistance and review
+
+Codex prepared disposable browser-test harnesses and ran the checks, retained local result logs and screenshots, reproduced the provider observation before opening its separate bug issue, and drafted this record. Adopted only observed results; rejected treating earlier local simulated-API checks, a successful build, historical approvals or the absent Admin/mailbox session as live acceptance. The account holder confirmed that they will coordinate Admin and mailbox access with Juan. No application implementation changes or unrecorded human test results are claimed. Final delivery is not approved by this checkpoint.

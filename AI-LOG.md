@@ -1037,7 +1037,7 @@ The rows distinguish automated public/Member Chrome checks with real services, n
 | Live Admin moderation | PASS | Removed only the disposable test Listing after explicit confirmation. Admin showed Removed, the stored reason and success message; the owner API returned its copy to Available with currentListing null and matching lastModeration |
 | Admin layouts and keyboard | PASS for observed states | Inspected the removal dialog at 375/768/1280/1440 px in both themes, plus desktop overview and phone tables with internal horizontal scroll. Blank reason blocked submission; Cancel and Escape closed the dialog; Shift+Tab/Tab wrapped focus and Escape restored its trigger |
 | Admin console | PASS: no errors | Chrome DevTools showed only the existing Tailwind CDN production warning during these checks; no runtime or network errors were observed. This does not resolve the separate Marketplace provider failure in #66 |
-| Password recovery | ACCEPTED: limited scope, user report | On 2026-11-18 the account holder reported working recovery for the available test account and accepted the single-recipient scope. Codex did not observe a new email/reset; account role and individual negative cases were not specified |
+| Single-recipient recovery report | USER ACKNOWLEDGEMENT ONLY | On 2026-11-18 the account holder reported working recovery for the available test account and accepted the single-recipient scope. Codex did not observe a new email/reset; account role and individual negative cases were not specified |
 
 The final runs above completed after correcting harness selectors and waits. Only reproduced product/provider failures are tracked as bugs. Mobile dark Home and desktop light Marketplace screenshots were visually inspected as well.
 
@@ -1059,9 +1059,14 @@ The recipient restriction belongs to the email sender, not MongoDB: the document
 
 | Check | Status | Next step |
 | --- | --- | --- |
-| AI-LOG final-state completeness | PENDING | Four literal Pending team review entries remain (HW06, HW07 and the two Milestone 2 audit entries); Daniel owns completion in #54. Their human experience and changes have not been invented. The security-decision acknowledgement is updated separately in #65. Historical entries remain dated evidence, not a claim of current unfinished application behavior |
+| Password recovery as Member and Admin | PENDING | Issue #50 requires both role-specific live recovery walkthroughs. The single-recipient user report does not establish the account role or both journeys. Record both tests, or obtain an explicit scope change agreed by the coordinator in #50, before marking this PR ready or closing the issue. Preserve unchecked expiry and other unverified security cases |
+| AI-LOG final-state completeness | PENDING | Four literal Pending team review entries remain (HW06, HW07 and the two Milestone 2 audit entries); Daniel owns completion in #54. Their human experience and changes have not been invented. The security-decision acknowledgement was integrated in #65 (main 10e3ab6). Historical entries remain dated evidence, not a claim of current unfinished application behavior |
 | Provider console failure | OPEN BUG | Coordinator triage and resolution of #66, followed by a repeat check; this verification PR contains no implementation fix |
 | Independent review and final merge | PENDING | Daniel reviews the completed evidence after the remaining checks; only the coordinator merges. Keep this checkpoint in a draft PR and keep #50 open |
+
+### Review correction (2026-11-18)
+
+Juan requested changes on checkpoint b0a8e52 because the outstanding-gates table omitted Member/Admin recovery after the limited user acknowledgement. Codex restored that explicit PENDING gate and classified the report as an acknowledgement only. The report remains attributed to the account holder; it does not satisfy both role-specific journeys or change the issue scope. Merged main 10e3ab6 into this feature branch to include the accepted #65 decision record; no application code changed. The draft remains blocked by recovery evidence or an explicit agreed scope change in #50, #54, #66 and independent review.
 
 ### AI assistance and review
 

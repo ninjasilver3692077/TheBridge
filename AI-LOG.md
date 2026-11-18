@@ -1062,13 +1062,15 @@ At the account holder's explicit request, Juan performed the remaining role-spec
 
 | Check | Status | Next step |
 | --- | --- | --- |
-| AI-LOG final-state completeness | PENDING | Four literal Pending team review entries remain (HW06, HW07 and the two Milestone 2 audit entries); Daniel owns completion in #54. Their human experience and changes have not been invented. The security-decision acknowledgement was integrated in #65 (main 10e3ab6). Historical entries remain dated evidence, not a claim of current unfinished application behavior |
+| AI-LOG final-state completeness | PENDING | Four entries awaiting team review remain (HW06, HW07 and the two Milestone 2 audit entries); Daniel owns completion in #54. Their human experience and changes have not been invented. The security-decision acknowledgement was integrated in #65 (main 10e3ab6). Historical entries remain dated evidence, not a claim of current unfinished application behavior |
 | Provider console failure | OPEN BUG | Coordinator triage and resolution of #66, followed by a repeat check; this verification PR contains no implementation fix |
-| Independent review and final merge | PENDING | Daniel reviews the completed evidence after the remaining checks; only the coordinator merges. Keep this checkpoint in a draft PR and keep #50 open |
+| Independent review and final merge | PENDING | Daniel reviews the completed evidence after the remaining checks; only the coordinator merges. Keep this checkpoint in a draft PR and keep #50 open. Integrate #68 first, then update this branch from main, preserve both AI-LOG additions, and mark the #54 gate resolved only after checking the integrated result |
 
 ### Review correction (2026-11-18)
 
 Juan requested changes on checkpoint b0a8e52 because the outstanding-gates table omitted Member/Admin recovery after the limited user acknowledgement. Codex restored that explicit PENDING gate and classified the report as an acknowledgement only. The report remains attributed to the account holder; it does not satisfy both role-specific journeys or change the issue scope. Merged main 10e3ab6 into this feature branch to include the accepted #65 decision record; no application code changed. The recovery gate was subsequently satisfied by the coordinator evidence linked above. The draft remains blocked by #54, #66 and independent review.
+
+Daniel's preliminary review of 6142275 identified a quoted completion-marker phrase in the outstanding-gates row. Codex reworded that row so it cannot create a false match after #68 resolves the four historical entries. The append conflict with #68 will be resolved by updating from main after the coordinator integrates #68 first; neither that peer branch nor the final checkpoint is declared merged or approved here.
 
 ### AI assistance and review
 

@@ -937,3 +937,33 @@ Each feature claim was checked against `src/`, `routes/`, `api-design.md` and `.
 ### Learning
 
 A README drifts quickly once a backend lands; checking each sentence against the code and running the setup steps from a clean clone is what makes it trustworthy.
+
+## Chore - Issue #52: Archive the delivered 0-3 OpenSpec change (2026-11-18)
+
+### Prompt or task
+
+Jorge asked Claude to implement issue #52 on `feat/chore-archive-0-3` from main: sync the `catalog-search` delta into `openspec/specs/` and archive `0-3-data-layer-consolidation`, then address Edwin's review of PR #62 about the Knip check (task 2.1).
+
+### AI suggestions
+
+- Do the sync and archive by hand because the `openspec` CLI is not installed: copy the delta to `openspec/specs/catalog-search/spec.md` in the main-spec format and move the change to `openspec/changes/archive/2026-11-18-0-3-data-layer-consolidation/`.
+- Add `knip.json` so `api/index.ts` (the Vercel entry point), `server/scripts/*.ts` and `tests/**/*.ts` count as entry points instead of reporting `api/index.ts` as unused.
+- Remove `normalizeCatalogValue` and `fetchCurrentAccount`, which have no consumers, and drop `export` from six helpers used only inside their own file (`navigationItems`, `ADMIN_PAGE_SIZE`, `getRequestCtaLabel`, `toClientListing`, `toClientBook`, `toClientRequest`).
+- Leave the 20 unused exports, 12 unused types and 5 duplicate exports in `models/`, `server/` and `src/types.ts`: they are contract aliases and types that serve the HW11-HW14 rubrics and are identical on `main`.
+
+### Changes adopted
+
+All of the above. Task 2.1 stays unticked with the real Knip status; task 2.2 is ticked with Edwin's automated browser evidence, described as automated and not a production test. No server, model or type file changed.
+
+### Tests and verification
+
+- `npm run lint`, `npm run typecheck`, `npm test` and `npm run build` pass; `npx knip` still exits 1 with the findings above.
+- Edwin reproduced lint, typecheck, build and the 46 tests, and re-checked the three catalog searches at 375px, 768px, 1280px and 1440px with no JavaScript errors.
+
+### Human review and follow-up
+
+Edwin reviewed PR #62 twice and keeps changes requested until the coordinator accepts the remaining Knip baseline as an explicit exception in #52 or the findings are resolved in a separate issue.
+
+### Learning
+
+A check that is already red on main cannot be marked done by a pull request that does not cause it; the task list has to say so until someone with authority records the exception.

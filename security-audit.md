@@ -95,3 +95,7 @@ Run against https://thebridge-sepia.vercel.app. Items marked done were checked o
 - [ ] The 11th attempt receives 429. Confirm the identical response for an unknown email.
 
 Local automated checks use a mail double and a real temporary MongoDB replica set. They verify hashing, expiry, reuse, concurrency, delivery failure cleanup and the uniform response. Live email verification remains in the checklist above.
+
+### Issue #50 recovery acknowledgement (2026-11-18)
+
+The account holder reports that recovery works for the available test account and accepts the single-recipient limitation for this demonstration. They believe the account was created by the coordinator; the identity has not been confirmed. This is user-reported sign-off, not a new delivery or password reset observed by Codex. The exact account role, original test date and individual negative-case outcomes were not specified. The existing unchecked Admin recovery, expiry and live throttling checks above remain unchecked. The documented restriction comes from the Resend testing sender, not MongoDB; arbitrary recipients require a verified sending domain and sender configured by the coordinator. AI-LOG.md records the matching limited scope. No authentication or deployment configuration changed.

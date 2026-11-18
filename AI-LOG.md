@@ -1008,7 +1008,7 @@ Remove `src/data/listings.js` and feed the Home hero cover wall from the API thr
 
 ### Live browser checks with real services
 
-These were automated Chrome interactions with the deployed UI and real API/Open Library responses, without mocked endpoints. They are not a separate human walkthrough or proof of Admin or email acceptance.
+The rows distinguish automated public/Member Chrome checks with real services, native UI checks in the existing Admin session, and user-reported email recovery. No mocked endpoint is presented as live evidence, and each check retains its stated scope.
 
 | Check | Result | Evidence |
 | --- | --- | --- |
@@ -1029,6 +1029,7 @@ These were automated Chrome interactions with the deployed UI and real API/Open 
 | Live Admin moderation | PASS | Removed only the disposable test Listing after explicit confirmation. Admin showed Removed, the stored reason and success message; the owner API returned its copy to Available with currentListing null and matching lastModeration |
 | Admin layouts and keyboard | PASS for observed states | Inspected the removal dialog at 375/768/1280/1440 px in both themes, plus desktop overview and phone tables with internal horizontal scroll. Blank reason blocked submission; Cancel and Escape closed the dialog; Shift+Tab/Tab wrapped focus and Escape restored its trigger |
 | Admin console | PASS: no errors | Chrome DevTools showed only the existing Tailwind CDN production warning during these checks; no runtime or network errors were observed. This does not resolve the separate Marketplace provider failure in #66 |
+| Password recovery | ACCEPTED: limited scope, user report | On 2026-11-18 the account holder reported working recovery for the available test account and accepted the single-recipient scope. Codex did not observe a new email/reset; account role and individual negative cases were not specified |
 
 The final runs above completed after correcting harness selectors and waits. Only reproduced product/provider failures are tracked as bugs. Mobile dark Home and desktop light Marketplace screenshots were visually inspected as well.
 
@@ -1040,15 +1041,20 @@ Fixture setup used the real API to create one disposable Member, copy and Exchan
 
 The disposable owner's real API independently confirmed the copy was Available, currentListing was null, and lastModeration contained the exact Listing ID, reason and timestamp. Cleanup then deleted only that disposable Member using its own session after an identity check; the deleted account's token was rejected with 401. All writes targeted this disposable fixture. Chrome remained signed in as Admin Test; its displayed totals may need a refresh after fixture cleanup. No application code or deployment variables changed.
 
+### Password recovery acknowledgement
+
+On 2026-11-18, the account holder reported that email recovery works and explicitly accepted the single-recipient test setup. They believe the recipient is linked to an account created by the coordinator; that account identity has not been confirmed. This is a user-reported functional sign-off for that controlled recipient, not a new recovery session observed by Codex. The exact account identity, role, original test date and individual old-password/reuse/expiry outcomes were not supplied; none has been inferred. Admin-specific recovery and the unchecked live security checks in security-audit.md remain unverified.
+
+The recipient restriction belongs to the email sender, not MongoDB: the documented configuration uses onboarding@resend.dev without a verified sending domain. [Resend documentation](https://resend.com/docs/knowledge-base/403-error-resend-dev-domain) limits that testing sender to the address associated with the Resend account. Sending recovery mail to arbitrary Member or Admin accounts requires a verified sender/domain configured by the coordinator. The account holder accepts the limited demonstration scope; this does not establish unrestricted delivery or a new team-wide deployment decision. No email was sent and no password or deployment setting was changed during this acknowledgement.
+
 ### Outstanding acceptance gates
 
 | Check | Status | Next step |
 | --- | --- | --- |
-| Real password recovery and mailbox use | PENDING | Coordinate the authorized provider recipient and mailbox with Juan; open the real reset email, change the password, verify login and link reuse/expiry as applicable. No production email-delivery claim is made here |
 | AI-LOG final-state completeness | PENDING | Four literal Pending team review entries remain (HW06, HW07 and the two Milestone 2 audit entries); Daniel owns completion in #54. Their human experience and changes have not been invented. The security-decision acknowledgement is updated separately in #65. Historical entries remain dated evidence, not a claim of current unfinished application behavior |
 | Provider console failure | OPEN BUG | Coordinator triage and resolution of #66, followed by a repeat check; this verification PR contains no implementation fix |
 | Independent review and final merge | PENDING | Daniel reviews the completed evidence after the remaining checks; only the coordinator merges. Keep this checkpoint in a draft PR and keep #50 open |
 
 ### AI assistance and review
 
-Codex prepared disposable browser-test harnesses and ran the checks, retained local result logs and screenshots, reproduced the provider observation before opening its separate bug issue, and drafted this record. Adopted only observed results; rejected treating earlier local simulated-API checks, a successful build, historical approvals or unexecuted checks as live acceptance. The account holder supplied the existing Admin session and explicitly confirmed the single test moderation action; mailbox access remains to be coordinated with Juan. No application implementation changes or unrecorded human test results are claimed. Final delivery is not approved by this checkpoint.
+Codex prepared disposable browser-test harnesses and ran the checks, retained local result logs and screenshots, reproduced the provider observation before opening its separate bug issue, and drafted this record. Adopted only observed results; rejected treating earlier local simulated-API checks, a successful build, historical approvals or unexecuted checks as live acceptance. The account holder supplied the existing Admin session and explicitly confirmed the single test moderation action; the account holder later reported working recovery and accepted the controlled-recipient scope, as recorded above. Codex added this acknowledgement without converting unspecified checks into passing evidence. No application implementation changes or unrecorded human test results are claimed. Final delivery is not approved by this checkpoint.

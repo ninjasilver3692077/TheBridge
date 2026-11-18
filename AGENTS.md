@@ -18,6 +18,7 @@ People state the goal in plain language (an issue number, "apply 0-1", "review D
 
 - Start with `git status` and `git fetch`. For new work, update `main` and create the branch named in the issue; to continue or review, switch to the existing branch. Never work on `main`.
 - Read the issue with `gh issue view <number>` (or ask the person to paste it) and follow its task card.
+- The graded course rubric lives in `docs/rubric/` (`HW10-...` to `HW15-...`, each ending with its autograding list); read the file for the issue's HW before coding and check the work against it before handing it over.
 - Implement the issue directly against `api-design.md` and the course README for that week; to review someone else's pull request, read its diff (optionally with `/code-review`).
 - If the goal is unclear, check the open issues and the next HW deadline and propose the next step.
 - Commit locally from the person's account, but never push or open pull requests; give the person the exact commands to run.

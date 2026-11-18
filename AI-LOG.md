@@ -937,3 +937,19 @@ Each feature claim was checked against `src/`, `routes/`, `api-design.md` and `.
 ### Learning
 
 A README drifts quickly once a backend lands; checking each sentence against the code and running the setup steps from a clean clone is what makes it trustworthy.
+
+## HW13 — Issue #57: Remove the hardcoded listings mock from the Home hero
+
+### Prompt or task
+
+Remove `src/data/listings.js` and feed the Home hero cover wall from the API through `src/services/listings.js`, updating the home-hero spec.
+
+### Changes adopted
+
+- `CoverWall.jsx` now loads up to 48 Available Listings with `fetchListings` through `useApiResource` and renders only the covers that exist; with no data or an unreachable API it renders an empty wall.
+- Deleted `src/data/listings.js`; `grep -rn 'data/listings' src` returns nothing.
+- Updated the fallback requirement and scenarios in `openspec/specs/home-hero/spec.md`.
+
+### Tests and verification
+
+`npm run lint`, `npm run typecheck`, `npm test` (46 of 46) and `npm run build` pass. The 375px, 768px, 1280px and 1440px light and dark checks with the API unreachable were not run in a browser.

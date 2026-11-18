@@ -25,7 +25,7 @@ When the user's system requests reduced motion, the hero SHALL show a single pho
 - **THEN** one photograph is shown and it never changes while the page is open
 
 ### Requirement: Hero falls back when images fail
-A photograph that fails to load SHALL be dropped from the rotation. When no photograph loads, the hero SHALL show the cover wall instead.
+A photograph that fails to load SHALL be dropped from the rotation. When no photograph loads, the hero SHALL show a cover wall built from the covers of the Available Listings returned by the API, and SHALL show no covers when the API returns none or is unreachable.
 
 #### Scenario: One image missing
 - **WHEN** one of the three photographs fails to load
@@ -33,4 +33,8 @@ A photograph that fails to load SHALL be dropped from the rotation. When no phot
 
 #### Scenario: All images missing
 - **WHEN** none of the photographs load
-- **THEN** the hero shows the cover wall and no indicator
+- **THEN** the hero shows the cover wall of API listing covers and no indicator
+
+#### Scenario: Cover wall without API data
+- **WHEN** none of the photographs load and the API returns no listings or is unreachable
+- **THEN** the hero shows no covers and no indicator

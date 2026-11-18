@@ -1,14 +1,4 @@
-const SEARCH_FIELDS = [
-  "key",
-  "title",
-  "author_name",
-  "first_publish_year",
-  "edition_count",
-  "cover_i",
-  "publisher",
-  "isbn",
-  "language",
-].join(",");
+import { apiRequest } from "./apiClient.js";
 
 function pickIsbn(isbns = []) {
   return isbns.find((isbn) => isbn.length === 13) || isbns[0] || null;
@@ -75,35 +65,33 @@ function writeCache(query, books) {
 }
 
 async function searchOpenLibrary(query, signal) {
-  const url = new URL("https://openlibrary.org/search.json");
-  url.searchParams.set("q", query);
-  url.searchParams.set("limit", "20");
-  url.searchParams.set("fields", SEARCH_FIELDS);
-
-  const response = await fetch(url, { signal });
-
-  if (!response.ok) {
-    throw new Error(`Open Library returned ${response.status}.`);
-  }
-
-  const data = await response.json();
+  const params = new URLSearchParams({ q: query.trim() });
+  const { data } = await apiRequest(`/catalog/search?${params}`, { signal });
   return normalizeOpenLibraryBooks(data.docs);
 }
 
 export async function searchOpenLibraryWithCache(query, signal) {
+  signal?.throwIfAborted();
+
   try {
+    if (!navigator.onLine) throw new Error("The device is offline.");
+
     const books = await searchOpenLibrary(query, signal);
+    signal?.throwIfAborted();
     writeCache(query, books);
     return { books, savedAt: null };
   } catch (requestError) {
+    signal?.throwIfAborted();
     if (requestError.name === "AbortError") {
       throw requestError;
     }
 
-    const cached = readCache()[getCacheKey(query)];
+    const cache = readCache();
+    const key = getCacheKey(query);
 
-    if (cached) {
-      return { books: cached.books, savedAt: cached.savedAt };
+    if (Object.hasOwn(cache, key)) {
+      const { books, savedAt } = cache[key];
+      return { books, savedAt };
     }
 
     throw new Error(

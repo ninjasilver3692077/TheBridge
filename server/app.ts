@@ -5,6 +5,7 @@ import { rateLimit } from "express-rate-limit";
 import helmet from "helmet";
 import { adminRouter } from "../routes/admin.js";
 import { authRouter } from "../routes/auth.js";
+import { catalogRouter } from "../routes/catalog.js";
 import { favoritesRouter } from "../routes/favorites.js";
 import { healthRouter } from "../routes/health.js";
 import { listingsRouter } from "../routes/listings.js";
@@ -48,6 +49,7 @@ export function createApp(): express.Express {
   app.use("/api/auth/forgot-password", authLimiter(10));
   app.use("/api/auth/reset-password", authLimiter(10));
   app.use("/api", healthRouter);
+  app.use("/api", catalogRouter);
   app.use("/api", authRouter);
   app.use("/api", listingsRouter);
   app.use("/api", myBooksRouter);

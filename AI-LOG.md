@@ -109,7 +109,7 @@ Yes, AI (Claude) was used to write `computeListingStats`. The function starts fr
 
 ### Human changes and review
 
-Pending team review of the reflection wording and of the hardest-method answer, which must reflect the team's own experience.
+Operated by Juan with Claude Code and Codex (commit `31ae187`, 2026-09-27). Juan reports that the suggestions were adopted as proposed: no code was changed by hand and no suggestion was rejected. He confirms that the tests below were run. The team confirms that `reduce` was the hardest array method, so the answer above and the comparison in `REFLECTION.md` stand as written.
 
 ### Tests and verification
 
@@ -149,7 +149,7 @@ Yes, AI (Claude) implemented the cache and rewrote the mount-time effect with `a
 
 ### Human changes and review
 
-Pending team review.
+Operated by Juan; this record identifies the agent as Claude (commit `31ae187`). Juan reports no recorded manual changes or rejected suggestions. The offline checks below are documented, but the record does not show whether they were run by hand or by the agent.
 
 ### Tests and verification
 
@@ -383,7 +383,7 @@ Audit the repository against the cumulative HW06-HW10 requirements and fix every
 
 ### Human changes and review
 
-Pending team review before submission.
+Operated by Juan (commit `31ae187`, 2026-09-27). The follow-up commits of 2026-09-28 made concrete changes: team names and links (`4179ff4`), visual adjustments (`2ab5ef2`), the Marketplace quick view (`0a04b65`), the Open Library catalog (`bcf976c`), random catalog discovery (`4f0968a`) and persisted requests (`307bd61`). Juan reports that an agent made these changes under his supervision; they were not hand-written. The checks below are documented, but the record does not identify who ran each one.
 
 ### Tests and verification
 
@@ -422,7 +422,7 @@ Audit the final Milestone 2 code against the literal HW06-HW10 requirements and 
 
 ### Human changes and review
 
-Pending team review before submission.
+Operated by Juan (commit `df09b32`, 2026-09-28) with Claude Code or Codex; the session record does not say which. Juan reports no manual changes to the refactor. The later commit `71d9524` ("src components and hooks") only added `src/components/my-books/MyBooksHeader 2.jsx` and `src/hooks/useListingForm 2.js`, byte-identical iCloud copies of existing files with no functional change; they were removed in `5d755ff` and are listed as a known pitfall in AGENTS.md. The 29-state rendered HTML comparison below was run by the agent.
 
 ### Tests and verification
 
@@ -988,3 +988,31 @@ Remove `src/data/listings.js` and feed the Home hero cover wall from the API thr
 ### Tests and verification
 
 `npm run lint`, `npm run typecheck`, `npm test` (46 of 46) and `npm run build` pass. The 375px, 768px, 1280px and 1440px light and dark checks with the API unreachable were not run in a browser.
+
+## Issue #54 — Complete the AI-LOG entries pending team review (2026-11-18)
+
+### Prompt or task
+
+Daniel asked Claude to close issue #54 on `feat/docs-ai-log-human-review`: replace the four lines still awaiting team review (HW06, HW07, Milestone 2 Audit and Completion, Milestone 2 Final Rubric Compliance) with the real human review, without inventing changes.
+
+### AI suggestions
+
+- Identify who operated each session from the commits that added the entries (`31ae187` and `df09b32`, both by Juan) and ask him, per entry, for the agent used, manual changes, rejected suggestions and how each check was run.
+- Cite the follow-up commits that the history shows, and state plainly where the record does not show who ran a check.
+- Declined: drafting plausible human changes that nobody reported, because the issue forbids inventing them.
+
+### Changes adopted
+
+The four pending lines now record Juan's answers: Claude Code and Codex for HW06 with no manual changes or rejections; Claude for HW07 with no recorded manual changes; the 2026-09-28 follow-up commits after the Milestone 2 audit, made by an agent under Juan's supervision; and, for the final rubric compliance, an unnamed agent (Claude Code or Codex) and the clarification that `71d9524` only added two byte-identical iCloud copies, later removed in `5d755ff`. The team confirmed `reduce` as the hardest array method, so `REFLECTION.md` is unchanged. The entries for #46, #47, #48 and #49 were already added by their pull requests.
+
+### Human changes and review
+
+Daniel collected Juan's answers and reviewed the wording. Jorge reviews the pull request.
+
+### Tests and verification
+
+The grep check from the issue finds no remaining lines awaiting team review. Every cited commit was checked with `git show --stat`, and the two files added in `71d9524` were compared with their originals and are identical.
+
+### Learning
+
+When a log entry cannot say who ran a check, writing exactly that is more useful to a reviewer than a confident sentence nobody can back up.

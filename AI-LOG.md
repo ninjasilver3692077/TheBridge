@@ -1025,20 +1025,30 @@ These were automated Chrome interactions with the deployed UI and real API/Open 
 | Marketplace online/offline/reconnect | PASS | Searched Dune online, resubmitted the same query offline, saw Showing saved data, reconnected and retried; the notice cleared after the real provider responded |
 | JavaScript exceptions | PASS for tested paths | None observed in the completed public and Member runs |
 | Empty browser console | FAIL overall | The completed Member run had no console errors. Deliberate offline mode produced expected network errors. Separately, initial catalog discovery for art intermittently produced CORS / net::ERR_FAILED online; isolated browser rechecks reproduced it. Tracked in [#66](https://github.com/ninjasilver3692077/TheBridge/issues/66), not fixed in this PR |
+| Live Admin overview and tables | PASS | Existing Admin Test session loaded Listings, Requests and Members; baseline counts matched the tables (3 Members, 3 Listings, 5 Requests). Members search returned the expected empty state |
+| Live Admin moderation | PASS | Removed only the disposable test Listing after explicit confirmation. Admin showed Removed, the stored reason and success message; the owner API returned its copy to Available with currentListing null and matching lastModeration |
+| Admin layouts and keyboard | PASS for observed states | Inspected the removal dialog at 375/768/1280/1440 px in both themes, plus desktop overview and phone tables with internal horizontal scroll. Blank reason blocked submission; Cancel and Escape closed the dialog; Shift+Tab/Tab wrapped focus and Escape restored its trigger |
+| Admin console | PASS: no errors | Chrome DevTools showed only the existing Tailwind CDN production warning during these checks; no runtime or network errors were observed. This does not resolve the separate Marketplace provider failure in #66 |
 
 The final runs above completed after correcting harness selectors and waits. Only reproduced product/provider failures are tracked as bugs. Mobile dark Home and desktop light Marketplace screenshots were visually inspected as well.
+
+### Admin follow-up
+
+The account holder opened an existing authenticated Admin Test session on 2026-11-18. Codex used the native Chrome UI without exporting its token. Initial overview counts were 3 Members; Listings: 0 Available, 0 Reserved, 2 Closed, 1 Removed; Requests: 0 Pending, 0 Accepted, 2 Rejected, 0 Cancelled, 3 Completed. The three table totals agreed.
+
+Fixture setup used the real API to create one disposable Member, copy and Exchange Listing named TheBridge moderation test mwmf80hx (Listing 6afde655d7ed8e1a79b4ad3e). Refreshing Admin showed 4 Members and 1 Available Listing. The user explicitly confirmed the final moderation action for that exact Listing. At 13:04:18 America/Bogota, Admin showed it as Removed by Admin Test with the reason `Issue #50 verification: remove this disposable test listing only.`; Available became 0 and Removed became 2. The dialog closed and its success message appeared.
+
+The disposable owner's real API independently confirmed the copy was Available, currentListing was null, and lastModeration contained the exact Listing ID, reason and timestamp. Cleanup then deleted only that disposable Member using its own session after an identity check; the deleted account's token was rejected with 401. All writes targeted this disposable fixture. Chrome remained signed in as Admin Test; its displayed totals may need a refresh after fixture cleanup. No application code or deployment variables changed.
 
 ### Outstanding acceptance gates
 
 | Check | Status | Next step |
 | --- | --- | --- |
-| Live Admin totals, tables and listing removal | PENDING | A controlled Admin session is unavailable. The account holder will coordinate access with Juan. Do not bootstrap, promote an account or change deployment variables from this task |
 | Real password recovery and mailbox use | PENDING | Coordinate the authorized provider recipient and mailbox with Juan; open the real reset email, change the password, verify login and link reuse/expiry as applicable. No production email-delivery claim is made here |
-| Admin responsive/keyboard/console checks | PENDING | Repeat the four widths and both themes, keyboard and modal checks with the controlled Admin session |
 | AI-LOG final-state completeness | PENDING | Four literal Pending team review entries remain (HW06, HW07 and the two Milestone 2 audit entries); Daniel owns completion in #54. Their human experience and changes have not been invented. The security-decision acknowledgement is updated separately in #65. Historical entries remain dated evidence, not a claim of current unfinished application behavior |
 | Provider console failure | OPEN BUG | Coordinator triage and resolution of #66, followed by a repeat check; this verification PR contains no implementation fix |
 | Independent review and final merge | PENDING | Daniel reviews the completed evidence after the remaining checks; only the coordinator merges. Keep this checkpoint in a draft PR and keep #50 open |
 
 ### AI assistance and review
 
-Codex prepared disposable browser-test harnesses and ran the checks, retained local result logs and screenshots, reproduced the provider observation before opening its separate bug issue, and drafted this record. Adopted only observed results; rejected treating earlier local simulated-API checks, a successful build, historical approvals or the absent Admin/mailbox session as live acceptance. The account holder confirmed that they will coordinate Admin and mailbox access with Juan. No application implementation changes or unrecorded human test results are claimed. Final delivery is not approved by this checkpoint.
+Codex prepared disposable browser-test harnesses and ran the checks, retained local result logs and screenshots, reproduced the provider observation before opening its separate bug issue, and drafted this record. Adopted only observed results; rejected treating earlier local simulated-API checks, a successful build, historical approvals or unexecuted checks as live acceptance. The account holder supplied the existing Admin session and explicitly confirmed the single test moderation action; mailbox access remains to be coordinated with Juan. No application implementation changes or unrecorded human test results are claimed. Final delivery is not approved by this checkpoint.

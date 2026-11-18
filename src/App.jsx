@@ -1,105 +1,21 @@
-import { useCallback } from "react";
-import {
-  BrowserRouter,
-  Navigate,
-  Outlet,
-  Route,
-  Routes,
-  useLocation,
-  useParams,
-} from "react-router-dom";
-import AppShell from "./components/AppShell.jsx";
-import ErrorState from "./components/ErrorState.jsx";
-import LoadingState from "./components/LoadingState.jsx";
-import { useApiResource } from "./hooks/useApiResource.js";
-import { useSession, useSessionExpiryObserver } from "./hooks/useSession.js";
+import { BrowserRouter, Route, Routes } from "react-router-dom";
+import GuestOnlyRoute from "./components/routing/GuestOnlyRoute.jsx";
+import ProtectedRoute from "./components/routing/ProtectedRoute.jsx";
+import SessionBoundary from "./components/routing/SessionBoundary.jsx";
 import AboutPage from "./pages/AboutPage.jsx";
 import AddBookPage from "./pages/AddBookPage.jsx";
 import AdminPage from "./pages/AdminPage.jsx";
 import CreateListingPage from "./pages/CreateListingPage.jsx";
-import HomePage from "./pages/HomePage.jsx";
 import ForgotPasswordPage from "./pages/ForgotPasswordPage.jsx";
-import ResetPasswordPage from "./pages/ResetPasswordPage.jsx";
-import ListingDetailsPage from "./pages/ListingDetailsPage.jsx";
+import HomePage from "./pages/HomePage.jsx";
+import ListingRoute from "./pages/ListingRoute.jsx";
 import LoginPage from "./pages/LoginPage.jsx";
 import MarketplacePage from "./pages/MarketplacePage.jsx";
 import MyBooksPage from "./pages/MyBooksPage.jsx";
 import NotFoundPage from "./pages/NotFoundPage.jsx";
 import RegisterPage from "./pages/RegisterPage.jsx";
 import RequestsPage from "./pages/RequestsPage.jsx";
-import { homePathByRole, safeReturnPath } from "./services/auth.js";
-import { isSessionExpired } from "./services/authStorage.js";
-import { fetchListing } from "./services/listings.js";
-
-function SessionBoundary() {
-  useSessionExpiryObserver();
-
-  return <Outlet />;
-}
-
-function ProtectedRoute({ role }) {
-  const session = useSession();
-  const location = useLocation();
-
-  if (isSessionExpired(session)) {
-    return (
-      <Navigate
-        to="/login"
-        replace
-        state={{ from: `${location.pathname}${location.search}` }}
-      />
-    );
-  }
-
-  if (session.account.role !== role) {
-    return <Navigate to={homePathByRole[session.account.role]} replace />;
-  }
-
-  return <Outlet />;
-}
-
-function GuestOnlyRoute() {
-  const session = useSession();
-  const location = useLocation();
-
-  if (!isSessionExpired(session)) {
-    return (
-      <Navigate
-        to={safeReturnPath(location.state?.from, session.account.role)}
-        replace
-      />
-    );
-  }
-
-  return <Outlet />;
-}
-
-function ListingRoute() {
-  const { id } = useParams();
-  const load = useCallback((signal) => fetchListing(id, { signal }), [id]);
-  const { status, data: listing, error, reload } = useApiResource(load);
-
-  if (status === "success") {
-    return <ListingDetailsPage key={id} listing={listing} />;
-  }
-
-  return (
-    <AppShell title="Listing details" subtitle="Loading this listing">
-      {status === "error" ? (
-        <ErrorState
-          title="We could not load this listing"
-          message={error}
-          onRetry={reload}
-        />
-      ) : (
-        <LoadingState
-          title="Loading listing..."
-          message="Fetching the details of this book."
-        />
-      )}
-    </AppShell>
-  );
-}
+import ResetPasswordPage from "./pages/ResetPasswordPage.jsx";
 
 function App() {
   return (

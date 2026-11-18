@@ -1,0 +1,37 @@
+export const navIconPaths = {
+  home: <path d="m3 11 9-8 9 8v9a1 1 0 0 1-1 1h-5v-7H9v7H4a1 1 0 0 1-1-1Z" />,
+  marketplace: <path d="M4 7h16M5 7l1-3h12l1 3M5 7v13h14V7M9 11h6M9 15h6" />,
+  books: (
+    <>
+      <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20V4H6.5A2.5 2.5 0 0 0 4 6.5Z" />
+      <path d="M4 6.5v13" />
+    </>
+  ),
+  add: (
+    <>
+      <circle cx="12" cy="12" r="9" />
+      <path d="M12 8v8M8 12h8" />
+    </>
+  ),
+  edit: (
+    <>
+      <path d="M12 20h9" />
+      <path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z" />
+    </>
+  ),
+  requests: <path d="M21 15a4 4 0 0 1-4 4H8l-5 3V7a4 4 0 0 1 4-4h10a4 4 0 0 1 4 4Z" />,
+  admin: (
+    <>
+      <path d="M12 3 4 6v6c0 4.5 3.4 8.3 8 9 4.6-.7 8-4.5 8-9V6Z" />
+      <path d="m9 12 2 2 4-4" />
+    </>
+  ),
+  "sign-in": <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4M10 17l5-5-5-5M15 12H3" />,
+};
+
+export const fallbackNavIconPath = (
+  <>
+    <circle cx="12" cy="12" r="9" />
+    <path d="M12 11v6M12 7h.01" />
+  </>
+);

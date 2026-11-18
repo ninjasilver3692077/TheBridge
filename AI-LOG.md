@@ -1,12 +1,20 @@
 # AI-LOG
 
+## Security decision acceptance record - Issue #53 (2026-11-18)
+
+OpenAI Codex updated DECISIONS.md and security-audit.md after Jorge [explicitly accepted and approved proposal commit 32018df](https://github.com/ninjasilver3692077/TheBridge/pull/56#pullrequestreview-5961763556) on 2026-11-18 at 12:26 America/Bogota. The record also links Juan's and Daniel's approvals of that same proposal commit and distinguishes those approvals from review of this follow-up. All required participants have accepted retaining localStorage for this academic delivery.
+
+Adopted Jorge's nonblocking clarification: index.html loads cdn.tailwindcss.com without a pinned version or an integrity attribute; that script executes with the page's privileges and could read the JWT if compromised. The documents retain the residual XSS risk, existing mitigations and HttpOnly-cookie alternative. No authentication code, dependencies or deployment settings changed, and no human implementation changes are claimed.
+
+Verification: checked the actual GitHub review states, commit IDs, timestamps and linked responses; inspected index.html and AGENTS.md for the CDN statement; checked both documents for matching status and evidence. npm run lint and npm run build pass. This is a documentation update, not a live security test. Daniel and the required team approvers are requested to review the final text; the coordinator alone merges. Issue #53 stays open until that review and merge.
+
 ## Security decision proposal - Issue #53 (2026-11-17)
 
 OpenAI Codex prepared the DECISIONS.md token-storage proposal and the matching security-audit.md status against the current authStorage, apiClient, server authentication and architecture. The proposal explains the course-delivery rationale, residual XSS risk, current mitigations and the HttpOnly-cookie alternative, with OWASP and MDN references.
 
-Recorded Juan's explicit acceptance and [formal approval of acc7596](https://github.com/ninjasilver3692077/TheBridge/pull/56#pullrequestreview-5945877261) on 2026-11-17, and Daniel's [independent approval and acceptance](https://github.com/ninjasilver3692077/TheBridge/pull/56#pullrequestreview-5950684340) on 2026-11-17 at 23:10 America/Bogota. These are approvals of acc7596, not a claim of approval of subsequent commits. Jorge's position remains pending, and the final updated record requires review before merge. Names, dates, evidence and audit status agree; authentication code is unchanged.
+Recorded Juan's explicit acceptance and [formal approval of acc7596](https://github.com/ninjasilver3692077/TheBridge/pull/56#pullrequestreview-5945877261) on 2026-11-17, and Daniel's [independent approval and acceptance](https://github.com/ninjasilver3692077/TheBridge/pull/56#pullrequestreview-5950684340) on 2026-11-17 at 23:10 America/Bogota. These are approvals of acc7596, not a claim of approval of subsequent commits. At that stage Jorge's position was pending; his later acceptance and the follow-up record are documented in the 2026-11-18 entry above. Names, dates, evidence and audit status agree; authentication code is unchanged.
 
-Verification: npm run lint and npm run build pass. This is documentation-only work; it does not claim a production security test or team acceptance.
+Verification: npm run lint and npm run build pass. This is documentation-only work; it did not establish team acceptance or claim a production security test. The completed acknowledgement evidence is recorded in the follow-up above.
 
 ## Repository Foundation
 
@@ -967,3 +975,54 @@ Edwin reviewed PR #62 twice and keeps changes requested until the coordinator ac
 ### Learning
 
 A check that is already red on main cannot be marked done by a pull request that does not cause it; the task list has to say so until someone with authority records the exception.
+
+## HW10 - Issue #46: Split admin and library components (2026-11-18)
+
+### Prompt or task
+
+Jorge asked Claude to implement issue #46 on `feat/hw10-split-admin-components` from main: bring `AdminPage.jsx`, `AdminCollection.jsx`, `AdminRows.jsx`, `RemoveListingDialog.jsx`, `FavoritesSection.jsx` and `AddBookConfirm.jsx` to 80 lines or fewer without changing rendered output, routes, services or behavior.
+
+### AI suggestions
+
+- Split `AdminRows.jsx` into one file per row (`AdminListingRow`, `AdminRequestRow`, `AdminMemberRow`) plus `AdminRowParts` for the status badge and person cell, and `formatAdminDate` for the shared date format.
+- Split `AdminCollection.jsx` into `AdminCollectionSearch`, `AdminCollectionResults`, `AdminCollectionTable` and `AdminCollectionPager`, keeping the fetch state in the container.
+- Move the three tab panels to `AdminTabPanels`, the overview states to `AdminOverviewSection`, and the removal and member-deletion state to `useAdminModeration`, with `useAdminOverview` wrapping the overview request.
+- Move the removal form out of `RemoveListingDialog.jsx` into `RemoveListingForm`, the favorite list item into `FavoriteItem`, and the Add Book confirmation state into `useAddBookConfirm`.
+
+### Changes adopted
+
+All of the above. Every remaining JSX file in the issue and every new component file is at most 80 lines; `AdminRows.jsx` was replaced by the extracted row components. Text, classes, services and routes did not change; domain data is still read and written only through `src/services/admin.js` and `src/services/myBooks.js`.
+
+### Tests and verification
+
+- `npm run lint`, `npm run typecheck`, `npm test` and `npm run build` pass; `find src -name "*.jsx" -exec wc -l {} +` shows no file above 80 lines.
+- The first lint run failed because `formatDate` was exported from a component file (`react-refresh/only-export-components`); it moved to `formatAdminDate.js`.
+- On 2026-11-18, Edwin recorded a local Chrome comparison of the baseline and commit `101f332461ea1f4c1a25d80aef4c0fe8fb3909ca` using the same controlled API data: all 62 DOM states matched after ignoring empty style attributes introduced by automation. The checks covered Admin totals, Listings/Requests/Members, search, filters, pagination, empty/error states, listing removal with reason validation and conflict/retry, Member deletion, Add Book confirmation with validation/retry, and removing favorites.
+- Edwin also verified 375px, 768px, 1280px and 1440px in light and dark themes, Tab/Shift+Tab, Escape dismissal and dialog focus restoration, plus Member and guest redirects from the Admin route. No horizontal overflow or JavaScript errors were reported; intentional HTTP 409 and 503 responses produced only expected network errors. These were automated local browser checks with a simulated API, not production acceptance.
+- OpenAI Codex independently reran `npm run lint`, `npm run typecheck`, `npm test` (46/46) and `npm run build` against the same commit in a temporary copy on 2026-11-18; all passed. No JSX file exceeded 80 lines; the maximum was `RemoveListingForm.jsx` at 80.
+
+### Human review and follow-up
+
+Edwin (AndresMonca) independently [approved commit `101f332461ea1f4c1a25d80aef4c0fe8fb3909ca`](https://github.com/ninjasilver3692077/TheBridge/pull/64#pullrequestreview-5960931061) on 2026-11-18 at 11:37 America/Bogota. His review contains the browser evidence summarized above and reports no blocking findings. It does not claim a separate manual production walkthrough. Final integrated and live Member/Admin verification remains issue #50; the coordinator merges.
+
+Juan subsequently asked OpenAI Codex to reconcile this entry with the recorded review. Codex replaced the stale pending-browser and pending-review statements, linked the actual approval, and clarified the verification scope. This follow-up changes documentation only; it adds no application code changes and does not extend the existing approval to a later commit.
+
+### Learning
+
+Moving state into hooks and splitting tables by responsibility keeps each file small, but an exported helper in a component file breaks fast refresh, so shared helpers need their own module.
+
+## HW13 — Issue #57: Remove the hardcoded listings mock from the Home hero
+
+### Prompt or task
+
+Remove `src/data/listings.js` and feed the Home hero cover wall from the API through `src/services/listings.js`, updating the home-hero spec.
+
+### Changes adopted
+
+- `CoverWall.jsx` now loads up to 48 Available Listings with `fetchListings` through `useApiResource` and renders only the covers that exist; with no data or an unreachable API it renders an empty wall.
+- Deleted `src/data/listings.js`; `grep -rn 'data/listings' src` returns nothing.
+- Updated the fallback requirement and scenarios in `openspec/specs/home-hero/spec.md`.
+
+### Tests and verification
+
+`npm run lint`, `npm run typecheck`, `npm test` (46 of 46) and `npm run build` pass. The 375px, 768px, 1280px and 1440px light and dark checks with the API unreachable were not run in a browser.

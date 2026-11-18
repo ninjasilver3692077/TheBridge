@@ -1,4 +1,4 @@
-export const navigationItems = [
+const navigationItems = [
   { id: "home", label: "Home", path: "/", icon: "home", mobile: true, audience: "everyone" },
   {
     id: "marketplace",

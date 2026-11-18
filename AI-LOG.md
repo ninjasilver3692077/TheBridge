@@ -937,3 +937,34 @@ Each feature claim was checked against `src/`, `routes/`, `api-design.md` and `.
 ### Learning
 
 A README drifts quickly once a backend lands; checking each sentence against the code and running the setup steps from a clean clone is what makes it trustworthy.
+
+## HW10 - Issue #46: Split admin and library components (2026-11-18)
+
+### Prompt or task
+
+Jorge asked Claude to implement issue #46 on `feat/hw10-split-admin-components` from main: bring `AdminPage.jsx`, `AdminCollection.jsx`, `AdminRows.jsx`, `RemoveListingDialog.jsx`, `FavoritesSection.jsx` and `AddBookConfirm.jsx` to 80 lines or fewer without changing rendered output, routes, services or behavior.
+
+### AI suggestions
+
+- Split `AdminRows.jsx` into one file per row (`AdminListingRow`, `AdminRequestRow`, `AdminMemberRow`) plus `AdminRowParts` for the status badge and person cell, and `formatAdminDate` for the shared date format.
+- Split `AdminCollection.jsx` into `AdminCollectionSearch`, `AdminCollectionResults`, `AdminCollectionTable` and `AdminCollectionPager`, keeping the fetch state in the container.
+- Move the three tab panels to `AdminTabPanels`, the overview states to `AdminOverviewSection`, and the removal and member-deletion state to `useAdminModeration`, with `useAdminOverview` wrapping the overview request.
+- Move the removal form out of `RemoveListingDialog.jsx` into `RemoveListingForm`, the favorite list item into `FavoriteItem`, and the Add Book confirmation state into `useAddBookConfirm`.
+
+### Changes adopted
+
+All of the above. Every file in the issue is now at most 80 lines and every new file is smaller. Text, classes, services and routes did not change; domain data is still read and written only through `src/services/admin.js` and `src/services/myBooks.js`.
+
+### Tests and verification
+
+- `npm run lint`, `npm run typecheck`, `npm test` and `npm run build` pass; `find src -name "*.jsx" -exec wc -l {} +` shows no file above 80 lines.
+- The first lint run failed because `formatDate` was exported from a component file (`react-refresh/only-export-components`); it moved to `formatAdminDate.js`.
+- Not yet checked in a browser: Admin totals, Listings and Requests tables, removing a Listing, the Admin-only route guard, and the 375px, 768px, 1280px and 1440px layouts in light and dark mode.
+
+### Human review and follow-up
+
+Edwin is the requested reviewer. The manual Admin checks above must be run by a person before merging. Final integrated verification remains issue #50.
+
+### Learning
+
+Moving state into hooks and splitting tables by responsibility keeps each file small, but an exported helper in a component file breaks fast refresh, so shared helpers need their own module.

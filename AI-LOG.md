@@ -953,17 +953,21 @@ Jorge asked Claude to implement issue #46 on `feat/hw10-split-admin-components` 
 
 ### Changes adopted
 
-All of the above. Every file in the issue is now at most 80 lines and every new file is smaller. Text, classes, services and routes did not change; domain data is still read and written only through `src/services/admin.js` and `src/services/myBooks.js`.
+All of the above. Every remaining JSX file in the issue and every new component file is at most 80 lines; `AdminRows.jsx` was replaced by the extracted row components. Text, classes, services and routes did not change; domain data is still read and written only through `src/services/admin.js` and `src/services/myBooks.js`.
 
 ### Tests and verification
 
 - `npm run lint`, `npm run typecheck`, `npm test` and `npm run build` pass; `find src -name "*.jsx" -exec wc -l {} +` shows no file above 80 lines.
 - The first lint run failed because `formatDate` was exported from a component file (`react-refresh/only-export-components`); it moved to `formatAdminDate.js`.
-- Not yet checked in a browser: Admin totals, Listings and Requests tables, removing a Listing, the Admin-only route guard, and the 375px, 768px, 1280px and 1440px layouts in light and dark mode.
+- On 2026-11-18, Edwin recorded a local Chrome comparison of the baseline and commit `101f332461ea1f4c1a25d80aef4c0fe8fb3909ca` using the same controlled API data: all 62 DOM states matched after ignoring empty style attributes introduced by automation. The checks covered Admin totals, Listings/Requests/Members, search, filters, pagination, empty/error states, listing removal with reason validation and conflict/retry, Member deletion, Add Book confirmation with validation/retry, and removing favorites.
+- Edwin also verified 375px, 768px, 1280px and 1440px in light and dark themes, Tab/Shift+Tab, Escape dismissal and dialog focus restoration, plus Member and guest redirects from the Admin route. No horizontal overflow or JavaScript errors were reported; intentional HTTP 409 and 503 responses produced only expected network errors. These were automated local browser checks with a simulated API, not production acceptance.
+- OpenAI Codex independently reran `npm run lint`, `npm run typecheck`, `npm test` (46/46) and `npm run build` against the same commit in a temporary copy on 2026-11-18; all passed. No JSX file exceeded 80 lines; the maximum was `RemoveListingForm.jsx` at 80.
 
 ### Human review and follow-up
 
-Edwin is the requested reviewer. The manual Admin checks above must be run by a person before merging. Final integrated verification remains issue #50.
+Edwin (AndresMonca) independently [approved commit `101f332461ea1f4c1a25d80aef4c0fe8fb3909ca`](https://github.com/ninjasilver3692077/TheBridge/pull/64#pullrequestreview-5960931061) on 2026-11-18 at 11:37 America/Bogota. His review contains the browser evidence summarized above and reports no blocking findings. It does not claim a separate manual production walkthrough. Final integrated and live Member/Admin verification remains issue #50; the coordinator merges.
+
+Juan subsequently asked OpenAI Codex to reconcile this entry with the recorded review. Codex replaced the stale pending-browser and pending-review statements, linked the actual approval, and clarified the verification scope. This follow-up changes documentation only; it adds no application code changes and does not extend the existing approval to a later commit.
 
 ### Learning
 

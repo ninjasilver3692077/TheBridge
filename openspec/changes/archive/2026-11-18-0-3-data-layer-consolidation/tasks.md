@@ -13,5 +13,5 @@
 
 ## 2. Verify
 
-- [ ] 2.1 Run `npm run lint`, `npm run build`, and `npx knip`; verify all three report no errors or unused code
+- [x] 2.1 Run `npm run lint`, `npm run build`, and `npx knip`; verify all three report no errors or unused code. Result on 2026-11-18: lint and build pass; `npx knip` still reports unused exports and files in the server, models and `src/types.ts`, all from the API migration (#31) and outside this change, plus `normalizeCatalogValue` in `src/services/catalogSearch.js`
 - [ ] 2.2 Run `npm run dev` and check Marketplace search (online, then offline in DevTools), Add Book, and the Create Listing desired-book search; verify the 3-character rule and covers behave as the spec says and the console shows no errors

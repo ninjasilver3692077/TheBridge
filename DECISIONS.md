@@ -59,15 +59,17 @@ These proposals are documentation for review, not proof of implementation, deplo
 
 ## Issue #53: Session token storage for the academic delivery
 
-**Status:** Proposed on 2026-11-17 by Edwin (AndresMonca). Juan accepted the proposal and approved record acc7596; Daniel independently reviewed and approved that record. Jorge's acknowledgement remains pending, so full team acceptance is incomplete. The updated final record still requires review before merge.
+**Status:** Accepted for this academic delivery on 2026-11-18 after Juan, Jorge and Daniel approved the proposal in PR #56. The acknowledgement record below links their actual responses. This follow-up records the completed agreement after the coordinator merged #56; its final wording still needs independent review and coordinator merge before issue #53 closes.
 
-### Proposed decision and rationale
+### Accepted decision and rationale
 
-Keep the existing JWT in localStorage under thebridge:session through src/services/authStorage.js for this course delivery. src/services/apiClient.js reads the session and explicitly sends the Bearer header. This preserves the current React SPA and the course/architecture token-storage profile while Express runs on Vercel. Vercel serverless does not require localStorage and supports cookie-based designs; compatibility with the delivered contract and the academic scope motivate this proposal.
+Keep the existing JWT in localStorage under thebridge:session through src/services/authStorage.js for this course delivery. src/services/apiClient.js reads the session and explicitly sends the Bearer header. This preserves the current React SPA and the course/architecture token-storage profile while Express runs on Vercel. Vercel serverless does not require localStorage and supports cookie-based designs; compatibility with the delivered contract and the academic scope motivate this decision.
 
 ### Residual risk and existing controls
 
-Any JavaScript executing in the application origin can read the token. An XSS flaw or compromised third-party script can steal it and act as that account. OWASP recommends avoiding session identifiers in localStorage because JavaScript can access them; this proposal requires an explicit, limited course-delivery exception rather than a claim that localStorage is safe. See [OWASP HTML5 local storage guidance](https://cheatsheetseries.owasp.org/cheatsheets/HTML5_Security_Cheat_Sheet.html#local-storage).
+Any JavaScript executing in the application origin can read the token. An XSS flaw or compromised third-party script can steal it and act as that account. OWASP recommends avoiding session identifiers in localStorage because JavaScript can access them; the team accepts an explicit, limited course-delivery exception rather than a claim that localStorage is safe. See [OWASP HTML5 local storage guidance](https://cheatsheetseries.owasp.org/cheatsheets/HTML5_Security_Cheat_Sheet.html#local-storage).
+
+The main third-party script exposure is `https://cdn.tailwindcss.com`, loaded by `index.html` without a pinned version or an integrity attribute. Although fetched from a third-party host, the script executes with the application page's privileges and can read its localStorage. A compromised response could therefore steal the JWT. AGENTS.md currently requires Tailwind from the CDN; Jorge explicitly accepted the residual risk for this delivery and requested this clarification. API helmet headers do not add a CSP to the static client.
 
 The current implementation reduces exposure as follows:
 
@@ -82,14 +84,14 @@ A stolen JWT can remain usable until expiry while its account exists. Logout, ch
 
 A Secure, HttpOnly cookie could prevent JavaScript from reading the cookie value. It would still accompany eligible requests, so XSS could perform actions and cookie-based authentication would need an explicit CSRF/SameSite design. See [MDN HttpOnly](https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/Set-Cookie#httponly). Selecting that alternative requires a separate implementation issue covering the contract, cookie/session lifecycle, client requests, tests and course compatibility. This documentation PR does not change authentication code.
 
-### Required acknowledgement record
+### Acknowledgement record
 
 | Participant | Role | Position | Date | Evidence |
 | --- | --- | --- | --- | --- |
-| Juan (ninjasilver3692077) | Required team acknowledgement | Accepted the proposal and approved record acc7596 | 2026-11-17 (America/Bogota) | [Acknowledgement](https://github.com/ninjasilver3692077/TheBridge/pull/56#pullrequestreview-5944844208); [APPROVED review](https://github.com/ninjasilver3692077/TheBridge/pull/56#pullrequestreview-5945877261) |
-| Jorge (jfontx) | Required team acknowledgement | Pending | Pending | Pending PR conversation or review |
-| Daniel (danieloro07) | Independent reviewer | Independently reviewed and approved acc7596; explicitly accepted the proposal | 2026-11-17 23:10 -05:00 (America/Bogota) | [APPROVED review](https://github.com/ninjasilver3692077/TheBridge/pull/56#pullrequestreview-5950684340) |
+| Juan (ninjasilver3692077) | Required team acknowledgement | Accepted the proposal on 2026-11-17; formally approved final proposal record 32018df | 2026-11-18 10:34 -05:00 (America/Bogota) | [Acknowledgement](https://github.com/ninjasilver3692077/TheBridge/pull/56#pullrequestreview-5944844208); [APPROVED final proposal](https://github.com/ninjasilver3692077/TheBridge/pull/56#pullrequestreview-5959739010) |
+| Jorge (jfontx) | Required team acknowledgement | Explicitly accepted localStorage for this delivery and approved 32018df; requested the nonblocking Tailwind CDN risk clarification above | 2026-11-18 12:26 -05:00 (America/Bogota) | [APPROVED review](https://github.com/ninjasilver3692077/TheBridge/pull/56#pullrequestreview-5961763556) |
+| Daniel (danieloro07) | Independent reviewer | Explicitly accepted the proposal on 2026-11-17 at 23:10 -05:00; independently approved final proposal record 32018df | 2026-11-18 10:50 -05:00 (America/Bogota) | [Initial acceptance](https://github.com/ninjasilver3692077/TheBridge/pull/56#pullrequestreview-5950684340); [APPROVED final proposal](https://github.com/ninjasilver3692077/TheBridge/pull/56#pullrequestreview-5960076781) |
 
-Record the actual position, date and link from each participant's own PR response. Silence, an assignment or an earlier code approval does not establish acceptance of this proposal. Keep issue #53 open until both required positions are recorded and the final PR has the approvals required by the issue, including Daniel's independent review. After both acknowledgements, update this entry and security-audit.md section 6 together to state the actual decision and evidence; then obtain review of the final text before the coordinator merges. If the team chooses another storage mechanism, open a separate implementation issue and keep this record aligned with that choice.
+All three reviews above apply to proposal commit 32018df in #56, not to this later documentation commit. The coordinator merged #56 before Jorge responded; Jorge's later explicit approval completes the required acknowledgement evidence. Keep issue #53 open until this matching update to DECISIONS.md and security-audit.md receives independent review and is merged by the coordinator. HttpOnly cookies remain an alternative requiring a separate implementation issue if selected; the team has chosen to keep the current storage for this delivery.
 
 This entry governs the session-token storage decision only. It does not accept other historical architecture proposals or resolve unrelated security risks.

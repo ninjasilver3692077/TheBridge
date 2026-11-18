@@ -842,3 +842,32 @@ Implement Milestone 4 account management (`PATCH /api/account/password`, `DELETE
 - `npm run build`: production bundle built cleanly.
 - `npm test`: 36 of 36 unit tests passing.
 - `npm run test:integration`: 41 of 41 integration tests passing against `MongoMemoryReplSet`.
+
+## HW10 - Issue #48: Split listing, requests and My Books components (2026-11-17)
+
+### Prompt or task
+
+OpenAI Codex implemented issue #48 on feat/hw10-split-listing-components from main e771e8c. Reduce the five assigned JSX files to at most 80 lines by responsibility while preserving rendered output, routes, service calls and behavior.
+
+### Changes adopted
+
+- Extracted request-dialog state and submission into useListingRequest, with separate dialog, form and exchange-book views. The existing focus hook still controls the dialog.
+- Extracted Requests and Create Listing state into useRequests and useCreateListing, with views for request results and listing header/loading/error/empty states.
+- Extracted listing empty and pagination views, and My Books filtering/counters into useMyBooks. Domain reads and writes still go through src/services.
+- The five target line counts are ListingRequestModal.jsx 13, RequestsPage.jsx 22, CreateListingPage.jsx 32, ListingGrid.jsx 64, MyBooksPage.jsx 57. All nine new JSX files are also under 80 lines. The other oversized components belong to #46 and #47.
+
+### Tests and verification
+
+- npm run lint, npm run typecheck, npm test (46 tests) and npm run build pass.
+- Local Chrome compared main and the refactor using the same controlled API data. All 77 rendered states match after ignoring empty style attributes added by browser automation: 45 page/workflow states and 32 request-dialog states.
+- Verified My Books filters and counters; Requests Received/Sent tabs, keyboard tab changes, accept, reject, complete and cancel; publishing and requesting all four modalities; Exchange offer and Sale payment validation; pagination and empty states.
+- Checked 375px, 768px, 1280px and 1440px in light and dark themes. Dialogs retain Tab/Shift+Tab trapping, Escape dismissal and focus restoration, with no horizontal overflow. Screenshots were inspected locally.
+- Exercised one intentional HTTP 409 send failure and retry in each baseline/candidate run. There were no JavaScript errors or unexpected browser console errors. The API was simulated; these checks do not claim production acceptance or a live password-reset email.
+
+### Human review and follow-up
+
+Daniel is the requested independent reviewer; the coordinator merges. Final integrated and live verification remains issue #50, after #46, #47, #48 and #49 merge.
+
+### Learning
+
+Comparing the rendered DOM and actions against a fixed baseline checks that component extraction preserves behavior across responsive layouts and dialogs.

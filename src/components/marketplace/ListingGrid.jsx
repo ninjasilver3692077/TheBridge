@@ -1,4 +1,5 @@
-import { buttonSecondary } from "../../styles/ui.js";
+import ListingGridEmpty from "./ListingGridEmpty.jsx";
+import ListingPagination from "./ListingPagination.jsx";
 import ErrorState from "../ErrorState.jsx";
 import LoadingState from "../LoadingState.jsx";
 import ListingCard from "./ListingCard.jsx";
@@ -35,21 +36,7 @@ function ListingGrid({
   }
 
   if (listings.length === 0) {
-    return (
-      <div className="rounded-2xl bg-surface-muted px-6 py-16 text-center">
-        <h2 className="text-lg font-semibold text-ink">
-          No listings match your filters
-        </h2>
-
-        <p className="mt-2 text-sm text-ink-muted">
-          Try another title, author, or ISBN, or remove some filters.
-        </p>
-
-        <button type="button" onClick={onReset} className={`mt-6 ${buttonSecondary}`}>
-          Clear filters
-        </button>
-      </div>
-    );
+    return <ListingGridEmpty onReset={onReset} />;
   }
 
   return (
@@ -64,24 +51,12 @@ function ListingGrid({
         ))}
       </div>
 
-      {hasMore && (
-        <div className="mt-8 flex flex-col items-center gap-3">
-          <button
-            type="button"
-            onClick={onLoadMore}
-            disabled={loadingMore}
-            className={buttonSecondary}
-          >
-            {loadingMore ? "Loading..." : "Show more listings"}
-          </button>
-
-          {loadMoreError && (
-            <p role="alert" className="text-sm text-ink-muted">
-              {loadMoreError}
-            </p>
-          )}
-        </div>
-      )}
+      <ListingPagination
+        hasMore={hasMore}
+        loadingMore={loadingMore}
+        loadMoreError={loadMoreError}
+        onLoadMore={onLoadMore}
+      />
     </section>
   );
 }

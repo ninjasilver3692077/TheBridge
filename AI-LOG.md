@@ -1066,7 +1066,7 @@ When a log entry cannot say who ran a check, writing exactly that is more useful
 
 ### Scope and status
 
-**In progress; not final acceptance.** OpenAI Codex began this task after the coordinator merged #55 (#48), #59 (#47), #60 (#49) and #64 (#46). The source under test was main commit 281027c, with no application code changes in this verification branch. The public site was https://thebridge-sepia.vercel.app; its module asset index-BtIH4JF-.js matched the production build from that commit. All dates below are 2026-11-18 in America/Bogota.
+**Ready for independent review; final acceptance and merge remain pending.** The final integrated source under test is main c903c9905f1fc56f7b905b20fde494d082a505ab, including #62, #65, #68 and #69. This PR adds verification documentation only. The public app at https://thebridge-sepia.vercel.app serves module index-Cs07IuAO.js, matching that main build. Earlier full Member/Admin walkthroughs are retained below with their original scope; the changed catalog paths were rechecked on the final deployment. All dates are 2026-11-18 in America/Bogota.
 
 ### Local checks on main
 
@@ -1074,14 +1074,15 @@ When a log entry cannot say who ran a check, writing exactly that is more useful
 | --- | --- | --- |
 | npm run lint | PASS | Exit 0, no lint errors or warnings |
 | npm run typecheck | PASS | Exit 0, strict TypeScript check |
-| npm test | PASS | 46 tests, 0 failures |
-| npm run build | PASS | Exit 0; production module index-BtIH4JF-.js |
-| npm run test:integration | PASS | Prescribed command completed without a serial retry: 61 tests, 0 failures, disposable real MongoDB replica sets |
+| npm test | PASS | 48 tests, 0 failures on final main c903c99 |
+| npm run build | PASS | Exit 0; production module index-Cs07IuAO.js |
+| npm run test:integration | PASS | Prescribed command on c903c99 completed without a serial retry: 61 tests, 0 failures, disposable real MongoDB replica sets |
 | JSX line limit | PASS | Counted physical lines including blank lines in all 151 src/**/*.jsx files; none exceeds 80. RemoveListingForm.jsx is the largest at 80 |
+| Knip 6.46.0 | PASS | Exit 0 on the combined main with the public model/type exclusions documented by #62; this is a scoped analysis result |
 
 ### Live browser checks with real services
 
-The rows distinguish automated public/Member Chrome checks with real services, native UI checks in the existing Admin session, and attributed user/coordinator email-recovery reports. No mocked endpoint is presented as live evidence, and each check retains its stated scope.
+The original full public/Member walkthroughs used codebase 281027c; the later native Admin walkthrough used the same UI/domain logic after documentation-only #65. The changed catalog paths were rechecked on final main c903c99. The rows distinguish those observations from attributed user/coordinator recovery reports. No mocked endpoint is presented as live evidence, and each check retains its stated scope.
 
 | Check | Result | Evidence |
 | --- | --- | --- |
@@ -1097,7 +1098,7 @@ The rows distinguish automated public/Member Chrome checks with real services, n
 | Account deletion and fixture cleanup | PASS | Both disposable accounts were deleted through the UI after completing the accepted transfer; only test-owned data was touched. Earlier harness retries also deleted their own temporary accounts through the own-account API |
 | Marketplace online/offline/reconnect | PASS | Searched Dune online, resubmitted the same query offline, saw Showing saved data, reconnected and retried; the notice cleared after the real provider responded |
 | JavaScript exceptions | PASS for tested paths | None observed in the completed public and Member runs |
-| Empty browser console | FAIL overall | The completed Member run had no console errors. Deliberate offline mode produced expected network errors. Separately, initial catalog discovery for art intermittently produced CORS / net::ERR_FAILED online; isolated browser rechecks reproduced it. Tracked in [#66](https://github.com/ninjasilver3692077/TheBridge/issues/66), not fixed in this PR |
+| Catalog console / #66 | PASS: CORS defect resolved | Original CORS failure on 281027c is historical. On deployed c903c99 the three catalog paths had no direct Open Library search requests, CORS errors or JavaScript exceptions. Three injected same-origin 503s and nine uncached/lazy image errors during deliberate disconnection were expected negative-test network events. [Production evidence and closure](https://github.com/ninjasilver3692077/TheBridge/issues/66#issuecomment-6991655452) |
 | Live Admin overview and tables | PASS | Existing Admin Test session loaded Listings, Requests and Members; baseline counts matched the tables (3 Members, 3 Listings, 5 Requests). Members search returned the expected empty state |
 | Live Admin moderation | PASS | Removed only the disposable test Listing after explicit confirmation. Admin showed Removed, the stored reason and success message; the owner API returned its copy to Available with currentListing null and matching lastModeration |
 | Admin layouts and keyboard | PASS for observed states | Inspected the removal dialog at 375/768/1280/1440 px in both themes, plus desktop overview and phone tables with internal horizontal scroll. Blank reason blocked submission; Cancel and Escape closed the dialog; Shift+Tab/Tab wrapped focus and Escape restored its trigger |
@@ -1123,20 +1124,29 @@ The recipient restriction belongs to the email sender, not MongoDB: the document
 
 At the account holder's explicit request, Juan performed the remaining role-specific verification and [recorded formal acceptance in #50](https://github.com/ninjasilver3692077/TheBridge/issues/50#issuecomment-6990287128) on 2026-11-18 (report updated at 15:12 America/Bogota). He reports a controlled Member and Admin each completed forgot-password with a uniform response, receipt/use of the email link, successful new-password login, rejection of the old password and rejection of link reuse. The Admin could still access /admin after login. These are attributed coordinator results, not new resets observed by Codex. Juan explicitly left expired-link handling and live 429 throttling unverified; both remain unchecked in security-audit.md. The onboarding@resend.dev recipient restriction remains unchanged. Issue #50 remains owned by Edwin, with Daniel as independent reviewer of the completed final record.
 
-### Outstanding acceptance gates
+### Final catalog deployment recheck
+
+On 2026-11-18, after #69, #68 and #62 were integrated, the production module matched the c903c99 build. A clean Marketplace discovery returned HTTP 200 for art. Dune returned HTTP 200 and 20 real records in Marketplace, Add Book and desired-book search. Each path rejected invalid blank/short/overlong queries without a catalog request; a browser-injected 503 with empty cache exposed the retry state, the subsequent real request returned data, offline search kept same-query results, cover metadata and the saved timestamp without another catalog request, and reconnect/retry restored fresh results and removed the notice. All three paths were checked at four widths in both themes (24 states) without page overflow.
+
+There were no browser requests to openlibrary.org/search.json, CORS errors or JavaScript exceptions. The three injected 503 console errors and nine image fetch errors during intentional disconnection are recorded as expected test failures; image bytes are not promised by the catalog metadata cache. A separate earlier API probe of art returned a sanitized 503 and Dune returned 200/20; the later browser art request succeeded. Provider unavailability remains an explicitly handled 503 under contract v9 and is distinct from the resolved CORS defect. The temporary Members and own library copy used by the harness were deleted and their tokens rejected with 401.
+
+[Issue #66 was closed after this production verification](https://github.com/ninjasilver3692077/TheBridge/issues/66#issuecomment-6991655452). The complete main AI-LOG, including #54's four historical-entry replacements and the #69/#62 entries, was preserved when merging into this branch; the final checkpoint was preserved as well. The original append conflict was resolved without dropping either side. The literal completion-marker check returns zero matches in both main and this branch. [#68](https://github.com/ninjasilver3692077/TheBridge/pull/68) is merged and #54 is closed.
+
+### Remaining acceptance
 
 | Check | Status | Next step |
 | --- | --- | --- |
-| AI-LOG final-state completeness | PENDING | Four entries awaiting team review remain (HW06, HW07 and the two Milestone 2 audit entries); Daniel owns completion in #54. Their human experience and changes have not been invented. The security-decision acknowledgement was integrated in #65 (main 10e3ab6). Historical entries remain dated evidence, not a claim of current unfinished application behavior |
-| Provider console failure | OPEN BUG | Coordinator triage and resolution of #66, followed by a repeat check; this verification PR contains no implementation fix |
-| Independent review and final merge | PENDING | Daniel reviews the completed evidence after the remaining checks; only the coordinator merges. Keep this checkpoint in a draft PR and keep #50 open. Integrate #68 first, then update this branch from main, preserve both AI-LOG additions, and mark the #54 gate resolved only after checking the integrated result |
+| AI-LOG integration / #54 | PASS | #68 is merged, both append sections are preserved, and the completion-marker check is clean. This file check does not replace the operator-confirmation condition below |
+| Catalog recovery / #66 | PASS | Fix integrated in #69, rechecked on the public c903c99 deployment, and #66 closed with linked evidence |
+| Coordinator confirmation of #68 statements | PENDING before final merge | Jorge's approval asked Juan to confirm the operator statements relayed by Daniel. No explicit Juan comment/review was present when checked. [Confirmation requested](https://github.com/ninjasilver3692077/TheBridge/pull/68#issuecomment-6991375644); do not infer an additional human statement from the merge |
+| Independent review and final merge | PENDING | Daniel reviews the final record and source; only the coordinator merges and closes #50 after the acceptance conditions are satisfied |
 
 ### Review correction (2026-11-18)
 
-Juan requested changes on checkpoint b0a8e52 because the outstanding-gates table omitted Member/Admin recovery after the limited user acknowledgement. Codex restored that explicit PENDING gate and classified the report as an acknowledgement only. The report remains attributed to the account holder; it does not satisfy both role-specific journeys or change the issue scope. Merged main 10e3ab6 into this feature branch to include the accepted #65 decision record; no application code changed. The recovery gate was subsequently satisfied by the coordinator evidence linked above. The draft remains blocked by #54, #66 and independent review.
+Juan requested changes on checkpoint b0a8e52 because the outstanding-gates table omitted Member/Admin recovery after the limited user acknowledgement. Codex restored that explicit PENDING gate and classified the report as an acknowledgement only. The report remains attributed to the account holder; it does not satisfy both role-specific journeys or change the issue scope. Merged main 10e3ab6 into this feature branch to include the accepted #65 decision record; no application code changed. The recovery gate was subsequently satisfied by the coordinator evidence linked above. The subsequent integration and production results above resolve those implementation dependencies. Independent review, the explicit operator acknowledgement and coordinator merge remain.
 
-Daniel's preliminary review of 6142275 identified a quoted completion-marker phrase in the outstanding-gates row. Codex reworded that row so it cannot create a false match after #68 resolves the four historical entries. The append conflict with #68 will be resolved by updating from main after the coordinator integrates #68 first; neither that peer branch nor the final checkpoint is declared merged or approved here.
+Daniel's preliminary review of 6142275 identified a quoted completion-marker phrase in the outstanding-gates row. Codex reworded that row so it cannot create a false match after #68 resolves the four historical entries. After the coordinator integrated #68, Codex merged main into this branch and preserved the full main log and full final checkpoint. The marker check now has zero matches. This verification PR is ready for review, not self-approved or merged.
 
 ### AI assistance and review
 
-Codex prepared disposable browser-test harnesses and ran the checks, retained local result logs and screenshots, reproduced the provider observation before opening its separate bug issue, and drafted this record. Adopted only observed results; rejected treating earlier local simulated-API checks, a successful build, historical approvals or unexecuted checks as live acceptance. The account holder supplied the existing Admin session and explicitly confirmed the single test moderation action; the account holder later reported working recovery and accepted the controlled-recipient scope, as recorded above. Codex requested coordinator verification and then recorded Juan's linked results and acceptance; expiry and live throttling were not converted into passing evidence. No application implementation changes or unrecorded human test results are claimed. Final delivery is not approved by this checkpoint.
+Codex prepared disposable browser-test harnesses and ran the checks, retained local result logs and screenshots, reproduced the provider observation before opening its separate bug issue, and drafted this record. Adopted only observed results; rejected treating earlier local simulated-API checks, a successful build, historical approvals or unexecuted checks as live acceptance. The account holder supplied the existing Admin session and explicitly confirmed the single test moderation action; the account holder later reported working recovery and accepted the controlled-recipient scope, as recorded above. Codex requested coordinator verification and then recorded Juan's linked results and acceptance; expiry and live throttling were not converted into passing evidence. No application implementation changes or unrecorded human test results are claimed. Codex also re-ran all five required commands and Knip on final main c903c99, rechecked the affected catalog paths on the real deployment, closed the assigned CORS bug with evidence, and requested the outstanding operator acknowledgement. Final delivery is not approved by this checkpoint.

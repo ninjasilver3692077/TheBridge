@@ -4,8 +4,8 @@ import type { Account, AuthSession, LoginInput, RegisterInput, Role } from "@/ty
 import type { AccountDocument } from "../models/Account.js";
 import { HttpError } from "./errors.js";
 
-export const passwordHashCost = 12;
-export const requiredSessionTtlSeconds = 86400;
+const passwordHashCost = 12;
+const requiredSessionTtlSeconds = 86400;
 
 const minimumSecretBytes = 32;
 const minimumPasswordLength = 8;
@@ -17,7 +17,7 @@ const rejectedSecrets = new Set(["changeme", "secret", "replace-with-a-random-se
 const invalidCredentialsMessage = "Email or password is incorrect.";
 const dummyPasswordSource = "thebridge-dummy-password-for-timing";
 
-export interface AuthConfig {
+interface AuthConfig {
   secret: string;
   ttlSeconds: number;
 }
@@ -26,7 +26,7 @@ export interface StoredAccount extends AccountDocument {
   _id: unknown;
 }
 
-export function readAuthConfig(): AuthConfig {
+function readAuthConfig(): AuthConfig {
   const secret = process.env.JWT_SECRET ?? "";
   if (Buffer.byteLength(secret, "utf8") < minimumSecretBytes || rejectedSecrets.has(secret.toLowerCase())) {
     throw new Error("JWT_SECRET must be a random value of at least 32 bytes.");

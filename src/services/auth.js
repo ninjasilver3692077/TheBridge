@@ -107,11 +107,6 @@ export async function resetPassword({ token, newPassword }) {
   return data;
 }
 
-export async function fetchCurrentAccount(signal) {
-  const { data } = await apiRequest("/auth/me", { authenticated: true, signal });
-  return data;
-}
-
 export async function changePassword({ currentPassword, newPassword }) {
   const { data } = await apiRequest("/account/password", {
     method: "PATCH",

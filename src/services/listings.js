@@ -19,7 +19,7 @@ function toClientBook(book) {
     : null;
 }
 
-export function toClientListing(listing) {
+function toClientListing(listing) {
   const { book, terms } = listing;
 
   return {

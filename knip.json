@@ -1,0 +1,12 @@
+{
+  "entry": [
+    "api/index.ts",
+    "server/scripts/*.ts",
+    "tests/**/*.ts"
+  ],
+  "project": ["api/**", "models/**", "routes/**", "server/**", "src/**", "tests/**"],
+  "ignoreIssues": {
+    "models/**": ["exports", "types", "duplicates"],
+    "src/types.ts": ["types"]
+  }
+}

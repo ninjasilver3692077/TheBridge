@@ -44,7 +44,7 @@ export function getListingOfferRows(listing) {
   ];
 }
 
-export function getRequestCtaLabel(modality) {
+function getRequestCtaLabel(modality) {
   const labels = {
     Exchange: "Request Exchange",
     Loan: "Request Loan",

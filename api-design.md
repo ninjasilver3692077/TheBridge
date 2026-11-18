@@ -1,9 +1,9 @@
 ---
 title: "TheBridge REST API contract"
 status: proposed
-version: 8
+version: 9
 created: 2026-10-27
-updated: 2026-11-13
+updated: 2026-11-18
 issue: 36
 input_prd_commit: 50edc11165184a186a5afb660a6ffb145feb1cb8
 ---
@@ -38,7 +38,7 @@ Every API error, including parser, auth, validation, origin-policy, rate-limit, 
 | 405 | Unsupported method on a known API resource; send `Allow`. |
 | 409 | Duplicate identity/active request, unavailable state/copy, blocked listing edit or confirmed write contention. |
 | 413 / 415 | Body too large / unsupported request content type. |
-| 429 | Auth rate limit exceeded; send `Retry-After`. |
+| 429 | Auth or catalog rate limit exceeded; send `Retry-After`. |
 | 500 / 503 | Sanitized unexpected fault / unavailable backing service or unconfirmed transaction commit. An unconfirmed commit is not a rollback guarantee. |
 
 **Pagination:** every database collection endpoint accepts `page` (integer 1–10000, default 1) and `limit` (integer 1–100, default 10, following FR-13/NFR-6). Reject arrays, objects, operators and numeric fractions with 400. Pages beyond the end return an empty array with the actual total. Default sort is descending `createdAt`, then descending `id`, for deterministic ties. `q` is a trimmed string of at most 100 characters; server search ignores case/accents and escapes regex syntax. No arbitrary sort expressions are accepted.
@@ -198,7 +198,17 @@ A quick view uses REQUEST-01 with the same rules as the detail page (FR-15). The
 | FAVORITE-02 | POST `/api/favorites` | Member | `{book: BookMetadata}` | 201 `data: Favorite` | FR-6 |
 | FAVORITE-03 | DELETE `/api/favorites/:id` | Member, own favorite | ID | 200 `data: {id, deleted: true}` | FR-6 |
 
-Saving the same catalogId twice returns 409; deleting a foreign/unknown favorite returns 404. Catalog searches remain a public direct Open Library service (FR-5), not a fake `/api/catalog` route. Normalize all three catalog entry points to the PRD's three-character minimum and propagate saved-data timestamps through service responses. Catalog caching is device-local and public; account favorites are server data. Logout clears rendered/private account state before another account is loaded.
+Saving the same catalogId twice returns 409; deleting a foreign/unknown favorite returns 404. Account favorites are server data. Logout clears rendered/private account state before another account is loaded.
+
+### Catalog
+
+| ID | Method and path | Access | Input | Success | Requirement |
+| --- | --- | --- | --- | --- | --- |
+| CATALOG-01 | GET `/api/catalog/search` | Public | One trimmed `q`, 3–100 characters | 200 `data: { docs }` | FR-5 |
+
+Version 9 (issue #66, HW15) moves the browser's Open Library request to the same-origin API. The server sends the query to the fixed Open Library Search API endpoint and requests up to 20 works with the catalog metadata fields used by TheBridge. Invalid query parameters return 400. Each server instance limits the route to 30 requests per minute per client IP. An upstream network failure, timeout, HTTP error, or invalid response returns 503. A valid search with no matches returns 200 with an empty `docs` array.
+
+Marketplace discovery and search, Add Book, and desired-book selection share the catalog client service. Successful results are saved on the device. When offline or the service is unavailable, show the saved results for the same query with their saved timestamp, or display the appropriate error and offer a retry. A successful browser check has no cross-origin catalog requests or CORS errors. A provider outage may produce a same-origin 503 in the Network panel and should be recorded separately from a CORS failure.
 
 ### Admin moderation
 

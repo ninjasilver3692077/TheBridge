@@ -5,7 +5,9 @@ export function validateCatalogQuery(query) {
     return "Enter a title, author, or keyword.";
   }
 
-  return trimmed.length < 3 ? "Use at least 3 characters." : "";
+  if (trimmed.length < 3) return "Use at least 3 characters.";
+  if (trimmed.length > 100) return "Use 100 characters or fewer.";
+  return "";
 }
 
 export function normalizeCatalogValue(value) {

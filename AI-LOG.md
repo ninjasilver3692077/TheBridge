@@ -1,5 +1,11 @@
 # AI-LOG
 
+## Catalog search recovery - Issue #66 (2026-11-18)
+
+OpenAI Codex moved Open Library searches to the same-origin catalog API and updated the FR-5 contract. The public endpoint validates the query, makes a time-limited request to Open Library, and reports upstream failures as HTTP 503. The client keeps the existing device-local cache and saved timestamps. No deployment variables were changed.
+
+Verification: lint, typecheck, build, 48 unit/API tests, and 61 integration tests passed. In local Chrome, an injected first-attempt failure on fresh Marketplace discovery displayed the empty-cache error. Retrying returned real `art` results, `Dune` returned results, and offline `art` showed the previously saved result and timestamp. Reconnecting and retrying returned fresh results. Chrome recorded no direct Open Library search requests or CORS errors. The same-origin 503 appeared in the console during the outage. Production verification remains pending deployment.
+
 ## Security decision acceptance record - Issue #53 (2026-11-18)
 
 OpenAI Codex updated DECISIONS.md and security-audit.md after Jorge [explicitly accepted and approved proposal commit 32018df](https://github.com/ninjasilver3692077/TheBridge/pull/56#pullrequestreview-5961763556) on 2026-11-18 at 12:26 America/Bogota. The record also links Juan's and Daniel's approvals of that same proposal commit and distinguishes those approvals from review of this follow-up. All required participants have accepted retaining localStorage for this academic delivery.

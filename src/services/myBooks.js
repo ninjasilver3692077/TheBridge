@@ -33,7 +33,7 @@ function describeStatus({ status, activity, currentListing, borrowedFrom }) {
   return { status };
 }
 
-export function toClientBook(libraryBook) {
+function toClientBook(libraryBook) {
   const { book, currentListing } = libraryBook;
 
   return {

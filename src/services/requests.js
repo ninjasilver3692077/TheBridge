@@ -19,7 +19,7 @@ function describeNote(request, direction, counterpart) {
     : `${counterpart} sent a ${modality} request for this copy.`;
 }
 
-export function toClientRequest(request) {
+function toClientRequest(request) {
   const accountId = readSession()?.account.id;
   const direction = request.owner.id === accountId ? "received" : "sent";
   const counterpart = (direction === "received" ? request.requester : request.owner).name;

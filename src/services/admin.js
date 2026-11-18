@@ -1,6 +1,6 @@
 import { apiRequest } from "./apiClient.js";
 
-export const ADMIN_PAGE_SIZE = 10;
+const ADMIN_PAGE_SIZE = 10;
 export const REASON_MAX_LENGTH = 500;
 
 function buildQuery({ page, q, status }) {

@@ -69,7 +69,10 @@ export async function changeAccountPassword(
   const nextPasswordHash = await hashPassword(input.newPassword);
   const updated = await AccountModel.findOneAndUpdate(
     { _id: account._id, passwordHash: verifiedPasswordHash },
-    { $set: { passwordHash: nextPasswordHash } },
+    {
+      $set: { passwordHash: nextPasswordHash },
+      $unset: { passwordResetHash: "", passwordResetExpiresAt: "" },
+    },
     { new: true },
   )
     .select("+passwordHash")

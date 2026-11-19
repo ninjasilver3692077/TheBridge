@@ -1069,3 +1069,106 @@ The grep check from the issue finds no remaining lines awaiting team review. Eve
 ### Learning
 
 When a log entry cannot say who ran a check, writing exactly that is more useful to a reviewer than a confident sentence nobody can back up.
+
+## Final verification checkpoint - Issue #50 (2026-11-18)
+
+### Scope and status
+
+**Verification record under review; normal-console acceptance and final merge remain pending.** The final integrated source under test is main c903c9905f1fc56f7b905b20fde494d082a505ab, including #62, #65, #68 and #69. This PR adds verification documentation only. The public app at https://thebridge-sepia.vercel.app serves module index-Cs07IuAO.js, matching that main build. Earlier full Member/Admin walkthroughs are retained below with their original scope; the changed catalog paths were rechecked on the final deployment. All dates are 2026-11-18 in America/Bogota.
+
+### Local checks on main
+
+| Check | Result | Evidence |
+| --- | --- | --- |
+| npm run lint | PASS | Exit 0, no lint errors or warnings |
+| npm run typecheck | PASS | Exit 0, strict TypeScript check |
+| npm test | PASS | 48 tests, 0 failures on final main c903c99 |
+| npm run build | PASS | Exit 0; production module index-Cs07IuAO.js |
+| npm run test:integration | PASS | Prescribed command on c903c99 completed without a serial retry: 61 tests, 0 failures, disposable real MongoDB replica sets |
+| JSX line limit | PASS | Counted physical lines including blank lines in all 151 src/**/*.jsx files; none exceeds 80. RemoveListingForm.jsx is the largest at 80 |
+| Knip 6.46.0 | PASS | Exit 0 on the combined main with the public model/type exclusions documented by #62; this is a scoped analysis result |
+
+### Live browser checks with real services
+
+The original full public/Member walkthroughs used codebase 281027c; the later native Admin walkthrough used the same UI/domain logic after documentation-only #65. The changed catalog paths were rechecked on final main c903c99. The rows distinguish those observations from attributed user/coordinator recovery reports. No mocked endpoint is presented as live evidence, and each check retains its stated scope.
+
+| Check | Result | Evidence |
+| --- | --- | --- |
+| Public routing and responsive layout | PASS | Home, Marketplace, Login, Register, Forgot Password, Reset Password without a token, About and an unknown route rendered without horizontal overflow at 375/768/1280/1440 px in light and dark themes |
+| Guest route guards | PASS | My Books and Admin redirected unauthenticated visitors to Login |
+| Member registration and login | PASS | Two disposable Members registered, signed out and signed in through the UI |
+| Add Book and four publication modalities | PASS | Selected four real catalog records, added copies through the UI and published Exchange, Loan (7 days), Rental (COP 8,000 / 7 days), and Sale (COP 25,000 / Cash) |
+| Send, reject, accept and complete | PASS | The second Member requested Loan and Sale; the owner rejected Loan, accepted Sale and marked that transfer completed through Requests |
+| My Books and responsive Member views | PASS | My Books displayed the four publication modalities; My Books, Requests and Member Marketplace had no horizontal overflow at all four widths in both themes using the actual theme toggle |
+| Keyboard and modal dismissal | PASS | Tab and Shift+Tab stayed inside each tested request dialog; Escape closed it and restored focus to its trigger. ArrowRight activated the Sent request tab |
+| Favorites | PASS | Saved a real catalog result, confirmed persistence after page reload and removed it through the saved-favorites UI |
+| Member Admin restriction | PASS | A Member was redirected away from Admin |
+| Account deletion and fixture cleanup | PASS | Both disposable accounts were deleted through the UI after completing the accepted transfer; only test-owned data was touched. Earlier harness retries also deleted their own temporary accounts through the own-account API |
+| Marketplace online/offline/reconnect | PASS | Searched Dune online, resubmitted the same query offline, saw Showing saved data, reconnected and retried; the notice cleared after the real provider responded |
+| JavaScript exceptions | PASS for tested paths | None observed in the original completed public/Member runs or the later normal-console follow-ups on c903c99; this does not establish an empty console |
+| Normal Public console | NOT CLEAN; acceptance pending | On c903c99, seven of eight normal public routes had zero console errors; Marketplace logged a real catalog 503. All eight routes showed the Tailwind CDN warning. See Normal-console follow-up and #70 below |
+| Normal Member console | NOT CLEAN; acceptance pending | On c903c99, UI login, My Books, Requests and Add Book had zero console errors; Member Marketplace logged a 503 resource error. Each phase showed the Tailwind CDN warning. No page exceptions; the disposable account was deleted and its token rejected with 401 |
+| Catalog console / #66 | PASS: CORS defect resolved | Original CORS failure on 281027c is historical. On deployed c903c99 the three catalog paths had no direct Open Library search requests, CORS errors or JavaScript exceptions. Three injected same-origin 503s and nine uncached/lazy image errors during deliberate disconnection were expected negative-test network events. [Production evidence and closure](https://github.com/ninjasilver3692077/TheBridge/issues/66#issuecomment-6991655452) |
+| Live Admin overview and tables | PASS | Existing Admin Test session loaded Listings, Requests and Members; baseline counts matched the tables (3 Members, 3 Listings, 5 Requests). Members search returned the expected empty state |
+| Live Admin moderation | PASS | Removed only the disposable test Listing after explicit confirmation. Admin showed Removed, the stored reason and success message; the owner API returned its copy to Available with currentListing null and matching lastModeration |
+| Admin layouts and keyboard | PASS for observed states | Inspected the removal dialog at 375/768/1280/1440 px in both themes, plus desktop overview and phone tables with internal horizontal scroll. Blank reason blocked submission; Cancel and Escape closed the dialog; Shift+Tab/Tab wrapped focus and Escape restored its trigger |
+| Normal Admin console | No errors observed; warning acceptance pending | Chrome DevTools showed only the existing Tailwind CDN production warning during these checks; no runtime or network errors were observed. This row retains the dated original Admin observation, not a new Admin session on c903c99. No explicit acceptance of the warning is recorded. The separate catalog CORS defect in #66 was subsequently resolved (see Final catalog deployment recheck below) |
+| Single-recipient recovery report | USER ACKNOWLEDGEMENT ONLY | On 2026-11-18 the account holder reported working recovery for the available test account and accepted the single-recipient scope. Codex did not observe a new email/reset; account role and individual negative cases were not specified |
+| Password recovery as Member and Admin | PASS: coordinator report and acceptance | Juan [reported and accepted both role-specific journeys](https://github.com/ninjasilver3692077/TheBridge/issues/50#issuecomment-6990287128) on 2026-11-18: uniform forgot-password response, email link, new-password login, old-password rejection and link reuse rejection; Admin retained access to /admin. Codex records his evidence without claiming to have observed the resets |
+
+The final runs above completed after correcting harness selectors and waits. Only reproduced product/provider failures are tracked as bugs. Mobile dark Home and desktop light Marketplace screenshots were visually inspected as well.
+
+### Admin follow-up
+
+The account holder opened an existing authenticated Admin Test session on 2026-11-18. Codex used the native Chrome UI without exporting its token. Initial overview counts were 3 Members; Listings: 0 Available, 0 Reserved, 2 Closed, 1 Removed; Requests: 0 Pending, 0 Accepted, 2 Rejected, 0 Cancelled, 3 Completed. The three table totals agreed.
+
+Fixture setup used the real API to create one disposable Member, copy and Exchange Listing named TheBridge moderation test mwmf80hx (Listing 6afde655d7ed8e1a79b4ad3e). Refreshing Admin showed 4 Members and 1 Available Listing. The user explicitly confirmed the final moderation action for that exact Listing. At 13:04:18 America/Bogota, Admin showed it as Removed by Admin Test with the reason `Issue #50 verification: remove this disposable test listing only.`; Available became 0 and Removed became 2. The dialog closed and its success message appeared.
+
+The disposable owner's real API independently confirmed the copy was Available, currentListing was null, and lastModeration contained the exact Listing ID, reason and timestamp. Cleanup then deleted only that disposable Member using its own session after an identity check; the deleted account's token was rejected with 401. All writes targeted this disposable fixture. Chrome remained signed in as Admin Test; its displayed totals may need a refresh after fixture cleanup. No application code or deployment variables changed.
+
+### Password recovery acknowledgement
+
+The account holder initially reported working recovery and accepted the single-recipient test setup on 2026-11-18. The account identity, role and individual negative-case outcomes were not specified in that initial report, so it was retained as personal acknowledgement only. The later coordinator evidence below supplies the Member/Admin verification required by #50; it does not establish expiry or live throttling results.
+
+The recipient restriction belongs to the email sender, not MongoDB: the documented configuration uses onboarding@resend.dev without a verified sending domain. [Resend documentation](https://resend.com/docs/knowledge-base/403-error-resend-dev-domain) limits that testing sender to the address associated with the Resend account. Sending recovery mail to arbitrary Member or Admin accounts requires a verified sender/domain configured by the coordinator. The account holder accepts the limited demonstration scope; this does not establish unrestricted delivery or a new team-wide deployment decision. Codex sent no email and changed no password or deployment setting during this documentation update.
+
+At the account holder's explicit request, Juan performed the remaining role-specific verification and [recorded formal acceptance in #50](https://github.com/ninjasilver3692077/TheBridge/issues/50#issuecomment-6990287128) on 2026-11-18 (report updated at 15:12 America/Bogota). He reports a controlled Member and Admin each completed forgot-password with a uniform response, receipt/use of the email link, successful new-password login, rejection of the old password and rejection of link reuse. The Admin could still access /admin after login. These are attributed coordinator results, not new resets observed by Codex. Juan explicitly left expired-link handling and live 429 throttling unverified; both remain unchecked in security-audit.md. The onboarding@resend.dev recipient restriction remains unchanged. Issue #50 remains owned by Edwin, with Daniel as independent reviewer of the completed final record.
+
+### Final catalog deployment recheck
+
+On 2026-11-18, after #69, #68 and #62 were integrated, the production module matched the c903c99 build. A clean Marketplace discovery returned HTTP 200 for art. Dune returned HTTP 200 and 20 real records in Marketplace, Add Book and desired-book search. Each path rejected invalid blank/short/overlong queries without a catalog request; a browser-injected 503 with empty cache exposed the retry state, the subsequent real request returned data, offline search kept same-query results, cover metadata and the saved timestamp without another catalog request, and reconnect/retry restored fresh results and removed the notice. Separately, cached-result layouts for the three paths were checked at four widths in both themes (24 layout states) without page overflow. The functional error/retry/cache/reconnect sequence ran once per search path; it was not repeated for every width/theme combination.
+
+There were no browser requests to openlibrary.org/search.json, CORS errors or JavaScript exceptions. The three injected 503 console errors and nine image fetch errors during intentional disconnection are recorded as expected test failures; image bytes are not promised by the catalog metadata cache. A separate earlier API probe of art returned a sanitized 503 and Dune returned 200/20; the later browser art request succeeded. Provider unavailability remains an explicitly handled 503 under contract v9 and is distinct from the resolved CORS defect. The temporary Members and own library copy used by the harness were deleted and their tokens rejected with 401.
+
+[Issue #66 was closed after this production verification](https://github.com/ninjasilver3692077/TheBridge/issues/66#issuecomment-6991655452). The complete main AI-LOG, including #54's four historical-entry replacements and the #69/#62 entries, was preserved when merging into this branch; the final checkpoint was preserved as well. The original append conflict was resolved without dropping either side. The literal completion-marker check returns zero matches in both main and this branch. [#68](https://github.com/ninjasilver3692077/TheBridge/pull/68) is merged and #54 is closed.
+
+### Normal-console follow-up (2026-11-18)
+
+After Juan's review of d3fc08c, normal online console checks were run on deployed c903c99 without offline mode or injected failures. Seven of eight public routes had no console errors; Marketplace discovery GET /api/catalog/search?q=art returned a real 503. A fresh-context run returned art 200 and Dune 200; another fresh-context run reproduced art 503, displayed the correct no-saved-data/retry state, then returned 200/20 on Try again and 200/20 for Dune. There were no page exceptions or observed CORS errors. An intervening diagnostic run also logged nine certificate errors without resource URLs; the later instrumented run did not reproduce those errors, so no certificate root cause or blanket clean-console result is asserted.
+
+A controlled disposable Member then completed normal UI login and loaded My Books, Requests, Add Book and Marketplace. Login and the first three views had zero console errors; Marketplace logged a 503 resource error. No page exceptions occurred. The test account was deleted using its own session after an identity check, and its token was rejected with 401. This checks normal navigation only; it does not repeat the earlier complete publication/request workflow. All new public routes and Member phases logged the existing Tailwind CDN production warning. The original native Admin run likewise observed that warning and no runtime/network errors, as recorded above.
+
+The normal empty-console criterion is therefore not unconditionally passed. [Issue #70](https://github.com/ninjasilver3692077/TheBridge/issues/70) tracks the observed operational console failure separately from the resolved CORS issue #66. The coordinator must triage it and record any agreed acceptance/scope change in #50; no such agreement is assumed. Explicit acceptance of the Tailwind warning is also still unrecorded. Required CDN usage in the repository is not presented as an additional human acceptance statement. The earlier three deliberately injected 503s and nine offline image errors remain evidence of negative tests, distinct from these real online observations.
+
+### Remaining acceptance
+
+| Check | Status | Next step |
+| --- | --- | --- |
+| AI-LOG integration / #54 | PASS | #68 is merged, both append sections are preserved, and the completion-marker check is clean. This file check does not replace the operator-confirmation condition below |
+| Catalog recovery / #66 | PASS | Fix integrated in #69, rechecked on the public c903c99 deployment, and #66 closed with linked evidence |
+| Normal-console criterion / #70 | NOT PASSED; coordinator triage pending | Real online Marketplace 503s prevent an unconditional clean-console result. #70 is open; explicit acceptance of the Tailwind warning is separately unrecorded |
+| Coordinator confirmation of #68 statements | PENDING before final merge | Jorge's approval asked Juan to confirm the operator statements relayed by Daniel. No explicit Juan comment/review was present when checked. [Confirmation requested](https://github.com/ninjasilver3692077/TheBridge/pull/68#issuecomment-6991375644); do not infer an additional human statement from the merge |
+| Independent review | APPROVED on 56ed54c; later documentation confirmation pending | [Daniel approved 56ed54c](https://github.com/ninjasilver3692077/TheBridge/pull/67#pullrequestreview-5966689776). Confirmation was requested for d3fc08c; these subsequent review corrections also need independent confirmation. The approval is not attributed to a later commit |
+| Coordinator final review and merge | PENDING | Juan requested the current corrections on d3fc08c. Only the coordinator merges; #50 remains open while #70 and the other acceptance conditions remain unresolved |
+
+### Review correction (2026-11-18)
+
+Juan requested changes on checkpoint b0a8e52 because the outstanding-gates table omitted Member/Admin recovery after the limited user acknowledgement. Codex restored that explicit PENDING gate and classified the report as an acknowledgement only. The report remains attributed to the account holder; it does not satisfy both role-specific journeys or change the issue scope. Merged main 10e3ab6 into this feature branch to include the accepted #65 decision record; no application code changed. The recovery gate was subsequently satisfied by the coordinator evidence linked above. The subsequent integration and production results above resolve those implementation dependencies. Daniel approved 56ed54c; independent confirmation of the later documentation changes, normal-console acceptance, the separate operator acknowledgement and coordinator merge remain.
+
+Daniel's preliminary review of 6142275 identified a quoted completion-marker phrase in the outstanding-gates row. Codex reworded that row so it cannot create a false match after #68 resolves the four historical entries. After the coordinator integrated #68, Codex merged main into this branch and preserved the full main log and full final checkpoint. The marker check now has zero matches. This verification PR is ready for review, not self-approved or merged.
+
+### AI assistance and review
+
+Codex prepared disposable browser-test harnesses and ran the checks, retained local result logs and screenshots, reproduced the provider observation before opening its separate bug issue, and drafted this record. Adopted only observed results; rejected treating earlier local simulated-API checks, a successful build, historical approvals or unexecuted checks as live acceptance. The account holder supplied the existing Admin session and explicitly confirmed the single test moderation action; the account holder later reported working recovery and accepted the controlled-recipient scope, as recorded above. Codex requested coordinator verification and then recorded Juan's linked results and acceptance; expiry and live throttling were not converted into passing evidence. No application implementation changes or unrecorded human test results are claimed. Codex also re-ran all five required commands and Knip on final main c903c99, rechecked the affected catalog paths on the real deployment, closed the assigned CORS bug with evidence, and requested the outstanding operator acknowledgement. Final delivery is not approved by this checkpoint. After Daniel independently approved 56ed54c, Codex addressed his nonblocking wording note by linking the historical Admin console observation to the final catalog recheck. The follow-up changes this record only; git diff --check and the zero-marker check were rerun, and confirmation of the documentation-only delta was requested without treating the prior approval as review of a new commit.
+
+Juan subsequently requested three record corrections on d3fc08c. Codex separated functional catalog checks from the 24 layout states, recorded Daniel's approval with its exact commit and link, and kept later-change confirmation separate from Juan's #68 acknowledgement. New normal public/Member console checks found real online Marketplace 503s; Codex reported #70 and retained the pending Tailwind-warning acceptance rather than claiming a clean console. The new Member fixture was deleted and its token rejected. These are documentation-only corrections, checked with git diff --check and the zero-marker/conflict-marker checks; application tests were not represented as newly rerun.

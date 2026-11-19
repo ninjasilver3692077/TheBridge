@@ -1,5 +1,25 @@
 # AI-LOG
 
+## Post-merge verification reconciliation - Issue #50 (2026-11-18)
+
+This follow-up records what changed after the earlier checkpoint. Juan merged #71 at 19:28 and #67 at 19:32 America/Bogota; GitHub then closed #50 and #70. Those closures do not supply an additional review statement. The integrated source checked here is main 81d3d6bc64cc7a461b39a34e8484f4fa1807cbdf, with contract v10 and public module index-Cs07IuAO.js. Only verification documents change in this follow-up.
+
+| Check | Result | Evidence and scope |
+| --- | --- | --- |
+| Required commands on integrated main | PASS | Re-ran npm run lint, npm run typecheck, npm test, npm run build and npm run test:integration on 81d3d6b; exit 0 for all, 48 unit/API and 61 integration tests, no failures or serial retry |
+| JSX physical line limit | PASS | Recounted 151 src JSX files; none above 80, with RemoveListingForm.jsx at 80 |
+| Production catalog data | PASS for observed requests | At 19:49-19:50, real art and Dune probes returned 200/20. In Chrome, clean art discovery and Dune in Marketplace, Add Book and desired-book search returned real data on the deployed module |
+| Production error/retry/cache/reconnect | PASS in three functional paths | Once per search path: controlled empty-cache 503, actual successful retry, same-query offline metadata and saved timestamp without a catalog request, actual successful reconnect and notice removal. The earlier 24 layout states were not repeated and are not a 24-case functional matrix |
+| Production console in the catalog follow-up | No unexpected errors in this scope | Zero page exceptions, direct Open Library search requests or CORS errors. Three browser-injected 503 errors and two image errors during deliberate disconnection are preserved as negative-test events; they are not normal-navigation failures |
+| Disposable data cleanup | PASS | One own temporary Member and one library copy were removed through the own-account API after an identity check; its token then returned 401. No Listing was published |
+| Tailwind warning | ACCEPTED EXCEPTION | [Juan explicitly accepted only the CDN warning for the academic delivery](https://github.com/ninjasilver3692077/TheBridge/issues/50#issuecomment-6995986750); this does not accept every provider outage or future console error |
+| Four operator statements from #68 | CONFIRMED | [Juan explicitly confirmed all four entries](https://github.com/ninjasilver3692077/TheBridge/pull/68#issuecomment-6996209704), including agents, manual changes, discarded suggestions and attribution or missing attribution of checks |
+| Independent review provenance | FOLLOW-UP REVIEW PENDING | [Daniel approved 56ed54c](https://github.com/ninjasilver3692077/TheBridge/pull/67#pullrequestreview-5966689776) and [confirmed the documentation delta through e3d9c54 with a Comment](https://github.com/ninjasilver3692077/TheBridge/pull/67#pullrequestreview-5967381932). His comment reserved final Approve until the issue and record were reconciled. No new approval is inferred from the merge; this follow-up requests review of the current record |
+
+The provider can still be unavailable after the bounded retry. These successful requests demonstrate the observed deployment, not uninterrupted Open Library availability or a new acceptance of persistent 503s. The original full Public/Member/Admin walkthroughs, prior normal-console failures and 24 layout checks retain their original source, dates and scope below. No new Admin moderation, recovery email/password change, expired-link result or live 429 result is claimed. The previously unchecked expiry and auth-throttling rows remain unchecked.
+
+Codex operated the post-merge checks and drafted this reconciliation for Edwin. Adopted the observed results and linked human statements; rejected treating issue closure as final independent approval or the Tailwind exception as a general outage exception. The follow-up is not self-approved and only the coordinator merges it.
+
 ## Catalog retry on transient failures - Issue #70 (2026-11-18)
 
 OpenAI Codex added one server-side catalog retry for transport errors, timeouts, and selected upstream 5xx responses. The retry waits one second and shares a nine-second deadline with the first attempt. Provider backoff, throttling, invalid payloads, and empty results do not trigger a retry. Contract v10 records the change. The same-origin response format, saved-data fallback, and manual retry remain available, and no deployment settings changed.
@@ -1074,7 +1094,7 @@ When a log entry cannot say who ran a check, writing exactly that is more useful
 
 ### Scope and status
 
-**Verification record under review; normal-console acceptance and final merge remain pending.** The final integrated source under test is main c903c9905f1fc56f7b905b20fde494d082a505ab, including #62, #65, #68 and #69. This PR adds verification documentation only. The public app at https://thebridge-sepia.vercel.app serves module index-Cs07IuAO.js, matching that main build. Earlier full Member/Admin walkthroughs are retained below with their original scope; the changed catalog paths were rechecked on the final deployment. All dates are 2026-11-18 in America/Bogota.
+**Historical checkpoint before the coordinator merged #71 and #67. Current closure evidence and review status are in Post-merge verification reconciliation above.** The final integrated source under test is main c903c9905f1fc56f7b905b20fde494d082a505ab, including #62, #65, #68 and #69. This PR adds verification documentation only. The public app at https://thebridge-sepia.vercel.app serves module index-Cs07IuAO.js, matching that main build. Earlier full Member/Admin walkthroughs are retained below with their original scope; the changed catalog paths were rechecked on the final deployment. All dates are 2026-11-18 in America/Bogota.
 
 ### Local checks on main
 
@@ -1150,7 +1170,7 @@ A controlled disposable Member then completed normal UI login and loaded My Book
 
 The normal empty-console criterion is therefore not unconditionally passed. [Issue #70](https://github.com/ninjasilver3692077/TheBridge/issues/70) tracks the observed operational console failure separately from the resolved CORS issue #66. The coordinator must triage it and record any agreed acceptance/scope change in #50; no such agreement is assumed. Explicit acceptance of the Tailwind warning is also still unrecorded. Required CDN usage in the repository is not presented as an additional human acceptance statement. The earlier three deliberately injected 503s and nine offline image errors remain evidence of negative tests, distinct from these real online observations.
 
-### Remaining acceptance
+### Acceptance status recorded at e3d9c54 (before merge)
 
 | Check | Status | Next step |
 | --- | --- | --- |

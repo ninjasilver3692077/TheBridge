@@ -1,20 +1,9 @@
 import { Link } from "react-router-dom";
-import { badge, buttonSecondary, textLink, tone } from "../../styles/ui.js";
+import { buttonSecondary } from "../../styles/ui.js";
+import ActivityNote from "./ActivityNote.jsx";
+import PublishedBookStatus from "./PublishedBookStatus.jsx";
 
-function ActivityNote({ book }) {
-  const isPending = book.activityStatus.toLowerCase().includes("pending");
-
-  return (
-    <p className="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-ink-muted">
-      <span className={`${badge} ${isPending ? tone.amber : tone.plum}`}>
-        {book.activityStatus}
-      </span>
-      {book.activityWith && <span>with {book.activityWith}</span>}
-    </p>
-  );
-}
-
-function MyBookStatusAction({ book }) {
+function MyBookStatusAction({ book, onWithdraw }) {
   if (book.status === "Available") {
     if (book.activityStatus) {
       return <ActivityNote book={book} />;
@@ -31,17 +20,7 @@ function MyBookStatusAction({ book }) {
   }
 
   if (book.status === "Published") {
-    return (
-      <div className="space-y-2">
-        <p className="text-sm text-ink-muted">
-          Listed as {book.listingModality || "listing"} ·{" "}
-          <Link to="/marketplace" className={textLink}>
-            View Marketplace
-          </Link>
-        </p>
-        {book.activityStatus && <ActivityNote book={book} />}
-      </div>
-    );
+    return <PublishedBookStatus book={book} onWithdraw={onWithdraw} />;
   }
 
   if (book.status === "Borrowed") {

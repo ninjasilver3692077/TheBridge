@@ -8,7 +8,7 @@ const STATUS_TONE = {
   Borrowed: tone.amber,
 };
 
-function MyBookCard({ book }) {
+function MyBookCard({ book, onWithdraw }) {
   return (
     <article className="flex flex-col">
       <div className={`relative aspect-[2/3] shadow-card ${coverFrame}`}>
@@ -44,7 +44,7 @@ function MyBookCard({ book }) {
         </p>
 
         <div className="mt-4">
-          <MyBookStatusAction book={book} />
+          <MyBookStatusAction book={book} onWithdraw={onWithdraw} />
         </div>
       </div>
     </article>

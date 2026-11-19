@@ -122,6 +122,15 @@ export async function publishListing(libraryBookId, modality, values) {
   return toClientListing(data);
 }
 
+export async function withdrawListing(id) {
+  const { data } = await apiRequest(`/listings/${encodeURIComponent(id)}`, {
+    method: "DELETE",
+    authenticated: true,
+  });
+
+  return toClientListing(data);
+}
+
 export async function fetchListing(id, { signal } = {}) {
   try {
     const { data } = await apiRequest(`/listings/${encodeURIComponent(id)}`, { signal });

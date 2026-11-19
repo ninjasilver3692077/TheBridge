@@ -4,12 +4,15 @@ import LoadingState from "../components/LoadingState.jsx";
 import MyBooksFilters from "../components/my-books/MyBooksFilters.jsx";
 import MyBooksGrid from "../components/my-books/MyBooksGrid.jsx";
 import MyBooksHeader from "../components/my-books/MyBooksHeader.jsx";
+import WithdrawListingDialog from "../components/my-books/WithdrawListingDialog.jsx";
+import { useBookWithdrawal } from "../hooks/useBookWithdrawal.js";
 import { useMyBooks } from "../hooks/useMyBooks.js";
 
 function MyBooksPage() {
   const {
     status, error, reload, activeFilter, setActiveFilter, counts, filteredBooks,
   } = useMyBooks();
+  const withdrawal = useBookWithdrawal(reload);
 
   return (
     <AppShell
@@ -46,10 +49,27 @@ function MyBooksPage() {
               onChange={setActiveFilter}
             />
 
-            <MyBooksGrid books={filteredBooks} activeFilter={activeFilter} />
+            <MyBooksGrid
+              books={filteredBooks}
+              activeFilter={activeFilter}
+              onWithdraw={withdrawal.setWithdrawing}
+            />
           </>
         )}
       </section>
+
+      {withdrawal.withdrawing && (
+        <WithdrawListingDialog
+          book={withdrawal.withdrawing}
+          onClose={() => withdrawal.setWithdrawing(null)}
+          onWithdrawn={withdrawal.handleWithdrawn}
+          onConflict={withdrawal.handleConflict}
+        />
+      )}
+
+      <p className="sr-only" aria-live="polite">
+        {withdrawal.announcement}
+      </p>
     </AppShell>
   );
 }

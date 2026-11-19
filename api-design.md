@@ -1,7 +1,7 @@
 ---
 title: "TheBridge REST API contract"
 status: proposed
-version: 9
+version: 10
 created: 2026-10-27
 updated: 2026-11-18
 issue: 36
@@ -207,6 +207,8 @@ Saving the same catalogId twice returns 409; deleting a foreign/unknown favorite
 | CATALOG-01 | GET `/api/catalog/search` | Public | One trimmed `q`, 3–100 characters | 200 `data: { docs }` | FR-5 |
 
 Version 9 (issue #66, HW15) moves the browser's Open Library request to the same-origin API. The server sends the query to the fixed Open Library Search API endpoint and requests up to 20 works with the catalog metadata fields used by TheBridge. Invalid query parameters return 400. Each server instance limits the route to 30 requests per minute per client IP. An upstream network failure, timeout, HTTP error, or invalid response returns 503. A valid search with no matches returns 200 with an empty `docs` array.
+
+Version 10 (issue #70, HW15) allows one server-side retry of the same Open Library query after a network error, timeout, or HTTP 500, 502, 503 or 504 without a `Retry-After` header. The first attempt has a five-second deadline. The retry starts after one second and uses the remaining part of a nine-second upstream deadline. The route does not retry upstream 429, a response with `Retry-After`, malformed data, or a valid empty result. Persistent upstream failures retain the sanitized 503 response and the client's saved-data and manual retry behavior.
 
 Marketplace discovery and search, Add Book, and desired-book selection share the catalog client service. Successful results are saved on the device. When offline or the service is unavailable, show the saved results for the same query with their saved timestamp, or display the appropriate error and offer a retry. A successful browser check has no cross-origin catalog requests or CORS errors. A provider outage may produce a same-origin 503 in the Network panel and should be recorded separately from a CORS failure.
 

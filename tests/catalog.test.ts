@@ -9,14 +9,36 @@ const dune = { key: "/works/OL2W", title: "Dune", author_name: ["Frank Herbert"]
 
 test("catalog API uses a fixed upstream and reports failure separately from no matches", async (t) => {
   const localFetch = globalThis.fetch;
+  const callsByQuery = new Map<string, number>();
   const upstream = t.mock.method(globalThis, "fetch", async (url: URL, init: RequestInit) => {
     assert.equal(url.origin + url.pathname, "https://openlibrary.org/search.json");
     assert.equal(url.searchParams.get("limit"), "20");
     assert.equal(init.redirect, "error");
     assert.ok(init.signal);
-    switch (url.searchParams.get("q")) {
+    const signal = init.signal;
+    signal.throwIfAborted();
+    const query = url.searchParams.get("q") ?? "";
+    const calls = (callsByQuery.get(query) ?? 0) + 1;
+    callsByQuery.set(query, calls);
+    switch (query) {
       case "art":
+        return calls === 1
+          ? new Response("upstream error", { status: 503 })
+          : Response.json({ docs: [art] });
+      case "network":
+        if (calls === 1) throw new TypeError("connection lost");
+        return Response.json({ docs: [art] });
+      case "timeout":
+        if (calls === 2) return Response.json({ docs: [art] });
+        return new Promise<Response>((_resolve, reject) => {
+          signal.addEventListener("abort", () => reject(signal.reason), { once: true });
+        });
+      case "unavailable":
         return new Response("upstream error", { status: 502 });
+      case "throttled":
+        return new Response(null, { status: 429 });
+      case "retry later":
+        return new Response(null, { status: 503, headers: { "Retry-After": "60" } });
       case "Dune":
         return Response.json({ docs: [dune] });
       case "invalid":
@@ -36,22 +58,32 @@ test("catalog API uses a fixed upstream and reports failure separately from no m
   }
   assert.equal(upstream.mock.callCount(), 0);
 
-  for (const query of ["art", "invalid"]) {
-    const response = await localFetch(`${endpoint}?q=${query}`);
+  for (const query of ["art", "network", "timeout"]) {
+    const response = await localFetch(`${endpoint}?${new URLSearchParams({ q: query })}`);
+    assert.equal(response.status, 200);
+    assert.deepEqual(await response.json(), { data: { docs: [art] } });
+    assert.equal(callsByQuery.get(query), 2);
+  }
+
+  for (const [query, attempts] of [["unavailable", 2], ["invalid", 1], ["throttled", 1], ["retry later", 1]] as const) {
+    const response = await localFetch(`${endpoint}?${new URLSearchParams({ q: query })}`);
     assert.equal(response.status, 503);
     assert.deepEqual(await response.json(), {
       error: "Open Library is unavailable. Try again later.",
       code: 503,
     });
+    assert.equal(callsByQuery.get(query), attempts);
   }
 
   const results = await localFetch(`${endpoint}?q=%20Dune%20`);
   assert.equal(results.status, 200);
   assert.deepEqual(await results.json(), { data: { docs: [dune] } });
+  assert.equal(callsByQuery.get("Dune"), 1);
 
   const empty = await localFetch(`${endpoint}?q=no+matches`);
   assert.equal(empty.status, 200);
   assert.deepEqual(await empty.json(), { data: { docs: [] } });
+  assert.equal(callsByQuery.get("no matches"), 1);
 });
 
 test("catalog service can retry with an empty cache and use only same-query saved data", async (t) => {

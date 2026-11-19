@@ -1,3 +1,4 @@
+import { setTimeout as wait } from "node:timers/promises";
 import { Router } from "express";
 import { rateLimit } from "express-rate-limit";
 import { HttpError, methodNotAllowed } from "../server/errors.js";
@@ -28,7 +29,47 @@ function openLibraryUnavailable() {
   return new HttpError(503, "Open Library is unavailable. Try again later.");
 }
 
-async function fetchOpenLibraryDocs(query: string) {
+const retryableStatuses = new Set([500, 502, 503, 504]);
+const firstAttemptTimeoutMs = 5_000;
+const searchTimeoutMs = 9_000;
+const retryDelayMs = 1_000;
+
+async function requestOpenLibraryDocs(url: URL, signal: AbortSignal) {
+  let response: Response;
+  try {
+    response = await fetch(url, {
+      headers: {
+        Accept: "application/json",
+        "User-Agent": "TheBridge (+https://github.com/ninjasilver3692077/TheBridge)",
+      },
+      redirect: "error",
+      signal,
+    });
+  } catch {
+    return null;
+  }
+
+  if (!response.ok) {
+    await response.body?.cancel().catch(() => undefined);
+    if (retryableStatuses.has(response.status) && !response.headers.has("Retry-After")) {
+      return null;
+    }
+    throw openLibraryUnavailable();
+  }
+
+  let data: { docs?: unknown } | null;
+  try {
+    data = await response.json();
+  } catch {
+    if (signal.aborted) return null;
+    throw openLibraryUnavailable();
+  }
+
+  if (!Array.isArray(data?.docs)) throw openLibraryUnavailable();
+  return data.docs.slice(0, 20);
+}
+
+async function fetchOpenLibraryDocs(query: string, clientSignal: AbortSignal) {
   const url = new URL("https://openlibrary.org/search.json");
   url.search = new URLSearchParams({
     q: query,
@@ -36,27 +77,23 @@ async function fetchOpenLibraryDocs(query: string) {
     fields: searchFields,
   }).toString();
 
-  let data: { docs?: unknown } | null;
+  const searchSignal = AbortSignal.any([clientSignal, AbortSignal.timeout(searchTimeoutMs)]);
+  const firstAttemptSignal = AbortSignal.any([
+    searchSignal,
+    AbortSignal.timeout(firstAttemptTimeoutMs),
+  ]);
+  const docs = await requestOpenLibraryDocs(url, firstAttemptSignal);
+  if (docs !== null) return docs;
+
   try {
-    const response = await fetch(url, {
-      headers: {
-        Accept: "application/json",
-        "User-Agent": "TheBridge (+https://github.com/ninjasilver3692077/TheBridge)",
-      },
-      redirect: "error",
-      signal: AbortSignal.timeout(8_000),
-    });
-    if (!response.ok) {
-      await response.body?.cancel();
-      throw openLibraryUnavailable();
-    }
-    data = await response.json();
+    await wait(retryDelayMs, undefined, { signal: searchSignal });
   } catch {
     throw openLibraryUnavailable();
   }
 
-  if (!Array.isArray(data?.docs)) throw openLibraryUnavailable();
-  return data.docs.slice(0, 20);
+  const retriedDocs = await requestOpenLibraryDocs(url, searchSignal);
+  if (retriedDocs === null) throw openLibraryUnavailable();
+  return retriedDocs;
 }
 
 export const catalogRouter = Router();
@@ -69,7 +106,13 @@ catalogRouter.route("/catalog/search")
       throw new HttpError(400, "q: enter a single search query between 3 and 100 characters.");
     }
 
-    const docs = await fetchOpenLibraryDocs(query);
-    res.json({ data: { docs } });
+    const client = new AbortController();
+    res.once("close", () => client.abort());
+    try {
+      const docs = await fetchOpenLibraryDocs(query, client.signal);
+      res.json({ data: { docs } });
+    } catch (error) {
+      if (!client.signal.aborted) throw error;
+    }
   })
   .all(methodNotAllowed(["GET", "HEAD"]));

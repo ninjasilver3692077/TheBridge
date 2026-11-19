@@ -1192,3 +1192,34 @@ Daniel's preliminary review of 6142275 identified a quoted completion-marker phr
 Codex prepared disposable browser-test harnesses and ran the checks, retained local result logs and screenshots, reproduced the provider observation before opening its separate bug issue, and drafted this record. Adopted only observed results; rejected treating earlier local simulated-API checks, a successful build, historical approvals or unexecuted checks as live acceptance. The account holder supplied the existing Admin session and explicitly confirmed the single test moderation action; the account holder later reported working recovery and accepted the controlled-recipient scope, as recorded above. Codex requested coordinator verification and then recorded Juan's linked results and acceptance; expiry and live throttling were not converted into passing evidence. No application implementation changes or unrecorded human test results are claimed. Codex also re-ran all five required commands and Knip on final main c903c99, rechecked the affected catalog paths on the real deployment, closed the assigned CORS bug with evidence, and requested the outstanding operator acknowledgement. Final delivery is not approved by this checkpoint. After Daniel independently approved 56ed54c, Codex addressed his nonblocking wording note by linking the historical Admin console observation to the final catalog recheck. The follow-up changes this record only; git diff --check and the zero-marker check were rerun, and confirmation of the documentation-only delta was requested without treating the prior approval as review of a new commit.
 
 Juan subsequently requested three record corrections on d3fc08c. Codex separated functional catalog checks from the 24 layout states, recorded Daniel's approval with its exact commit and link, and kept later-change confirmation separate from Juan's #68 acknowledgement. New normal public/Member console checks found real online Marketplace 503s; Codex reported #70 and retained the pending Tailwind-warning acceptance rather than claiming a clean console. The new Member fixture was deleted and its token rejected. These are documentation-only corrections, checked with git diff --check and the zero-marker/conflict-marker checks; application tests were not represented as newly rerun.
+
+## HW13 - Issue #76: Let owners withdraw an available listing from My Books (2026-11-19)
+
+### Prompt or task
+
+Jorge asked Claude to implement issue #76 on `feat/hw13-withdraw-listing` from main: add a Withdraw listing action in My Books for an owned listing whose server status is Available, using the existing `DELETE /api/listings/:id` (LISTING-07) through `src/services/listings.js`, and carry the current listing status through `src/services/myBooks.js`.
+
+### AI suggestions
+
+- Add `withdrawListing` to `src/services/listings.js` and a `listingStatus` field to the client book in `src/services/myBooks.js`, taken from `currentListing.status`.
+- Show the action only when `listingStatus` is `Available`; Reserved listings, borrowed and loaned books get no action.
+- Keep the confirmation dialog state at page level through `useBookWithdrawal`, so the dialog and its error survive the library refresh that follows a 409.
+- Extract `PublishedBookStatus` and `ActivityNote` from `MyBookStatusAction.jsx` to keep every component at 80 lines or fewer.
+- Cover the service behavior with `tests/withdraw-listing.test.ts` (DELETE request, 409 error and the `listingStatus` mapping).
+
+### Changes adopted
+
+All of the above. Confirming closes the dialog, refreshes My Books and announces that the book is available to publish again; cancelling or pressing Escape closes the dialog without a request. On a 409 the dialog shows the API message, the library refreshes, and the dialog offers only Close. No API contract change: LISTING-07 and COPY-01 already provide what the client needs.
+
+### Tests and verification
+
+- `npm run lint`, `npm run typecheck`, `npm test` (51 tests), `npm run build` and `npx knip` pass; no `.jsx` file is above 80 lines.
+- Not yet checked in a browser: the withdrawal flow against the real API, cancellation, the 409 case, and the layouts at 375px, 768px, 1280px and 1440px in light and dark mode.
+
+### Human review and follow-up
+
+Edwin is the requested reviewer. The browser checks above must be run by a person or by the reviewer before merging.
+
+### Learning
+
+A withdrawal that can fail with 409 needs its error state to live outside the card that disappears when the library refreshes.

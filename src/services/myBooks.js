@@ -52,6 +52,7 @@ function toClientBook(libraryBook) {
     addedAt: libraryBook.createdAt,
     listingId: currentListing?.id ?? null,
     listingModality: currentListing?.modality ?? null,
+    listingStatus: currentListing?.status ?? null,
     lastModeration: libraryBook.lastModeration,
     activityStatus: null,
     activityWith: null,

@@ -57,11 +57,13 @@ async function requestOpenLibraryDocs(url: URL, signal: AbortSignal) {
     throw openLibraryUnavailable();
   }
 
+  const body = await response.text().catch(() => null);
+  if (body === null) return null;
+
   let data: { docs?: unknown } | null;
   try {
-    data = await response.json();
+    data = JSON.parse(body);
   } catch {
-    if (signal.aborted) return null;
     throw openLibraryUnavailable();
   }
 

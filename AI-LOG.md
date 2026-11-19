@@ -6,6 +6,8 @@ OpenAI Codex added one server-side catalog retry for transport errors, timeouts,
 
 Before the change, production returned 200 for `art` and `Dune`, then returned 503 for `art` in 8.2 seconds. Lint, typecheck, build, 48 unit/API tests, and 61 integration tests passed. Local Chrome with a controlled upstream failure showed a single browser 200 for a recovered first-attempt 503. Two upstream 503s produced one browser 503 and the manual retry state. Manual retry and offline saved results with their timestamp also passed. Live requests from the modified local API timed out on both attempts and returned the expected sanitized 503 within the configured deadline. A separate direct request to Open Library for `Dune` returned HTTP 503. Recheck the mitigation on Vercel after deployment before closing #70.
 
+During PR #71 review, Andrés found that a transport interruption after the provider sent HTTP 200 headers did not trigger the retry. Codex separated body reading from JSON parsing. The regression first reproduced the 503 with an interrupted body, then verified recovery on the second attempt. The same partial JSON delivered as a complete body still returns 503 after one attempt. The existing two-attempt limit and nine-second deadline still apply.
+
 ## Catalog search recovery - Issue #66 (2026-11-18)
 
 OpenAI Codex moved Open Library searches to the same-origin catalog API and updated the FR-5 contract. The public endpoint validates the query, makes a time-limited request to Open Library, and reports upstream failures as HTTP 503. The client keeps the existing device-local cache and saved timestamps. No deployment variables were changed.

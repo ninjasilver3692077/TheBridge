@@ -6,6 +6,7 @@ import { searchOpenLibraryWithCache } from "../src/services/openLibrary.js";
 
 const art = { key: "/works/OL1W", title: "Art" };
 const dune = { key: "/works/OL2W", title: "Dune", author_name: ["Frank Herbert"] };
+const partialJson = '{"docs":[';
 
 test("catalog API uses a fixed upstream and reports failure separately from no matches", async (t) => {
   const localFetch = globalThis.fetch;
@@ -28,6 +29,16 @@ test("catalog API uses a fixed upstream and reports failure separately from no m
       case "network":
         if (calls === 1) throw new TypeError("connection lost");
         return Response.json({ docs: [art] });
+      case "interrupted body":
+        if (calls === 2) return Response.json({ docs: [art] });
+        return new Response(new ReadableStream<Uint8Array>({
+          start(controller) {
+            controller.enqueue(new TextEncoder().encode(partialJson));
+          },
+          pull(controller) {
+            controller.error(new TypeError("connection lost while reading the body"));
+          },
+        }, { highWaterMark: 0 }), { headers: { "Content-Type": "application/json" } });
       case "timeout":
         if (calls === 2) return Response.json({ docs: [art] });
         return new Promise<Response>((_resolve, reject) => {
@@ -39,6 +50,8 @@ test("catalog API uses a fixed upstream and reports failure separately from no m
         return new Response(null, { status: 429 });
       case "retry later":
         return new Response(null, { status: 503, headers: { "Retry-After": "60" } });
+      case "invalid json":
+        return new Response(partialJson, { headers: { "Content-Type": "application/json" } });
       case "Dune":
         return Response.json({ docs: [dune] });
       case "invalid":
@@ -58,14 +71,21 @@ test("catalog API uses a fixed upstream and reports failure separately from no m
   }
   assert.equal(upstream.mock.callCount(), 0);
 
-  for (const query of ["art", "network", "timeout"]) {
+  for (const query of ["art", "network", "interrupted body", "timeout"]) {
     const response = await localFetch(`${endpoint}?${new URLSearchParams({ q: query })}`);
     assert.equal(response.status, 200);
     assert.deepEqual(await response.json(), { data: { docs: [art] } });
     assert.equal(callsByQuery.get(query), 2);
   }
 
-  for (const [query, attempts] of [["unavailable", 2], ["invalid", 1], ["throttled", 1], ["retry later", 1]] as const) {
+  const failureCases = [
+    ["unavailable", 2],
+    ["invalid json", 1],
+    ["invalid", 1],
+    ["throttled", 1],
+    ["retry later", 1],
+  ] as const;
+  for (const [query, attempts] of failureCases) {
     const response = await localFetch(`${endpoint}?${new URLSearchParams({ q: query })}`);
     assert.equal(response.status, 503);
     assert.deepEqual(await response.json(), {

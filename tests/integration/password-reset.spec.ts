@@ -35,6 +35,15 @@ async function reset(token: string, password = newPassword) {
   return call("reset-password", { token, newPassword: password });
 }
 
+async function changePassword(token: string, currentPassword: string, nextPassword = newPassword) {
+  const response = await fetch(baseUrl + "/api/account/password", {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json", Authorization: "Bearer " + token },
+    body: JSON.stringify({ currentPassword, newPassword: nextPassword }),
+  });
+  return { status: response.status, body: await response.json() };
+}
+
 before(async () => {
   replSet = await MongoMemoryReplSet.create({ replSet: { count: 1 } });
   process.env.MONGODB_URI = replSet.getUri();
@@ -96,6 +105,53 @@ test("reset changes the bcrypt password atomically, consumes the token and makes
   assert.equal(login.status, 200);
   assert.equal(JSON.stringify(login.body).includes("passwordReset"), false);
 });
+
+for (const role of ["Member", "Admin"] as const) {
+  test("signed-in " + role + " password change retires a pending recovery link", async () => {
+    await AccountModel.updateOne({ email: "member@example.edu" }, { $set: { role } });
+    assert.equal((await forgot()).status, 200);
+    const pendingToken = sent[0]!.token;
+    const login = await call("login", { email: "member@example.edu", password: oldPassword });
+    assert.equal(login.status, 200);
+    assert.equal(login.body.data.account.role, role);
+
+    const changed = await changePassword(login.body.data.token, oldPassword);
+    assert.equal(changed.status, 200);
+    assert.equal(changed.body.data.role, role);
+    assert.equal((await reset(pendingToken, "stale-link-password")).status, 400);
+
+    const stored = await AccountModel.findOne().select("+passwordHash +passwordResetHash +passwordResetExpiresAt").lean();
+    assert.equal(stored?.passwordResetHash, undefined);
+    assert.equal(stored?.passwordResetExpiresAt, undefined);
+    assert.ok(stored && await bcrypt.compare(newPassword, stored.passwordHash));
+    assert.equal((await call("login", { email: "member@example.edu", password: oldPassword })).status, 401);
+    const currentLogin = await call("login", { email: "member@example.edu", password: newPassword });
+    assert.equal(currentLogin.status, 200);
+    assert.equal(currentLogin.body.data.account.role, role);
+  });
+
+  test("rejected " + role + " password changes preserve a pending recovery link", async () => {
+    await AccountModel.updateOne({ email: "member@example.edu" }, { $set: { role } });
+    assert.equal((await forgot()).status, 200);
+    const stored = await AccountModel.findOne().select("+passwordHash +passwordResetHash +passwordResetExpiresAt").lean();
+    assert.ok(stored?.passwordResetHash && stored.passwordResetExpiresAt);
+    const login = await call("login", { email: "member@example.edu", password: oldPassword });
+    assert.equal(login.status, 200);
+
+    for (const [currentPassword, nextPassword, status] of [
+      ["incorrect-current-password", newPassword, 401],
+      [oldPassword, "short", 400],
+    ] as const) {
+      assert.equal((await changePassword(login.body.data.token, currentPassword, nextPassword)).status, status);
+      const unchanged = await AccountModel.findOne().select("+passwordHash +passwordResetHash +passwordResetExpiresAt").lean();
+      assert.equal(unchanged?.passwordHash, stored.passwordHash);
+      assert.equal(unchanged?.passwordResetHash, stored.passwordResetHash);
+      assert.equal(unchanged?.passwordResetExpiresAt?.getTime(), stored.passwordResetExpiresAt.getTime());
+    }
+    assert.equal((await reset(sent[0]!.token)).status, 200);
+    assert.equal((await call("login", { email: "member@example.edu", password: newPassword })).status, 200);
+  });
+}
 
 test("expired, malformed and unknown tokens fail without changing the password", async () => {
   await forgot();

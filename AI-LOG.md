@@ -1,5 +1,13 @@
 # AI-LOG
 
+## Retire recovery links on authenticated password change - Issue #74 (2026-11-18)
+
+Codex implemented this task for Edwin in feat/hw15-clear-pending-reset. AUTH-06 now unsets the stored recovery digest and expiry in the same conditional Account update that replaces the password hash. The verified-current-password predicate remains in place. Contract v11 records the invalidation rule and the security audit describes the atomic write. No route, payload, token format, UI, JWT lifetime or deployment configuration changed.
+
+Four local MongoDB replica-set regressions use the existing mail double. For both Member and Admin, a link issued before a successful authenticated change is refused, its hidden digest/expiry are absent, the new password logs in and the old password fails. Wrong-current-password and invalid-new-password requests preserve the password hash, digest and expiry, and the pending link remains usable. Before the implementation, the two success-path regressions reproduced the defect: the old link returned 200 instead of 400; both rejection-path tests already passed. After the fix, lint, typecheck, build, 48 unit/API tests and 65 integration tests pass (113 total), with a clean diff check.
+
+The combined update avoids a separate token-cleanup window. The tests operate only on temporary local accounts and simulated email; they do not claim new live delivery or password-reset evidence. Edwin's task is submitted to Daniel for independent review; only the coordinator merges and closes #74 after acceptance.
+
 ## Post-merge verification reconciliation - Issue #50 (2026-11-18)
 
 This follow-up records what changed after the earlier checkpoint. Juan merged #71 at 19:28 and #67 at 19:32 America/Bogota; GitHub then closed #50 and #70. Those closures do not supply an additional review statement. The integrated source checked here is main 81d3d6bc64cc7a461b39a34e8484f4fa1807cbdf, with contract v10 and public module index-Cs07IuAO.js. Only verification documents change in this follow-up.

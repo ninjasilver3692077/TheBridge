@@ -1231,3 +1231,31 @@ Edwin is the requested reviewer. The browser checks above must be run by a perso
 ### Learning
 
 A withdrawal that can fail with 409 needs its error state to live outside the card that disappears when the library refreshes.
+
+## Issue #75 — HW13: show the agreed price and duration on request cards (2026-11-19)
+
+### Prompt or task
+
+Daniel asked Claude to implement issue #75 on `feat/hw13-show-request-terms`: carry `quotedTerms.priceCop` and `quotedTerms.durationDays` through `src/services/requests.js` and show them on `RequestCard.jsx`, keeping the payment method, for Received and Sent cards including completed requests.
+
+### AI suggestions
+
+- Build the visible terms in a small pure helper, `describeQuotedTerms` in `src/services/requestTerms.js`, so the rule per modality can be unit-tested without the browser: Sale shows the COP amount, Loan the duration, Rental both, Exchange neither, and the payment method stays when present.
+- Render the rows in a separate `RequestTerms.jsx` description list so `RequestCard.jsx` stays short, and reuse the existing COP formatter.
+- Read only the request's stored quote, never the current listing.
+
+### Changes adopted
+
+All of the above. The card's former single payment-method line is now one row of the same list. `RequestCard.jsx` has 51 lines and the new files 16 and 18.
+
+### Human changes and review
+
+Daniel chose to start the task and reviews the diff before pushing. Jorge reviews the pull request.
+
+### Tests and verification
+
+`npm run lint`, `npm run typecheck`, `npm run build` and `npm test` (56/56, including five new cases in `tests/request-terms.test.ts`) pass. A local run against the real API and a temporary MongoDB replica set created Sale, Loan, Rental and Exchange requests, accepted and completed the Rental, and then changed the Sale listing price directly in the database. In the browser, Received and Sent cards at 1280 and 375 pixels showed COP 40,000 and Nequi for the Sale (the stored quote, not the new listing price), 14 days for the Loan, COP 8,000 and 7 days for the completed Rental, and nothing extra for the Exchange; there was no horizontal scroll on mobile, the Rental card was also checked in dark mode, and the console had no errors.
+
+### Learning
+
+Rendering from the quote snapshot instead of the live listing is what keeps a request card truthful after the owner edits or closes the listing.

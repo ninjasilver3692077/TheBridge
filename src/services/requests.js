@@ -1,5 +1,6 @@
 import { apiRequest } from "./apiClient.js";
 import { readSession } from "./authStorage.js";
+import { describeQuotedTerms } from "./requestTerms.js";
 
 const PAGE_LIMIT = 100;
 const ACTIVE_STATUSES = ["Pending", "Accepted"];
@@ -39,7 +40,7 @@ function toClientRequest(request) {
     cover: listing.coverUrl || "",
     modality: request.quotedModality,
     offeredBookTitle: request.offeredBook?.book.title ?? null,
-    paymentMethod: request.quotedTerms?.paymentMethod ?? null,
+    terms: describeQuotedTerms(request.quotedModality, request.quotedTerms),
   };
 }
 
